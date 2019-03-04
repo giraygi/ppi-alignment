@@ -108,7 +108,7 @@ public class AkkaSystem {
 //		@SuppressWarnings("unused")
 		GraphDatabaseService graphDb = new GraphDatabaseFactory()
 //		        .newEmbeddedDatabase( new File("C:\\Users\\giray.tuncay\\neo4j-community-3.4.9-windows\\neo4j-community-3.4.9") );
-                .newEmbeddedDatabase( new File("/home/giray/neo4j-community-3.5.3") );
+                .newEmbeddedDatabase( new File("~/neo4j-community-3.5.2") );
 //		        .setConfig( bolt.enabled, "true" )
 //		        .setConfig( bolt.address, "localhost:7687" )
 //		        .newGraphDatabase();
