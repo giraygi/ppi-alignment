@@ -92,6 +92,7 @@ public class AlignerImpl implements Aligner, Receiver {
 		int added = template.with(AkkaSystem.graphDb).execute( transaction -> {
 			Session create = AkkaSystem.driver.session();
 			int count = 0;
+			ResultSummary rs;
 		try ( org.neo4j.driver.v1.Transaction tx = create.beginTransaction()  )
 		{
 			fr = new FileReader(alignment);
@@ -101,9 +102,8 @@ public class AlignerImpl implements Aligner, Receiver {
 			while((line = br.readLine())!=null)
 			{
 				proteinPair = line.split(" ");
-				
-				tx.run("match (n:Organism2 {proteinName: '"+proteinPair[0]+"'}), (m:Organism1 {proteinName: '"+proteinPair[1]+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+proteinPair[0]+"*"+alignmentNo+"*"+proteinPair[1]+"',markedQuery:[]}]->(m)");
-				count++;
+				rs = tx.run("match (n:Organism2 {proteinName: '"+proteinPair[0]+"'}), (m:Organism1 {proteinName: '"+proteinPair[1]+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+proteinPair[0]+"*"+alignmentNo+"*"+proteinPair[1]+"',markedQuery:[]}]->(m)").consume();
+				count+=rs.counters().relationshipsCreated();
 			}	
 			tx.success(); tx.close();
 		} catch (FileNotFoundException e) {
@@ -645,7 +645,7 @@ public Future<SubGraph> subGraphWithDoubleAlignedEdges(ExecutionContextExecutor 
 // İlk önce tüm hizalama ile Induced Kenarların Güçsüz olanların farkını gönderiyordu. java.util.ConcurrentModificationException ile çok uğraşamadım.
 // Şimdi Sadece Induced Kenarların Güçlü olanlarını gönderiyor.
 // Çok Az kenar gönderiyor?
-public Future<SubGraph> subGraphWithStrongInducedEdges(ExecutionContextExecutor dispatcher, boolean mode,int simTreshold, int annotationTreshold,int powerTreshold){
+public Future<SubGraph> subGraphWithStrongInducedEdges(ExecutionContextExecutor dispatcher, int simTreshold, int annotationTreshold,int powerTreshold){
 	
 	SubGraph sg = new SubGraph(this);
 	Session swcs = AkkaSystem.driver.session();
@@ -718,7 +718,7 @@ public Future<SubGraph> subGraphWithStrongInducedEdges(ExecutionContextExecutor 
 					tx.success(); tx.close();
 			      } catch (Exception e){
 			    	  System.out.println("SubGraph With Strong Induced Edges::: " + e.getMessage());
-			    	  subGraphWithStrongInducedEdges(dispatcher, mode,simTreshold, annotationTreshold,powerTreshold);
+			    	  subGraphWithStrongInducedEdges(dispatcher, simTreshold, annotationTreshold,powerTreshold);
 			      } finally {swcs.close();}
 				AlignerImpl.this.conservedStructures = sgwcs;
 				return sgwcs; //önceki hali sgwcs 
@@ -1148,7 +1148,7 @@ return f;
 // Bunlara çalışıcaz daha
 // laddDivisorı 100 yapmak iyi oluyor.
 // options are: power, betweenness, harmonic, pagerank and closeness
-public Future<SubGraph> subGraphWithTopAlignedPowerNodes(int limit, int addDivisor, String algorithm, ExecutionContextExecutor dispatcher){
+public Future<SubGraph> subGraphWithTopAlignedPowerNodes(int limit, String algorithm, ExecutionContextExecutor dispatcher){
 	SubGraph s = new SubGraph(this);
 	Session  sgwapn = AkkaSystem.driver.session();
 	Future<SubGraph> f = future(new Callable<SubGraph>() {
@@ -1164,9 +1164,9 @@ public Future<SubGraph> subGraphWithTopAlignedPowerNodes(int limit, int addDivis
 			// match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '9' return n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 order by (s1+s2)/(abs(s1-s2)+100) desc limit 5
 			// // match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '9' return n.power2,n.power3,n.power4,m.power2,m.power3,m.power4,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 order by (s1+s2)/(abs(s1-s2)+100) desc limit 5
 			if(algorithm.equals("power"))
-			result = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 return n,r,m order by (s1+s2)/(abs(s1-s2)+"+addDivisor+") desc limit "+limit);
+			result = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 return n,r,m order by min(s1,s2) desc limit "+limit);
 			else if (algorithm.equals("betweenness")||algorithm.equals("harmonic")||algorithm.equals("pagerank")||algorithm.equals("closeness"))
-				result = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n."+algorithm+" as s1, m."+algorithm+" as s2 return n,r,m order by (s1+s2)/(abs(s1-s2)+"+addDivisor+") desc limit "+limit);
+				result = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n."+algorithm+" as s1, m."+algorithm+" as s2 return n,r,m order by min(s1,s2) desc limit "+limit);
 			else
 				result = null;
 			while(result.hasNext()){
@@ -1189,11 +1189,11 @@ public Future<SubGraph> subGraphWithTopAlignedPowerNodes(int limit, int addDivis
 						}
 				}
 			}
-			sgwAPN.type = "SubGraph with "+limit +" Top PowerNode Pairs and "+addDivisor+" addDivisor coefficient";
+			sgwAPN.type = "SubGraph with "+limit +" Top PowerNode Pairs";
 			tx.success(); tx.close();
 	    } catch (Exception e){
 	    	System.out.println("SubGraph Power Nodes::: " + e.getMessage());
-	    	subGraphWithTopAlignedPowerNodes(limit,addDivisor, algorithm, dispatcher);
+	    	subGraphWithTopAlignedPowerNodes(limit,algorithm, dispatcher);
 	      } finally {sgwapn.close();}
 		AlignerImpl.this.powerNodes = sgwAPN;
 				return sgwAPN;
@@ -1204,7 +1204,7 @@ public Future<SubGraph> subGraphWithTopAlignedPowerNodes(int limit, int addDivis
 	return f;
 }
 
-public Future<Long> markTopAlignedPowerNodes(int limit, int addDivisor, long markedQuery, String algorithm, ExecutionContextExecutor dispatcher){
+public Future<Long> markTopAlignedPowerNodes(int limit, long markedQuery, String algorithm, ExecutionContextExecutor dispatcher){
 	Future<Long> f = gelecek(new Callable<Long>() {
 		public Long call() {
 			
@@ -1218,12 +1218,12 @@ public Future<Long> markTopAlignedPowerNodes(int limit, int addDivisor, long mar
 					
 					// match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '9' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 order by (s1+s2)/(abs(s1-s2)+100) desc limit 10 set r.markedQuery = r.markedQuery + '999'
 					if(algorithm.equals("power"))
-				rs =	markAPNSession.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 order by (s1+s2)/(abs(s1-s2)+"+addDivisor+") desc limit "+limit
+				rs =	markAPNSession.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 order by min(s1,s2) desc limit "+limit
 							+ " set m.markedQuery = case when not ANY(x IN m.markedQuery WHERE x = '"+markedQuery+"') then m.markedQuery+'"+markedQuery+"' else m.markedQuery end, "
 							+ "n.markedQuery = case when not ANY(x IN n.markedQuery WHERE x = '"+markedQuery+"') then n.markedQuery+'"+markedQuery+"' else n.markedQuery end, "
 							+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
 					else if (algorithm.equals("betweenness")||algorithm.equals("harmonic")||algorithm.equals("pagerank")||algorithm.equals("closeness"))
-					rs =	markAPNSession.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n."+algorithm+" as s1, m."+algorithm+" as s2 order by (s1+s2)/(abs(s1-s2)+"+addDivisor+") desc limit "+limit
+					rs =	markAPNSession.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n."+algorithm+" as s1, m."+algorithm+" as s2 order by min(s1,s2) desc limit "+limit
 							+ " set m.markedQuery = case when not ANY(x IN m.markedQuery WHERE x = '"+markedQuery+"') then m.markedQuery+'"+markedQuery+"' else m.markedQuery end, "
 							+ "n.markedQuery = case when not ANY(x IN n.markedQuery WHERE x = '"+markedQuery+"') then n.markedQuery+'"+markedQuery+"' else n.markedQuery end, "
 							+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
@@ -2025,7 +2025,7 @@ public void increaseECWithFunctionalParameters(int k1, int k2, double sim1, doub
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 }
 
-public void increaseFunctionalParametersWithPower2(int minCommonAnnotations, double sim,int power2, char mode) {
+public void increaseFunctionalParametersWithPower(int minCommonAnnotations, double sim,int power, char powerMode, char mode) {
 	
 	System.out.println("increaseFunctionalParametersWithPower2 for Aligner "+this.alignmentNo);	
 	Session gocbs = AkkaSystem.driver.session();
@@ -2043,7 +2043,11 @@ public void increaseFunctionalParametersWithPower2(int minCommonAnnotations, dou
 			try ( org.neo4j.driver.v1.Transaction tx = gocbs.beginTransaction() ) {
 				
 				markUnalignedNodes();
-				result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" and p.power2 >= "+power2+" and n.power2 >= "+power2+" return p,n order by length(FILTER(x in p.annotations WHERE x in n.annotations)) desc, t.similarity desc");
+				
+				if(powerMode == '4' || powerMode == '3' )
+					result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" and p.power"+powerMode+" >= "+power+" and n.power"+powerMode+" >= "+power+" return p,n order by length(FILTER(x in p.annotations WHERE x in n.annotations)) desc, t.similarity desc");
+				else
+					result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" and p.power2 >= "+power+" and n.power2 >= "+power+" return p,n order by length(FILTER(x in p.annotations WHERE x in n.annotations)) desc, t.similarity desc");
 				
 		//System.out.println("Number of records in query: "+result.list().size());
 		records.clear();
@@ -2087,7 +2091,11 @@ public void increaseFunctionalParametersWithPower2(int minCommonAnnotations, dou
 			try ( org.neo4j.driver.v1.Transaction tx = gocbs.beginTransaction() ) {
 				
 				markUnalignedNodes();
-				result = tx.run("match (p:Organism2), (n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and p.power2 >= "+power2+" and n.power2 >= "+power2+" return p,n,min(p.power2 ,n.power2) order by length(FILTER(x in p.annotations WHERE x in n.annotations)) desc,min(p.power2 ,n.power2) desc");
+				
+				if(powerMode == '4' || powerMode == '3' )
+					result = tx.run("match (p:Organism2), (n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and p.power"+powerMode+" >= "+power+" and n.power"+powerMode+" >= "+power+" return p,n,min(p.power"+powerMode+" ,n.power"+powerMode+") order by length(FILTER(x in p.annotations WHERE x in n.annotations)) desc,min(p.power"+powerMode+" ,n.power"+powerMode+") desc");
+				else
+					result = tx.run("match (p:Organism2), (n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and p.power2 >= "+power+" and n.power2 >= "+power+" return p,n,min(p.power2 ,n.power2) order by length(FILTER(x in p.annotations WHERE x in n.annotations)) desc,min(p.power2 ,n.power2) desc");
 				
 		//System.out.println("Number of records in query: "+result.list().size());
 		records.clear();
@@ -2570,7 +2578,7 @@ this.bs = as.calculateGlobalBenchmarks((Aligner)this);
 }
 
 // Sıralı olması gerekiyordu!!! Sıralı oldu ama bitmedi.
-public Future<Boolean> alignCentralPowerNodes(int minCommonAnnotations, int power2, int power3, int power4, char mode){
+public Future<Boolean> alignCentralPowerNodes(int minCommonAnnotations, double sim, int power2, int power3, int power4, char mode){
 	System.out.println("Align Central Power Nodes for Aligner "+this.alignmentNo);
 	
 	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
@@ -2582,7 +2590,10 @@ public Future<Boolean> alignCentralPowerNodes(int minCommonAnnotations, int powe
 		markUnalignedNodes();
 		ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
 		ArrayList<Node> record = new ArrayList<Node>();
-		result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and p.power2 >= "+power2+" and n.power2 >= "+power2+" and p.power3 >= "+power3+" and n.power3 >= "+power3+" and p.power4 >= "+power4+" and n.power4 >= "+power4+" return p,n order by n.power4+p.power4 desc,n.power3+p.power3 desc,n.power2+p.power2 desc");
+		if (sim>0.0)
+			result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" and p.power2 >= "+power2+" and n.power2 >= "+power2+" and p.power3 >= "+power3+" and n.power3 >= "+power3+" and p.power4 >= "+power4+" and n.power4 >= "+power4+" return p,n,min(n.power4, p.power4) ,min(n.power3, p.power3) ,min(n.power2, p.power2) order by min(n.power4, p.power4) desc, min(n.power3, p.power3) desc,min(n.power2,p.power2) desc");
+		else
+			result = tx.run("match (p:Organism2),(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and p.power2 >= "+power2+" and n.power2 >= "+power2+" and p.power3 >= "+power3+" and n.power3 >= "+power3+" and p.power4 >= "+power4+" and n.power4 >= "+power4+" return p,n,min(n.power4, p.power4) ,min(n.power3, p.power3) ,min(n.power2, p.power2)  order by min(n.power4, p.power4) desc, min(n.power3, p.power3) desc,min(n.power2,p.power2) desc");
 		while(result.hasNext()){
 			Record row = result.next();
 			record.clear();
@@ -2595,8 +2606,17 @@ public Future<Boolean> alignCentralPowerNodes(int minCommonAnnotations, int powe
 					case "n":
 						record.add(1,row.get( column.getKey() ).asNode());
 						break;
+					case "min(n.power4, p.power4)":
+						;
+						break;
+					case "min(n.power3, p.power3)":
+						;
+						break;
+					case "min(n.power2, p.power2)":
+						;
+						break;
 					default:
-						System.out.println("Unexpected column"+column.getKey());
+						System.out.println("Unexpected column "+column.getKey());
 						break;
 					}
 				}
@@ -2624,7 +2644,7 @@ public Future<Boolean> alignCentralPowerNodes(int minCommonAnnotations, int powe
 }
 // denenmedi
 // algorithms: betweenness, harmonic, pagerank and closeness (not working),
-public Future<Boolean> alignAlternativeCentralNodes(int minCommonAnnotations, double score1, double score2, String algorithm, char mode){
+public Future<Boolean> alignAlternativeCentralNodes(int minCommonAnnotations, double sim, double score1, double score2, String algorithm, char mode){
 System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignmentNo);
 	
 	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
@@ -2637,10 +2657,17 @@ System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignme
 		
 		ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
 		ArrayList<Node> record = new ArrayList<Node>();
-		result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
+		if(sim>0.0)
+			result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
 				+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
+				+ " t.similarity >= "+sim 
 				+ " and p."+algorithm+" >"+score2+" and n."+algorithm+" >"+score1		
-				+ " return p,n order by p."+algorithm+"+n."+algorithm+", length(FILTER(x in p.annotations WHERE x in n.annotations)) desc");
+				+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+"), length(FILTER(x in p.annotations WHERE x in n.annotations)) desc");
+		else
+			result = tx.run("match (p:Organism2),(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
+					+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
+					+ " and p."+algorithm+" >"+score2+" and n."+algorithm+" >"+score1		
+					+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+"), length(FILTER(x in p.annotations WHERE x in n.annotations)) desc");
 		while(result.hasNext()){
 			Record row = result.next();
 			record.clear();
@@ -2653,8 +2680,20 @@ System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignme
 					case "n":
 						record.add(1,row.get( column.getKey() ).asNode());
 						break;
+					case "min(p.pagerank, n.pagerank)":
+						;
+						break;
+					case "min(p.betweenness, n.betweenness)":
+						;
+						break;
+					case "min(p.closeness, n.closeness)":
+						;
+						break;
+					case "min(p.harmonic, n.harmonic)":
+						;
+						break;
 					default:
-						System.out.println("Unexpected column"+column.getKey());
+						System.out.println("Unexpected column "+column.getKey());
 						break;
 					}
 				}
@@ -2682,7 +2721,7 @@ System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignme
 
 // Dosyadan okutulmayacak. AkkaSystemdeki ArrayListten okutulacak. Alttaki metot için de geçerli.
 
-public void alignClusters(int minCommonAnnotations,String clusterType, long clusterIDOfOrganism1, long clusterIDOfOrganism2, char mode) {
+public void alignClusters(int minCommonAnnotations, double sim, String clusterType, long clusterIDOfOrganism1, long clusterIDOfOrganism2, char mode) {
 	System.out.println("alignClusters for Aligner "+this.alignmentNo);
 	TransactionTemplate.Monitor tm = new TransactionTemplate.Monitor.Adapter();
 	tm.failure(new Throwable("Herkesin tuttuğu kendine"));
@@ -2695,9 +2734,12 @@ public void alignClusters(int minCommonAnnotations,String clusterType, long clus
 				markUnalignedNodes();
 				ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
 				ArrayList<Node> record = new ArrayList<Node>();
-				result = tx.run("match (n:Organism2 {"+clusterType+": "+clusterIDOfOrganism2+"})<-[s:SIMILARITY]-(m:Organism1 {"+clusterType+": "+clusterIDOfOrganism1+"}) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') "
-				+ "and length(FILTER(x in n.annotations WHERE x in m.annotations)) >= "+minCommonAnnotations+" return n,m");
-				
+				if(sim>0.0)
+					result = tx.run("match (n:Organism2 {"+clusterType+": "+clusterIDOfOrganism2+"})<-[s:SIMILARITY]-(m:Organism1 {"+clusterType+": "+clusterIDOfOrganism1+"}) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') "
+							+ "and length(FILTER(x in n.annotations WHERE x in m.annotations)) >= "+minCommonAnnotations+"and s.similarity >= "+sim+" return n,m");
+				else
+					result = tx.run("match (n:Organism2 {"+clusterType+": "+clusterIDOfOrganism2+"}),(m:Organism1 {"+clusterType+": "+clusterIDOfOrganism1+"}) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') "
+							+ "and length(FILTER(x in n.annotations WHERE x in m.annotations)) >= "+minCommonAnnotations+" return n,m");
 				while(result.hasNext()){
 					Record row = result.next();
 					record.clear();
@@ -3045,7 +3087,7 @@ public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepE
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return count;
 } );	
-	System.err.println(removed+" induced edges were removed.");
+	System.err.println(removed+" induced edges were removed in Aligner "+this.alignmentNo);
 	this.bs = as.calculateGlobalBenchmarks(this);
 }
 // Diğer ağ için
@@ -4297,7 +4339,7 @@ public void onReceive(Object message, ActorRef sender) {
 			else if (n==3)
 				centralityType = "closeness";
 				
-		Future<SubGraph> fs = this.subGraphWithTopAlignedPowerNodes(100, 100, centralityType, AkkaSystem.system2.dispatcher());
+		Future<SubGraph> fs = this.subGraphWithTopAlignedPowerNodes(100, centralityType, AkkaSystem.system2.dispatcher());
 		akka.pattern.Patterns.pipe(fs, AkkaSystem.system2.dispatcher()).to(sender);
 		fs.onSuccess(new PrintResult<SubGraph>(), AkkaSystem.system2.dispatcher());
 		fs.onFailure(new OnFailure() {
@@ -4309,7 +4351,11 @@ public void onReceive(Object message, ActorRef sender) {
 	}
 	
 		if(choice.equals("S3")) {
-		Future<SubGraph> fs = this.subGraphWithTopAlignedPowerNodes(100, 100, "power", AkkaSystem.system2.dispatcher());
+			Future<SubGraph> fs;
+			if(Math.random() < 0.8)
+				fs = this.subGraphWithTopAlignedPowerNodes(100, "power", AkkaSystem.system2.dispatcher());
+			else
+				fs = this.subGraphWithStrongInducedEdges(AkkaSystem.system2.dispatcher(), 0, 0, 0);
 		akka.pattern.Patterns.pipe(fs, AkkaSystem.system2.dispatcher()).to(sender);
 		fs.onSuccess(new PrintResult<SubGraph>(), AkkaSystem.system2.dispatcher());
 		fs.onFailure(new OnFailure() {

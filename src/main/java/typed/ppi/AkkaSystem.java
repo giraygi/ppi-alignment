@@ -91,7 +91,7 @@ public class AkkaSystem {
 	List<String> routeePaths = new ArrayList<String>();
 	Aligner typedRouter = typed.typedActorOf(new TypedProps<AlignerImpl>(AlignerImpl.class), router);
 	static Timeout timeout = new Timeout(Duration.create(360, "seconds"));
-	Timeout timeout2 = new Timeout(Duration.create(120, "seconds"));
+	Timeout timeout2 = new Timeout(Duration.create(180, "seconds"));
 	static int marked = 0; 
 	
 	
@@ -108,7 +108,7 @@ public class AkkaSystem {
 //		@SuppressWarnings("unused")
 		GraphDatabaseService graphDb = new GraphDatabaseFactory()
 //		        .newEmbeddedDatabase( new File("C:\\Users\\giray.tuncay\\neo4j-community-3.4.9-windows\\neo4j-community-3.4.9") );
-                .newEmbeddedDatabase( new File("~/neo4j-community-3.5.2") );
+                .newEmbeddedDatabase( new File("~/neo4j-community-3.5.3") );
 //		        .setConfig( bolt.enabled, "true" )
 //		        .setConfig( bolt.address, "localhost:7687" )
 //		        .newGraphDatabase();
@@ -1748,8 +1748,12 @@ Timeout sg =  new Timeout(Duration.create(60, "seconds"));
 				ecl = Await.result(ec.markAlignedEdges(marked++, AkkaSystem.system2.dispatcher()),sg.duration());
 				bsl = Await.result(bs.markXBitScoreSimilarity((bestBitscore+1)/bs.getBenchmarkScores().size, marked++,  AkkaSystem.system2.dispatcher()), sg.duration());
 				gocl = Await.result(goc.markKGOTerms((int) bestGOC/goc.getBenchmarkScores().size, marked++, AkkaSystem.system2.dispatcher()), sg.duration());
-				icsl = Await.result(ics.markTopAlignedPowerNodes(100,100, marked++, centralityType, AkkaSystem.system2.dispatcher()), sg.duration());
-				s3l = Await.result(s3.markTopAlignedPowerNodes(100,100, marked++, "power", AkkaSystem.system2.dispatcher()),sg.duration());
+				icsl = Await.result(ics.markTopAlignedPowerNodes(100,marked++, centralityType, AkkaSystem.system2.dispatcher()), sg.duration());
+				
+				if(Math.random() < 0.8)
+					s3l = Await.result(s3.markTopAlignedPowerNodes(100,marked++, "power", AkkaSystem.system2.dispatcher()),sg.duration());
+				else
+					s3l = Await.result(s3.markConservedStructureQuery(AkkaSystem.system2.dispatcher(), marked++),sg.duration());
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				System.err.println("ECL: "+ecl+" - BSL: "+bsl+" - GOCL: "+gocl+" - ICSL: "+icsl);
@@ -1972,11 +1976,16 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 				if(routees.get(i).getAlignmentNo()==1) {
 					Random rand = new Random();
 					Random rand2 = new Random();
+					Random rand3 = new Random();
 					int  n = rand.nextInt(3);
 					int m = rand2.nextInt(3);
+					double s = rand3.nextDouble()*50;
+//					if(s<3) s = 0;
+					if(Math.random() < 0.2)
+					routees.get(i).alignCentralPowerNodes(n, s,0, 30*(m+1)/4, 0, '3');
 					
 					if(Math.random() < 0.2)
-					routees.get(i).alignCentralPowerNodes(n, 0, 20*(m+1)/4, 0, '3');
+						routees.get(i).alignCentralPowerNodes(n, s, 0, 0, 30*(m+1)/4, '3');
 					
 					routees.get(i).increaseECByAddingPair(n, m*50, '3');
 				}
@@ -1984,13 +1993,15 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 					if(routees.get(i).getAlignmentNo()==2) {
 						Random rand = new Random();
 						Random rand2 = new Random();
+						Random rand3 = new Random();
 						int  n = rand.nextInt(5);
 						int m = rand2.nextInt(5)+1;
+						char p = (char) (rand3.nextInt(3)+2);
 						if(Math.random() < 0.8)
 						routees.get(i).increaseECWithFunctionalParameters(m, m, n*50, n*50, '3');
 						
 						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower2(m, n*50, m*5, '3');
+							routees.get(i).increaseFunctionalParametersWithPower(m, n*50, m*5, p, '3');
 						
 						if(Math.random() < 0.2)
 							routees.get(i).increaseECByAddingPair(n, (m-1)*50, '3');
@@ -2009,8 +2020,12 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 					if(routees.get(i).getAlignmentNo()==4) {
 						Random rand = new Random();
 						Random rand2 = new Random();
+						Random rand3 = new Random();
+						Random rand4 = new Random();
 						int  n = rand.nextInt(7);
 						int m = rand2.nextInt(7);
+						char p = (char) (rand3.nextInt(3)+2);
+						double s = rand4.nextDouble()*100;
 						boolean addPair = Math.random() < 0.5;
 						boolean edges = Math.random() < 0.5;
 						boolean tossBSGOC = Math.random() < 0.5; // BS daha ağırlıklı olmalı. GOC için aşağıdaki if leri tekrarla
@@ -2018,26 +2033,30 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							if(edges)
 								routees.get(i).alignClusterEdges(n, "labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters(n, "labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters(n, s,"labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism2, '3');
 						} else {
 							if(edges)
 								routees.get(i).alignClusterEdges(n, "labelpropagation", AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters(n, "labelpropagation", AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters(n, s,"labelpropagation", AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism2, '3');
 						}
 						
 						if(Math.random() < 0.2)
 						routees.get(i).increaseECByAddingPair(n, m*50, '3');
 						
 						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower2(m+1, n*50, (m+1)*5, '3');
+							routees.get(i).increaseFunctionalParametersWithPower(m+1, n*50, (m+1)*5, p,'3');
 						
 					}
 					if(routees.get(i).getAlignmentNo()==5) {
 						Random rand = new Random();
 						Random rand2 = new Random();
+						Random rand3 = new Random();
+						Random rand4 = new Random();
 						int  n = rand.nextInt(7);
 						int m = rand2.nextInt(7);
+						char p = (char) (rand3.nextInt(3)+2);
+						double s = rand4.nextDouble()*100;
 						boolean addPair = Math.random() < 0.5;
 						boolean edges = Math.random() < 0.5;
 						boolean tossBSGOC = Math.random() < 0.5;
@@ -2045,19 +2064,19 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							if(edges)
 								routees.get(i).alignClusterEdges(n, "louvain", AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters(n, "louvain", AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters(n, s,"louvain", AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism2, '3');
 						} else {
 							if(edges)
 								routees.get(i).alignClusterEdges(n, "louvain", AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters(n, "louvain", AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters(n, s,"louvain", AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism2, '3');
 						}
 						
 						if(Math.random() < 0.2)
 							routees.get(i).increaseECByAddingPair(n, m*50, '3');
 						
 						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower2(m+1, n*50, (m+1)*5, '3');
+							routees.get(i).increaseFunctionalParametersWithPower(m+1, n*50, (m+1)*5, p,'3');
 							
 					}
 					
@@ -2065,23 +2084,30 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 					{
 						Random rand = new Random();
 						Random rand2 = new Random();
+						Random rand3 = new Random();
 						int  n = rand.nextInt(3);
 						int m = rand2.nextInt(3);
+						double s = rand3.nextDouble()*50;
+//						if(s<5) s = 0;
+						if(Math.random() < 0.2)
+						routees.get(i).alignAlternativeCentralNodes(n, s, 2.5*(m+1)/4, 2.5*(m+1)/4, "pagerank", '3');
 						
 						if(Math.random() < 0.2)
-						routees.get(i).alignAlternativeCentralNodes(n, 2.5*(m+1)/4, 2.5*(m+1)/4, "pagerank", '3');
+							routees.get(i).alignCentralPowerNodes(n, s, 0, 0, 40*(m+1)/4, '3');
 						
 						routees.get(i).increaseECByAddingPair(n, m*50, '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==7) {
 						Random rand = new Random();
+						Random rand2 = new Random();
 						int  n = rand.nextInt(5) + 1;
+						char p = (char) (rand2.nextInt(3)+2);
 						routees.get(i).increaseBitScoreAndGOC(n, '3');
 						
 						// Ekledikten sonra sonuç görmedim.
 						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower2(n, n*50,n*5, '3');
+							routees.get(i).increaseFunctionalParametersWithPower(n, n*50,n*5, p,'3');
 						
 						if(Math.random() < 0.2)
 							routees.get(i).increaseECByAddingPair(n-1, (n-1)*50, '3');
@@ -2092,11 +2118,16 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 					{
 						Random rand = new Random();
 						Random rand2 = new Random();
+						Random rand3 = new Random();
 						int  n = rand.nextInt(3);
 						int m = rand2.nextInt(3);
+						double s = rand3.nextDouble()*50;
+//						if(s<5) s = 0;
+						if(Math.random() < 0.2)
+						routees.get(i).alignAlternativeCentralNodes(n, s,10000*(m+1)/4, 10000*(m+1)/4, "betweenness", '3');
 						
 						if(Math.random() < 0.2)
-						routees.get(i).alignAlternativeCentralNodes(n, 10000*(m+1)/4, 10000*(m+1)/4, "betweenness", '3');
+							routees.get(i).alignCentralPowerNodes(n, s,0, 0, 40*(m+1)/4, '3');
 						
 						routees.get(i).increaseECByAddingPair(n, m*50, '3');
 					}
@@ -2105,11 +2136,16 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 					{
 						Random rand = new Random();
 						Random rand2 = new Random();
+						Random rand3 = new Random();
 						int  n = rand.nextInt(3);
 						int m = rand2.nextInt(3);
+						double s = rand3.nextDouble()*50;
+//						if(s<5) s = 0;
+						if(Math.random() < 0.2)
+						routees.get(i).alignAlternativeCentralNodes(2, s, 0.3*(m+1)/4,0.3*(m+1)/4, "harmonic", '3');
 						
 						if(Math.random() < 0.2)
-						routees.get(i).alignAlternativeCentralNodes(2, 0.3*(m+1)/4,0.3*(m+1)/4, "harmonic", '3');;
+							routees.get(i).alignCentralPowerNodes(n, s, 0, 0, 50*(m+1)/4, '3');
 						
 						routees.get(i).increaseECByAddingPair(n, m*50, '3');
 					}
@@ -2118,11 +2154,16 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 					{
 						Random rand = new Random();
 						Random rand2 = new Random();
+						Random rand3 = new Random();
 						int  n = rand.nextInt(3);
 						int m = rand2.nextInt(3);
+						double s = rand3.nextDouble()*50;
+//						if(s<5) s = 0;
+						if(Math.random() < 0.2)
+						routees.get(i).alignAlternativeCentralNodes(2, s,0.3*(m+1)/4,0.3*(m+1)/4, "closeness", '3');
 						
 						if(Math.random() < 0.2)
-						routees.get(i).alignAlternativeCentralNodes(2, 0.3*(m+1)/4,0.3*(m+1)/4, "closeness", '3');
+							routees.get(i).alignCentralPowerNodes(n, s, 0, 0, 50*(m+1)/4, '3');
 						
 						routees.get(i).increaseECByAddingPair(n, m*50, '3');
 					}
@@ -2279,18 +2320,18 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 				
 		final AkkaSystem as = new AkkaSystem(1);
 		
-		as.deleteAllNodesRelationships();
-		as.createGraph(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);	
-		as.computePowers();
-		as.removeAllAlignments();
-		as.computePageRank(20, 0.85);
-		as.computeBetweennessCentrality();
-		as.computeClosenessCentrality();
-		as.computeHarmonicCentrality();
-		as.computeLabelPropagationCommunities(1);
-		as.computeLouvainCommunities();
-		as.computeClusterSimilarities("louvain", 5);
-		as.computeClusterSimilarities("labelpropagation", 5);
+//		as.deleteAllNodesRelationships();
+//		as.createGraph(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);	
+//		as.computePowers();
+//		as.removeAllAlignments();
+//		as.computePageRank(20, 0.85);
+//		as.computeBetweennessCentrality();
+//		as.computeClosenessCentrality();
+//		as.computeHarmonicCentrality();
+//		as.computeLabelPropagationCommunities(1);
+//		as.computeLouvainCommunities();
+//		as.computeClusterSimilarities("louvain", 5);
+//		as.computeClusterSimilarities("labelpropagation", 5);
 		
 		as.csLouvainGO = as.sortSimilarClusters("louvain", "commonGO");
 		as.csLouvainBitScore = as.sortSimilarClusters("louvain", "BitScore");	
@@ -2302,8 +2343,11 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.sizeOfSecondNetwork = as.countAllEdgesOfANetwork(false);
 		System.out.println("Size of Second Network: "+as.sizeOfSecondNetwork);
 		
-//		Aligner a = new AlignerImpl(as,1);
+//		Aligner a = new AlignerImpl(as,91);
 //		a.removeAlignment();
+//		a.createAlignment("sana.align");
+//		as.calculateGlobalBenchmarks(a);
+//		a.addMeaninglessMapping(5, '3');
 //		a.createAlignment("/home/giray/Dropbox/ProteinAlignment/alignments/dmsc/12022019/34/DMSC34Save2.aln");
 //		for(int i=0;i<20;i++)
 //		{
@@ -2461,198 +2505,198 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 //	    as.typed.getActorRefFor(secondAligner).tell("1 deneme", as.typed.getActorRefFor(firstAligner));
 
 	
-	    Future<Boolean> f = firstAligner.alignCentralPowerNodes(2, 0, 20, 0, '3');
+	    Future<Boolean> f = firstAligner.alignCentralPowerNodes(2, 0, 0, 20, 0, '3');
 	   as.descendParameterValuesOfChain(f, firstAligner, 5, 200, true);
-//	    Future<Boolean> f2 = f.andThen(new OnComplete<Boolean>() {
-//	    	public void onComplete(Throwable failure, Boolean success) {
-//	    		if (success && failure==null) {
-//	    			System.out.println("SONRAKİ");
-//	    			firstAligner.increaseECByAddingPair(4, 0.0, '3');
-//		    		firstAligner.increaseECByAddingPair(3, 0.0, '3');
-//		    		firstAligner.increaseECByAddingPair(2, 0.0, '3');
-//		    		firstAligner.increaseECByAddingPair(1, 50.0, '3');
-//		    		firstAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		firstAligner.increaseECByAddingPair(0, 0, '3');
-//	    		} else
-//	    			if (failure!=null)
-//	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
-//	    	public Boolean recover(Throwable problem) throws Throwable {
-//	  //  		if (problem instanceof Exception)
-//	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
-//	    		{
-//	    			System.out.println("RECOVER ETTİM GARİ");
-//	    			firstAligner.increaseECByAddingPair(4, 0.0, '3');
-//	    			firstAligner.increaseECByAddingPair(3, 0.0, '3');
-//	    			firstAligner.increaseECByAddingPair(2, 0.0, '3');
-//	    			firstAligner.increaseECByAddingPair(1, 50.0, '3');
-//	    			firstAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		firstAligner.increaseECByAddingPair(0, 0, '3');
-//	    			return true;
-//	    		}
-//	    			return false;
-//	 //   		else
-//	  //  		throw problem;
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher());
+	    Future<Boolean> f2 = f.andThen(new OnComplete<Boolean>() {
+	    	public void onComplete(Throwable failure, Boolean success) {
+	    		if (success && failure==null) {
+	    			System.out.println("SONRAKİ");
+	    			firstAligner.increaseECByAddingPair(4, 0.0, '3');
+		    		firstAligner.increaseECByAddingPair(3, 0.0, '3');
+		    		firstAligner.increaseECByAddingPair(2, 0.0, '3');
+		    		firstAligner.increaseECByAddingPair(1, 50.0, '3');
+		    		firstAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		firstAligner.increaseECByAddingPair(0, 0, '3');
+	    		} else
+	    			if (failure!=null)
+	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
+	    		}
+	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
+	    	public Boolean recover(Throwable problem) throws Throwable {
+	  //  		if (problem instanceof Exception)
+	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
+	    		{
+	    			System.out.println("RECOVER ETTİM GARİ");
+	    			firstAligner.increaseECByAddingPair(4, 0.0, '3');
+	    			firstAligner.increaseECByAddingPair(3, 0.0, '3');
+	    			firstAligner.increaseECByAddingPair(2, 0.0, '3');
+	    			firstAligner.increaseECByAddingPair(1, 50.0, '3');
+	    			firstAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		firstAligner.increaseECByAddingPair(0, 0, '3');
+	    			return true;
+	    		}
+	    			return false;
+	 //   		else
+	  //  		throw problem;
+	    		}
+	    		}, AkkaSystem.system2.dispatcher());
 	    
-	    Future<Boolean> f3 = sixthAligner.alignAlternativeCentralNodes(2, 2.5, 2.5, "pagerank", '3');
+	    Future<Boolean> f3 = sixthAligner.alignAlternativeCentralNodes(2, 0, 2.5, 2.5, "pagerank", '3');
 	    as.descendParameterValuesOfChain(f3, sixthAligner, 5, 200, true);
-//	    Future<Boolean> f4 = f3.andThen(new OnComplete<Boolean>() {
-//	    	public void onComplete(Throwable failure, Boolean success) {
-//	    		if (success && failure==null) {
-//	    			System.out.println("SONRAKİ");
-//	    			sixthAligner.increaseECByAddingPair(4, 0.0, '3');
-//		    		sixthAligner.increaseECByAddingPair(3, 0.0, '3');
-//		    		sixthAligner.increaseECByAddingPair(2, 0.0, '3');
-//		    		sixthAligner.increaseECByAddingPair(1, 50.0, '3');
-//		    		sixthAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		sixthAligner.increaseECByAddingPair(0, 0, '3');
-//	    		} else
-//	    			if (failure!=null)
-//	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
-//	    	public Boolean recover(Throwable problem) throws Throwable {
-//	  //  		if (problem instanceof Exception)
-//	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
-//	    		{
-//	    			System.out.println("RECOVER ETTİM GARİ");
-//	    			sixthAligner.increaseECByAddingPair(4, 0.0, '3');
-//	    			sixthAligner.increaseECByAddingPair(3, 0.0, '3');
-//	    			sixthAligner.increaseECByAddingPair(2, 0.0, '3');
-//	    			sixthAligner.increaseECByAddingPair(1, 50.0, '3');
-//	    			sixthAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		sixthAligner.increaseECByAddingPair(0, 0, '3');
-//	    			return true;
-//	    		}
-//	    			return false;
-//	 //   		else
-//	  //  		throw problem;
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher());
+	    Future<Boolean> f4 = f3.andThen(new OnComplete<Boolean>() {
+	    	public void onComplete(Throwable failure, Boolean success) {
+	    		if (success && failure==null) {
+	    			System.out.println("SONRAKİ");
+	    			sixthAligner.increaseECByAddingPair(4, 0.0, '3');
+		    		sixthAligner.increaseECByAddingPair(3, 0.0, '3');
+		    		sixthAligner.increaseECByAddingPair(2, 0.0, '3');
+		    		sixthAligner.increaseECByAddingPair(1, 50.0, '3');
+		    		sixthAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		sixthAligner.increaseECByAddingPair(0, 0, '3');
+	    		} else
+	    			if (failure!=null)
+	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
+	    		}
+	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
+	    	public Boolean recover(Throwable problem) throws Throwable {
+	  //  		if (problem instanceof Exception)
+	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
+	    		{
+	    			System.out.println("RECOVER ETTİM GARİ");
+	    			sixthAligner.increaseECByAddingPair(4, 0.0, '3');
+	    			sixthAligner.increaseECByAddingPair(3, 0.0, '3');
+	    			sixthAligner.increaseECByAddingPair(2, 0.0, '3');
+	    			sixthAligner.increaseECByAddingPair(1, 50.0, '3');
+	    			sixthAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		sixthAligner.increaseECByAddingPair(0, 0, '3');
+	    			return true;
+	    		}
+	    			return false;
+	 //   		else
+	  //  		throw problem;
+	    		}
+	    		}, AkkaSystem.system2.dispatcher());
 	    
 	    
-	    Future<Boolean> f5 = eighthAligner.alignAlternativeCentralNodes(1, 10000, 10000, "betweenness", '3');
+	    Future<Boolean> f5 = eighthAligner.alignAlternativeCentralNodes(1, 0, 10000, 10000, "betweenness", '3');
 	    as.descendParameterValuesOfChain(f5, eighthAligner, 5, 200, true);
-//	    Future<Boolean> f6 = f5.andThen(new OnComplete<Boolean>() {
-//	    	public void onComplete(Throwable failure, Boolean success) {
-//	    		if (success && failure==null) {
-//	    			System.out.println("SONRAKİ");
-//	    			eighthAligner.increaseECByAddingPair(4, 0.0, '3');
-//		    		eighthAligner.increaseECByAddingPair(3, 0.0, '3');
-//		    		eighthAligner.increaseECByAddingPair(2, 0.0, '3');
-//		    		eighthAligner.increaseECByAddingPair(1, 50.0, '3');
-//		    		eighthAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		eighthAligner.increaseECByAddingPair(0, 0, '3');
-//	    		} else
-//	    			if (failure!=null)
-//	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
-//	    	public Boolean recover(Throwable problem) throws Throwable {
-//	  //  		if (problem instanceof Exception)
-//	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
-//	    		{
-//	    			System.out.println("RECOVER ETTİM GARİ");
-//	    			eighthAligner.increaseECByAddingPair(4, 0.0, '3');
-//	    			eighthAligner.increaseECByAddingPair(3, 0.0, '3');
-//	    			eighthAligner.increaseECByAddingPair(2, 0.0, '3');
-//	    			eighthAligner.increaseECByAddingPair(1, 50.0, '3');
-//	    			eighthAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		eighthAligner.increaseECByAddingPair(0, 0, '3');
-//	    			return true;
-//	    		}
-//	    			return false;
-//	 //   		else
-//	  //  		throw problem;
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher());
+	    Future<Boolean> f6 = f5.andThen(new OnComplete<Boolean>() {
+	    	public void onComplete(Throwable failure, Boolean success) {
+	    		if (success && failure==null) {
+	    			System.out.println("SONRAKİ");
+	    			eighthAligner.increaseECByAddingPair(4, 0.0, '3');
+		    		eighthAligner.increaseECByAddingPair(3, 0.0, '3');
+		    		eighthAligner.increaseECByAddingPair(2, 0.0, '3');
+		    		eighthAligner.increaseECByAddingPair(1, 50.0, '3');
+		    		eighthAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		eighthAligner.increaseECByAddingPair(0, 0, '3');
+	    		} else
+	    			if (failure!=null)
+	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
+	    		}
+	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
+	    	public Boolean recover(Throwable problem) throws Throwable {
+	  //  		if (problem instanceof Exception)
+	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
+	    		{
+	    			System.out.println("RECOVER ETTİM GARİ");
+	    			eighthAligner.increaseECByAddingPair(4, 0.0, '3');
+	    			eighthAligner.increaseECByAddingPair(3, 0.0, '3');
+	    			eighthAligner.increaseECByAddingPair(2, 0.0, '3');
+	    			eighthAligner.increaseECByAddingPair(1, 50.0, '3');
+	    			eighthAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		eighthAligner.increaseECByAddingPair(0, 0, '3');
+	    			return true;
+	    		}
+	    			return false;
+	 //   		else
+	  //  		throw problem;
+	    		}
+	    		}, AkkaSystem.system2.dispatcher());
 	    
 	    
-	    Future<Boolean> f7 = ninthAligner.alignAlternativeCentralNodes(2, 0.3,0.3, "harmonic", '3');
+	    Future<Boolean> f7 = ninthAligner.alignAlternativeCentralNodes(2, 0, 0.3,0.3, "harmonic", '3');
 	    as.descendParameterValuesOfChain(f7, ninthAligner, 5, 200, true);
-//	    Future<Boolean> f8 = f7.andThen(new OnComplete<Boolean>() {
-//	    	public void onComplete(Throwable failure, Boolean success) {
-//	    		if (success && failure==null) {
-//	    			System.out.println("SONRAKİ");
-//	    			ninthAligner.increaseECByAddingPair(4, 0.0, '3');
-//		    		ninthAligner.increaseECByAddingPair(3, 0.0, '3');
-//		    		ninthAligner.increaseECByAddingPair(2, 0.0, '3');
-//		    		ninthAligner.increaseECByAddingPair(1, 50.0, '3');
-//		    		ninthAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		ninthAligner.increaseECByAddingPair(0, 0, '3');
-//	    		} else
-//	    			if (failure!=null)
-//	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
-//	    	public Boolean recover(Throwable problem) throws Throwable {
-//	  //  		if (problem instanceof Exception)
-//	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
-//	    		{
-//	    			System.out.println("RECOVER ETTİM GARİ");
-//	    			ninthAligner.increaseECByAddingPair(4, 0.0, '3');
-//	    			ninthAligner.increaseECByAddingPair(3, 0.0, '3');
-//	    			ninthAligner.increaseECByAddingPair(2, 0.0, '3');
-//	    			ninthAligner.increaseECByAddingPair(1, 50.0, '3');
-//	    			ninthAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		ninthAligner.increaseECByAddingPair(0, 0, '3');
-//	    			return true;
-//	    		}
-//	    			return false;
-//	 //   		else
-//	  //  		throw problem;
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher());
+	    Future<Boolean> f8 = f7.andThen(new OnComplete<Boolean>() {
+	    	public void onComplete(Throwable failure, Boolean success) {
+	    		if (success && failure==null) {
+	    			System.out.println("SONRAKİ");
+	    			ninthAligner.increaseECByAddingPair(4, 0.0, '3');
+		    		ninthAligner.increaseECByAddingPair(3, 0.0, '3');
+		    		ninthAligner.increaseECByAddingPair(2, 0.0, '3');
+		    		ninthAligner.increaseECByAddingPair(1, 50.0, '3');
+		    		ninthAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		ninthAligner.increaseECByAddingPair(0, 0, '3');
+	    		} else
+	    			if (failure!=null)
+	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
+	    		}
+	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
+	    	public Boolean recover(Throwable problem) throws Throwable {
+	  //  		if (problem instanceof Exception)
+	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
+	    		{
+	    			System.out.println("RECOVER ETTİM GARİ");
+	    			ninthAligner.increaseECByAddingPair(4, 0.0, '3');
+	    			ninthAligner.increaseECByAddingPair(3, 0.0, '3');
+	    			ninthAligner.increaseECByAddingPair(2, 0.0, '3');
+	    			ninthAligner.increaseECByAddingPair(1, 50.0, '3');
+	    			ninthAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		ninthAligner.increaseECByAddingPair(0, 0, '3');
+	    			return true;
+	    		}
+	    			return false;
+	 //   		else
+	  //  		throw problem;
+	    		}
+	    		}, AkkaSystem.system2.dispatcher());
 	    
-	    Future<Boolean> f9 = tenthAligner.alignAlternativeCentralNodes(2, 0.3,0.3, "closeness", '3');
+	    Future<Boolean> f9 = tenthAligner.alignAlternativeCentralNodes(2, 0, 0.3,0.3, "closeness", '3');
 	    as.descendParameterValuesOfChain(f9, tenthAligner, 5, 200, true);
-//	    Future<Boolean> f10 = f9.andThen(new OnComplete<Boolean>() {
-//	    	public void onComplete(Throwable failure, Boolean success) {
-//	    		if (success && failure==null) {
-//	    			System.out.println("SONRAKİ");
-//	    			tenthAligner.increaseECByAddingPair(4, 0.0, '3');
-//		    		tenthAligner.increaseECByAddingPair(3, 0.0, '3');
-//		    		tenthAligner.increaseECByAddingPair(2, 0.0, '3');
-//		    		tenthAligner.increaseECByAddingPair(1, 50.0, '3');
-//		    		tenthAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		tenthAligner.increaseECByAddingPair(0, 0, '3');
-//	    		} else
-//	    			if (failure!=null)
-//	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
-//	    	public Boolean recover(Throwable problem) throws Throwable {
-//	  //  		if (problem instanceof Exception)
-//	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
-//	    		{
-//	    			System.out.println("RECOVER ETTİM GARİ");
-//	    			tenthAligner.increaseECByAddingPair(4, 0.0, '3');
-//	    			tenthAligner.increaseECByAddingPair(3, 0.0, '3');
-//	    			tenthAligner.increaseECByAddingPair(2, 0.0, '3');
-//		    		tenthAligner.increaseECByAddingPair(1, 50.0, '3');
-//		    		tenthAligner.increaseECByAddingPair(0, 50.0, '3');
-//		    		tenthAligner.increaseECByAddingPair(0, 0, '3');
-//	    			return true;
-//	    		}
-//	    			return false;
-//	 //   		else
-//	  //  		throw problem;
-//	    		}
-//	    		}, AkkaSystem.system2.dispatcher());
+	    Future<Boolean> f10 = f9.andThen(new OnComplete<Boolean>() {
+	    	public void onComplete(Throwable failure, Boolean success) {
+	    		if (success && failure==null) {
+	    			System.out.println("SONRAKİ");
+	    			tenthAligner.increaseECByAddingPair(4, 0.0, '3');
+		    		tenthAligner.increaseECByAddingPair(3, 0.0, '3');
+		    		tenthAligner.increaseECByAddingPair(2, 0.0, '3');
+		    		tenthAligner.increaseECByAddingPair(1, 50.0, '3');
+		    		tenthAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		tenthAligner.increaseECByAddingPair(0, 0, '3');
+	    		} else
+	    			if (failure!=null)
+	    			System.out.println("KAMİLLEEEER"+failure.getMessage());
+	    		}
+	    		}, AkkaSystem.system2.dispatcher()).recover(new Recover<Boolean>() {
+	    	public Boolean recover(Throwable problem) throws Throwable {
+	  //  		if (problem instanceof Exception)
+	    		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
+	    		{
+	    			System.out.println("RECOVER ETTİM GARİ");
+	    			tenthAligner.increaseECByAddingPair(4, 0.0, '3');
+	    			tenthAligner.increaseECByAddingPair(3, 0.0, '3');
+	    			tenthAligner.increaseECByAddingPair(2, 0.0, '3');
+		    		tenthAligner.increaseECByAddingPair(1, 50.0, '3');
+		    		tenthAligner.increaseECByAddingPair(0, 50.0, '3');
+		    		tenthAligner.increaseECByAddingPair(0, 0, '3');
+	    			return true;
+	    		}
+	    			return false;
+	 //   		else
+	  //  		throw problem;
+	    		}
+	    		}, AkkaSystem.system2.dispatcher());
 	       
-//	    try {
-//			Await.result(f2, timeout2.duration());
-//			Await.result(f4, timeout2.duration());	
-//			Await.result(f6, timeout2.duration());
-//			Await.result(f8, timeout2.duration());
-//			Await.result(f10, timeout2.duration());
-//			
-//		} catch (Exception e1) {
-//			System.out.println("Futurelar yalan oldu::: "+e1.getMessage());;
-//		}
+	    try {
+			Await.result(f2, as.timeout2.duration());
+			Await.result(f4, as.timeout2.duration());	
+			Await.result(f6, as.timeout2.duration());
+			Await.result(f8, as.timeout2.duration());
+			Await.result(f10, as.timeout2.duration());
+			
+		} catch (Exception e1) {
+			System.out.println("Futurelar yalan oldu::: "+e1.getMessage());;
+		}
 	    
 	    try {
 			as.sendBestBenchmarkScoresInTime(300,200);
@@ -2677,10 +2721,10 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		}
 	    
 			fourthAligner.alignClusterEdges(1, "labelpropagation", as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism1, as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism2, false, '3');
-			fourthAligner.alignClusters(1, "labelpropagation", as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism1, as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism2, '3');
+			fourthAligner.alignClusters(1, 0, "labelpropagation", as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism1, as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism2, '3');
 		
 			fifthAligner.alignClusterEdges(1, "louvain", as.csLouvainBitScore.get(0).clusterIDOfOrganism1, as.csLouvainBitScore.get(0).clusterIDOfOrganism2, false, '3');
-			fifthAligner.alignClusters(1, "louvain", as.csLouvainBitScore.get(0).clusterIDOfOrganism1, as.csLouvainBitScore.get(0).clusterIDOfOrganism2, '3');
+			fifthAligner.alignClusters(1, 0, "louvain", as.csLouvainBitScore.get(0).clusterIDOfOrganism1, as.csLouvainBitScore.get(0).clusterIDOfOrganism2, '3');
 			
 //			as.writeAlignments("DMSC35Save", 10);
 //			as.printBenchmarkStatistics(null, "DMSC35Save", 10);
