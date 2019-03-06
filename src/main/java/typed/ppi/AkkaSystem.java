@@ -91,7 +91,7 @@ public class AkkaSystem {
 	List<String> routeePaths = new ArrayList<String>();
 	Aligner typedRouter = typed.typedActorOf(new TypedProps<AlignerImpl>(AlignerImpl.class), router);
 	static Timeout timeout = new Timeout(Duration.create(360, "seconds"));
-	Timeout timeout2 = new Timeout(Duration.create(180, "seconds"));
+	Timeout timeout2 = new Timeout(Duration.create(360, "seconds"));
 	static int marked = 0; 
 	
 	

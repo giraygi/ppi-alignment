@@ -1164,9 +1164,9 @@ public Future<SubGraph> subGraphWithTopAlignedPowerNodes(int limit, String algor
 			// match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '9' return n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 order by (s1+s2)/(abs(s1-s2)+100) desc limit 5
 			// // match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '9' return n.power2,n.power3,n.power4,m.power2,m.power3,m.power4,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 order by (s1+s2)/(abs(s1-s2)+100) desc limit 5
 			if(algorithm.equals("power"))
-			result = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 return n,r,m order by min(s1,s2) desc limit "+limit);
+			result = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 return n,r,m,min(s1,s2) order by min(s1,s2) desc limit "+limit);
 			else if (algorithm.equals("betweenness")||algorithm.equals("harmonic")||algorithm.equals("pagerank")||algorithm.equals("closeness"))
-				result = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n."+algorithm+" as s1, m."+algorithm+" as s2 return n,r,m order by min(s1,s2) desc limit "+limit);
+				result = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n."+algorithm+" as s1, m."+algorithm+" as s2 return n,r,m,min(s1,s2) order by min(s1,s2) desc limit "+limit);
 			else
 				result = null;
 			while(result.hasNext()){
@@ -1182,6 +1182,9 @@ public Future<SubGraph> subGraphWithTopAlignedPowerNodes(int limit, String algor
 							break;
 						case "m":
 							sgwAPN.nodes1.add((Node) row.get( column.getKey() ).asNode());
+							break;
+						case "min(s1,s2)":
+							;
 							break;
 						default:
 							System.out.println("Unexpected column");
