@@ -2663,7 +2663,7 @@ System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignme
 		if(sim>0.0)
 			result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
 				+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
-				+ " t.similarity >= "+sim 
+				+ " and t.similarity >= "+sim 
 				+ " and p."+algorithm+" >"+score2+" and n."+algorithm+" >"+score1		
 				+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+"), length(FILTER(x in p.annotations WHERE x in n.annotations)) desc");
 		else
@@ -2739,7 +2739,7 @@ public void alignClusters(int minCommonAnnotations, double sim, String clusterTy
 				ArrayList<Node> record = new ArrayList<Node>();
 				if(sim>0.0)
 					result = tx.run("match (n:Organism2 {"+clusterType+": "+clusterIDOfOrganism2+"})<-[s:SIMILARITY]-(m:Organism1 {"+clusterType+": "+clusterIDOfOrganism1+"}) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') "
-							+ "and length(FILTER(x in n.annotations WHERE x in m.annotations)) >= "+minCommonAnnotations+"and s.similarity >= "+sim+" return n,m");
+							+ "and length(FILTER(x in n.annotations WHERE x in m.annotations)) >= "+minCommonAnnotations+" and s.similarity >= "+sim+" return n,m");
 				else
 					result = tx.run("match (n:Organism2 {"+clusterType+": "+clusterIDOfOrganism2+"}),(m:Organism1 {"+clusterType+": "+clusterIDOfOrganism1+"}) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') "
 							+ "and length(FILTER(x in n.annotations WHERE x in m.annotations)) >= "+minCommonAnnotations+" return n,m");
