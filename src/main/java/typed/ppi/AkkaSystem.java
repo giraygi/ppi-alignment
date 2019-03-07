@@ -55,6 +55,7 @@ public class AkkaSystem {
 	 */
 	
 	static GraphDatabaseService graphDb;
+	static String databaseAddress;
 	FileReader fr;
 	BufferedReader br;
 	FileWriter fw;
@@ -2317,7 +2318,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 }
 	
 	public static void main(String[] args) {
-				
+		databaseAddress = args[8];	
 		final AkkaSystem as = new AkkaSystem(1,args[8]);
 		if(args[7]=="1")
 		{

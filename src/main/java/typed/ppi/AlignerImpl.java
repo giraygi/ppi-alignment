@@ -4450,7 +4450,7 @@ private static Future<SubGraph> future(Callable<SubGraph> callable, ExecutionCon
 	} catch (Exception e) {
 		// TODO Auto-generated catch block
 		System.err.println("fevzi");
-		SubGraph hezimet = new SubGraph(new AkkaSystem(3),TypedActor.<AlignerImpl>self(),(long) 5);
+		SubGraph hezimet = new SubGraph(new AkkaSystem(3,AkkaSystem.databaseAddress),TypedActor.<AlignerImpl>self(),(long) 5);
 		hezimet.type = "hep kazanamayız!!!";
 		return Futures.successful(hezimet);
 	}
