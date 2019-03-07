@@ -2320,7 +2320,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	public static void main(String[] args) {
 		databaseAddress = args[8];	
 		final AkkaSystem as = new AkkaSystem(1,args[8]);
-		if(args[7]=="1")
+		if(args[7].equals("1"))
 		{
 		as.deleteAllNodesRelationships();
 		as.createGraph(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);	
@@ -2367,13 +2367,20 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 //	    ActorRef router = as.system2.actorOf(new RoundRobinGroup(routeePaths).props(), "router");
 	 //   router.tell("1 deneme",as.typed.getActorRefFor(secondAligner));
 //	    as.typed.getActorRefFor(secondAligner).tell("1 deneme", as.typed.getActorRefFor(firstAligner));
-
-	
-	    if (args[7]=="2" || args[7]=="1") {
+		
+		
+		if (args[7].equals("2")) {
 			removeLogFiles();
 			as.removeAllMarks();
 			as.removeAllQueries();
 			as.removeAllAlignments();
+		}
+		
+		if(args[7].equals("3"))
+			as.loadOldMarkedQueries();
+		
+		if (args[7].equals("1") || args[7].equals("2") ||args[7].equals("3")) {
+			
 			Aligner firstAligner = TypedActor.get(AkkaSystem.system2)
 					.typedActorOf(new TypedProps<AlignerImpl>(Aligner.class, new Creator<AlignerImpl>() {
 						/**
@@ -2723,7 +2730,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 					as.csLouvainBitScore.get(0).clusterIDOfOrganism2, '3');
 		}
 			
-			if (args[7]=="3") {
+			if (args[7].equals("4")) {
 				as.writeAlignments(args[9]+"Save", 10);
 				as.printBenchmarkStatistics(null, args[9]+"Save", 10);
 				as.writeOldMarkedQueriesToDisk(args[9]+".txt");
