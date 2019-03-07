@@ -1221,12 +1221,12 @@ public Future<Long> markTopAlignedPowerNodes(int limit, long markedQuery, String
 					
 					// match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '9' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 order by (s1+s2)/(abs(s1-s2)+100) desc limit 10 set r.markedQuery = r.markedQuery + '999'
 					if(algorithm.equals("power"))
-				rs =	markAPNSession.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2 order by min(s1,s2) desc limit "+limit
+				rs =	markAPNSession.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n.power2+n.power3+n.power4 as s1, m.power2+m.power3+m.power4 as s2,min(s1,s2) order by min(s1,s2) desc limit "+limit
 							+ " set m.markedQuery = case when not ANY(x IN m.markedQuery WHERE x = '"+markedQuery+"') then m.markedQuery+'"+markedQuery+"' else m.markedQuery end, "
 							+ "n.markedQuery = case when not ANY(x IN n.markedQuery WHERE x = '"+markedQuery+"') then n.markedQuery+'"+markedQuery+"' else n.markedQuery end, "
 							+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
 					else if (algorithm.equals("betweenness")||algorithm.equals("harmonic")||algorithm.equals("pagerank")||algorithm.equals("closeness"))
-					rs =	markAPNSession.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n."+algorithm+" as s1, m."+algorithm+" as s2 order by min(s1,s2) desc limit "+limit
+					rs =	markAPNSession.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where r.alignmentNumber = '"+AlignerImpl.this.alignmentNo+"' with n,r,m,n."+algorithm+" as s1, m."+algorithm+" as s2,min(s1,s2) order by min(s1,s2) desc limit "+limit
 							+ " set m.markedQuery = case when not ANY(x IN m.markedQuery WHERE x = '"+markedQuery+"') then m.markedQuery+'"+markedQuery+"' else m.markedQuery end, "
 							+ "n.markedQuery = case when not ANY(x IN n.markedQuery WHERE x = '"+markedQuery+"') then n.markedQuery+'"+markedQuery+"' else n.markedQuery end, "
 							+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
