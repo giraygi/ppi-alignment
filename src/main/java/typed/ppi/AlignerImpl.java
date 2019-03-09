@@ -2976,7 +2976,7 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
     } catch (Exception e){
     	System.out.println("removeBadMappings: " + e.getMessage());
     	if(Math.random() < 0.5)
-    	removeBadMappings(k, sim, keepEdges,limit);
+    		removeBadMappings(k, sim, keepEdges,limit);
       }finally {rbm.close();}
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return count;
@@ -2986,7 +2986,7 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
 		noofCyclesAlignmentUnchanged = 0;	
 	
 	if(keepEdges)
-	System.err.println(removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+		System.err.println(removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
 	else
 		System.err.println(removed+" mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
 }
@@ -4153,7 +4153,7 @@ private int addResultsToAlignment(ArrayList<ArrayList<Node>> records,Set<Node> a
 	} );
 	if(added<=0) {
 		noofCyclesAlignmentUnchanged++;
-		if(noofCyclesAlignmentUnchanged>20)
+		if(noofCyclesAlignmentUnchanged>15)
 			System.err.println("Alignment "+this.alignmentNo+" did not improve itself for "+noofCyclesAlignmentUnchanged+" cycles.");
 		} else {
 			try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
