@@ -2985,10 +2985,24 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
 	if(removed>0&&(k>1||sim>1))
 		noofCyclesAlignmentUnchanged = 0;	
 	
-	if(keepEdges)
-		System.err.println(removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
-	else
-		System.err.println(removed+" mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
+		    BufferedWriter bw = new BufferedWriter(fw);
+		    PrintWriter out = new PrintWriter(bw))
+		{
+		if(keepEdges) {
+			System.err.println(removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappings | "+ZonedDateTime.now()+"]: "+removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+		}
+		else {
+			System.err.println(removed+" mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappings | "+ZonedDateTime.now()+"]: "+removed+" mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+		}
+		
+		} catch (IOException e) {
+		    //exception handling left as an exercise for the reader
+		}
+	
+	
 }
 // daha son haliyle denenmedi. rand() eklenerek rastgeleleştirilebilir.
 public void removeMappingsWithoutEdges(int limit){
@@ -3090,7 +3104,24 @@ public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepE
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return count;
 } );	
-	System.err.println(removed+" induced edges were removed in Aligner "+this.alignmentNo);
+	
+	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
+		    BufferedWriter bw = new BufferedWriter(fw);
+		    PrintWriter out = new PrintWriter(bw))
+		{
+		if(keepEdges) {
+			System.err.println(removed+" induced mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsToReduceInduction1 | "+ZonedDateTime.now()+"]: "+removed+" induced mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingToReduceInduction1 Method.");
+		}
+		else {
+			System.err.println(removed+" induced mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsToReduceInduction1 | "+ZonedDateTime.now()+"]: "+removed+" induced mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingToReduceInduction1 Method.");
+		}
+		
+		} catch (IOException e) {
+		    //exception handling left as an exercise for the reader
+		}
+	
 	this.bs = as.calculateGlobalBenchmarks(this);
 }
 // Diğer ağ için
