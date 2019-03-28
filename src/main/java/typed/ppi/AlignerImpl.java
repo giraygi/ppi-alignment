@@ -60,7 +60,7 @@ public class AlignerImpl implements Aligner, Receiver {
 	SubGraph xBitScore;
 	SubGraph clusterEdges;
 	SubGraph powerNodes;
-	BenchmarkScores bs;
+	BenchmarkScores bs = new BenchmarkScores();
 	AkkaSystem as;
 	String mesaj = "keriz avcısı";
 	List<BenchmarkScores> markedQueries = new ArrayList<BenchmarkScores>(); //???
