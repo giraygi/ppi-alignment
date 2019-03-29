@@ -3099,7 +3099,9 @@ public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepE
 				tx.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
 			tx.success(); tx.close();
 	    } catch (Exception e){
-	    	  e.printStackTrace();
+	    	System.out.println("removeBadMappingsToReduceInduction1: " + e.getMessage());
+	    	if(Math.random() < 0.5)
+	    		removeBadMappingsToReduceInduction1(k, sim, keepEdges,simTreshold, annotationTreshold,powerTreshold);
 	      }
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return count;
@@ -3174,7 +3176,9 @@ public void removeBadMappingsToReduceInduction2(int k, double sim, boolean keepE
 			tx.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
 		tx.success(); tx.close();
     } catch (Exception e){
-    	  e.printStackTrace();
+    	System.out.println("removeBadMappingsToReduceInduction2: " + e.getMessage());
+    	if(Math.random() < 0.5)
+    		removeBadMappingsToReduceInduction2(k, sim, keepEdges,simTreshold, annotationTreshold,powerTreshold);
       }
 	this.bs = as.calculateGlobalBenchmarks(this);
 }

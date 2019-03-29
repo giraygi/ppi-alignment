@@ -1020,7 +1020,7 @@ public void unmarkAllConservedStructureQueries() {
 }
 
 // Yarıda kesilmiş bir uygulamaya eski işaretli sorguları tekrar veritabanından yüklemek için kullanılır.
-public void loadOldMarkedQueries() {
+public void loadOldMarkedQueriesFromDBToApplication() {
 	StatementResult result;
 	Record record;
 	Set<BenchmarkScores> markedQueries = null;
@@ -1049,34 +1049,9 @@ public void loadOldMarkedQueries() {
 			unmarkAllConservedStructureQueries() ;
 		} finally {loadQuerySession.close();}
 }
-// Hizalayıcı numaraları elle veriliyor. Ön tanımlı: 1-10
-public void writeOldMarkedQueriesToDisk(String fileName) {
-	StatementResult result;
-	Record record;
-		
-		Session womqtd = AkkaSystem.driver.session();
-		try(BufferedWriter bw = new BufferedWriter(new FileWriter(fileName))){
-			
-			for (int i = 1;i<11;i++) {
-				result = womqtd.run("match ()-[a:ALIGNS]-() where a.alignmentNumber = '"+i+"' return distinct a.markedQuery,a.alignmentIndex");
-				while(result.hasNext()){
-					record = result.next();
-					bw.write("AlignmentIndex:"+record.get(1).asString()+" ");			
-					for (Object o : record.get(0).asList()) {
-						bw.write((String) o+" ");
-					}
-					bw.newLine();
-				}
-				
-			}	
-			
-		} catch(Exception e){
-			System.err.println("Write Old Marked Queries::: "+e.getMessage());
-			unmarkAllConservedStructureQueries() ;
-		} finally {womqtd.close();System.out.println("Old Marked Queries has been written to file: "+fileName);}
-}
-// Test Edilmedi. Yanlış gibi
-public void saveOldMarkedQueriesToDB(String fileName) {
+
+//Test Edilmedi. Yanlış gibi. Yarıda bırakılmış uygulamanın işaretli sorgularını dosya adına göre dosyadan veritabanına yükler.
+public void loadOldMarkedQueriesFromFileToDB(String fileName) {
 	
 	try {
 		fr = new FileReader(fileName);
@@ -1112,6 +1087,37 @@ public void saveOldMarkedQueriesToDB(String fileName) {
 	}
 	
 } 
+// Hizalayıcı numaraları elle veriliyor. Ön tanımlı: 1-10
+//Uygulamada mevcut durumda veritabanında bulunan İşaretli Sorgular daha sonra tekrar veritbanına yüklenebilecek biçimde dosyaya kaydedilir.
+public void saveOldMarkedQueriesToFile(String fileName) {
+	StatementResult result;
+	Record record;
+		
+		Session womqtd = AkkaSystem.driver.session();
+		try(BufferedWriter bw = new BufferedWriter(new FileWriter(fileName))){
+			
+			for (int i = 1;i<11;i++) {
+				result = womqtd.run("match ()-[a:ALIGNS]-() where a.alignmentNumber = '"+i+"' return distinct a.markedQuery,a.alignmentIndex");
+				while(result.hasNext()){
+					record = result.next();
+					bw.write("AlignmentIndex:"+record.get(1).asString()+" ");
+					if(!record.get(0).isNull())
+					for (Object o : record.get(0).asList()) {
+						bw.write((String) o+" ");
+						System.out.println((String) o);
+					}
+					bw.newLine();
+				}
+				
+			}	
+			
+		} catch(Exception e){
+			e.printStackTrace();
+			System.err.println("Write Old Marked Queries::: "+e.getMessage());
+			unmarkAllConservedStructureQueries() ;
+		} finally {womqtd.close();System.out.println("Old Marked Queries has been written to file: "+fileName);}
+}
+
 
 // Daha olmadi
 public SubGraph convertMarkToSubGraph(AlignerImpl a, String markNumber){
@@ -1747,7 +1753,9 @@ Timeout sg =  new Timeout(Duration.create(60, "seconds"));
 			
 			try {
 				ecl = Await.result(ec.markAlignedEdges(marked++, AkkaSystem.system2.dispatcher()),sg.duration());
+				if(bs.getBenchmarkScores().size>0)
 				bsl = Await.result(bs.markXBitScoreSimilarity((bestBitscore+1)/bs.getBenchmarkScores().size, marked++,  AkkaSystem.system2.dispatcher()), sg.duration());
+				if(goc.getBenchmarkScores().size>0)
 				gocl = Await.result(goc.markKGOTerms((int) bestGOC/goc.getBenchmarkScores().size, marked++, AkkaSystem.system2.dispatcher()), sg.duration());
 				icsl = Await.result(ics.markTopAlignedPowerNodes(100,marked++, centralityType, AkkaSystem.system2.dispatcher()), sg.duration());
 				
@@ -2328,12 +2336,13 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * args[6] -> Gene Ontology annotations  of the organism with smaller number of nodes
 	 * args[7] -> Execution Mode
 	 * args[8] -> Database address in the home directory of the current user
-	 * args[9] -> String Label for the alignments to be saved
+	 * args[9] -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
 	 * args[10] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
 	 * 
 	 * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
 	 * args[7] = 2 -> All previous alignments are deleted. The alignment process is executed afterwards.
-	 * args[7] = 3 -> The markedqueries of the previous alignment process is loaded into the memory and the process is continued afterwards.
+	 * args[7] = 3 -> The markedqueries of the previous alignment process is loaded from db into the application and the process is continued afterwards.
+	 * args[7] = 33 -> The markedqueries of the previous alignment process is loaded from file to db and consecutively from db into the application and the process is continued afterwards.
 	 * args[7] = 4 -> The alignment is recorded into files.
 	 * args[7] = 5 -> Random search is executed for all mature alignments in the database.
 	 * args[7] = 6 ->
@@ -2415,9 +2424,15 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		}
 		
 		if(args[7].equals("3"))
-			as.loadOldMarkedQueries();
+			as.loadOldMarkedQueriesFromDBToApplication();
 		
-		if (args[7].equals("1") || args[7].equals("2") ||args[7].equals("3")) {
+		if(args[7].equals("33")) {
+			as.loadOldMarkedQueriesFromFileToDB(args[9]+".txt");
+			as.loadOldMarkedQueriesFromDBToApplication();
+		}
+		
+		
+		if (args[7].equals("1") || args[7].equals("2") ||args[7].equals("3")||args[7].equals("33")) {
 			
 			Aligner firstAligner = TypedActor.get(AkkaSystem.system2)
 					.typedActorOf(new TypedProps<AlignerImpl>(Aligner.class, new Creator<AlignerImpl>() {
@@ -2539,7 +2554,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			as.routees.add(eighthAligner);
 			as.routees.add(ninthAligner);
 			as.routees.add(tenthAligner);
-			as.loadOldMarkedQueries();
+			as.loadOldMarkedQueriesFromDBToApplication();
 			as.routeePaths.add(as.typed.getActorRefFor(firstAligner).path().toStringWithoutAddress());
 			as.routeePaths.add(as.typed.getActorRefFor(secondAligner).path().toStringWithoutAddress());
 			as.routeePaths.add(as.typed.getActorRefFor(thirdAligner).path().toStringWithoutAddress());
@@ -2792,7 +2807,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			if (args[7].equals("4")) {
 				as.writeAlignments(args[9]+"Save", 10);
 				as.printBenchmarkStatistics(null, args[9]+"Save", 10);
-				as.writeOldMarkedQueriesToDisk(args[9]+".txt");
+				as.saveOldMarkedQueriesToFile(args[9]+".txt");
 			}
 		
 	}
