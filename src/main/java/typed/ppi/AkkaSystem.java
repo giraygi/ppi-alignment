@@ -2427,6 +2427,12 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			as.loadOldMarkedQueriesFromDBToApplication();
 		
 		if(args[7].equals("33")) {
+			
+			for (int i=1;i<11;i++) {
+				Aligner a = new AlignerImpl(as, i);
+				a.addAlignment(args[9]+"Save"+i+".aln");
+			}
+			
 			as.loadOldMarkedQueriesFromFileToDB(args[9]+".txt");
 			as.loadOldMarkedQueriesFromDBToApplication();
 		}

@@ -2982,7 +2982,7 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
 	return count;
 } );
 	
-	if(removed>0&&(k>1||sim>1))
+	if(removed>0&&(k>1||sim>1||!keepEdges))
 		noofCyclesAlignmentUnchanged = 0;	
 	
 	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
