@@ -2891,7 +2891,6 @@ public void addMeaninglessMapping(int limit, char mode) {
 				ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
 				ArrayList<Node> record = new ArrayList<Node>();
 				result = tx.run("match (n:Organism2),(m:Organism1) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') with n,m,rand() as number return n,m order by number limit "+limit);
-				
 				while(result.hasNext()){
 					Record row = result.next();
 					record.clear();
@@ -2944,7 +2943,8 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
 		int count = 0;
 		String limitInfix ="";
 		if(limit>0)
-			limitInfix = "with r limit "+limit+" match ()-[r:ALIGNS]-() ";
+			limitInfix = "with r,rand() as number limit "+2*limit+" match ()-[r:ALIGNS]-() where number > 0.5 ";
+//			limitInfix = "with r limit "+limit+" match ()-[r:ALIGNS]-() ";
 	try ( org.neo4j.driver.v1.Transaction tx = rbm.beginTransaction())
     {
 		if(keepEdges){
@@ -2953,7 +2953,8 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
 			count+=rs.counters().relationshipsDeleted();	
 			if(limit-count>0 || limit<1) {
 				if(limit-count>0)
-					limitInfix = "with r limit "+(limit-count)+" match ()-[r:ALIGNS]-() ";
+					limitInfix = "with r,rand() as number limit "+2*(limit-count)+" match ()-[r:ALIGNS]-() where number > 0.5 ";
+//					limitInfix = "with r limit "+(limit-count)+" match ()-[r:ALIGNS]-() ";
 				if(limit<1)
 					limitInfix = "";
 				rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
@@ -2965,7 +2966,8 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
 			count+=rs.counters().relationshipsDeleted();
 			if(limit-count>0 || limit<1) {
 				if(limit-count>0)
-					limitInfix = "with r limit "+(limit-count)+" match ()-[r:ALIGNS]-() ";
+					limitInfix = "with r limit "+2*(limit-count)+" match ()-[r:ALIGNS]-() where number > 0.5 ";
+//					limitInfix = "with r limit "+(limit-count)+" match ()-[r:ALIGNS]-() ";
 				if(limit<1)
 					limitInfix = "";
 				rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
@@ -3013,7 +3015,8 @@ public void removeMappingsWithoutEdges(int limit){
 	int removed = template.with(AkkaSystem.graphDb).execute( transaction -> {
 		Session rmwe = AkkaSystem.driver.session();
 		ResultSummary rs = null;
-		String limitInfix = "with r limit "+limit+" match ()-[r:ALIGNS]-() ";
+		String limitInfix = "with r,rand() as number limit "+2*limit+" match ()-[r:ALIGNS]-() where number > 0.5 ";
+//		String limitInfix = "with r limit "+limit+" match ()-[r:ALIGNS]-() ";
 	try ( org.neo4j.driver.v1.Transaction tx = rmwe.beginTransaction())
     {	
 		tx.run("match (o:Organism2)-[u:INTERACTS_2]-(p:Organism2)-[t:ALIGNS]->(n:Organism1)-[r:INTERACTS_1]-(m:Organism1)<-[s:ALIGNS]-(o) where s.alignmentNumber = '"+alignmentNo+"' and t.alignmentNumber = '"+alignmentNo+"' set o.marked = o.marked +'"+this.alignmentNo+"', p.marked = p.marked +'"+this.alignmentNo+"', n.marked = n.marked +'"+this.alignmentNo+"', m.marked = m.marked +'"+this.alignmentNo+"'");	
