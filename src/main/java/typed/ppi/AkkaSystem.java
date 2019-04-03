@@ -1753,10 +1753,14 @@ Timeout sg =  new Timeout(Duration.create(60, "seconds"));
 			
 			try {
 				ecl = Await.result(ec.markAlignedEdges(marked++, AkkaSystem.system2.dispatcher()),sg.duration());
+				int divisor = 1;
 				if(bs.getBenchmarkScores().size>0)
-				bsl = Await.result(bs.markXBitScoreSimilarity((bestBitscore+1)/bs.getBenchmarkScores().size, marked++,  AkkaSystem.system2.dispatcher()), sg.duration());
+					divisor = bs.getBenchmarkScores().size;
+				bsl = Await.result(bs.markXBitScoreSimilarity((bestBitscore+1)/divisor, marked++,  AkkaSystem.system2.dispatcher()), sg.duration());
+				divisor = 1;
 				if(goc.getBenchmarkScores().size>0)
-				gocl = Await.result(goc.markKGOTerms((int) bestGOC/goc.getBenchmarkScores().size, marked++, AkkaSystem.system2.dispatcher()), sg.duration());
+					divisor = goc.getBenchmarkScores().size;
+				gocl = Await.result(goc.markKGOTerms((int) bestGOC/divisor, marked++, AkkaSystem.system2.dispatcher()), sg.duration());
 				icsl = Await.result(ics.markTopAlignedPowerNodes(100,marked++, centralityType, AkkaSystem.system2.dispatcher()), sg.duration());
 				
 				if(Math.random() < 0.8)

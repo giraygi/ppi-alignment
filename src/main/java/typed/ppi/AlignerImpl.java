@@ -4409,7 +4409,9 @@ public void onReceive(Object message, ActorRef sender) {
 	
 		if(choice.equals("BS"))
 		{
-		Future<SubGraph> f2 = this.subGraphWithXBitScoreSimilarity(messageScores.getBitScore()/(messageScores.getSize()),AkkaSystem.system2.dispatcher());
+			int divisor = messageScores.getSize();
+			if (divisor ==0) divisor = 1;
+		Future<SubGraph> f2 = this.subGraphWithXBitScoreSimilarity(messageScores.getBitScore()/divisor,AkkaSystem.system2.dispatcher());
 		akka.pattern.Patterns.pipe(f2, AkkaSystem.system2.dispatcher()).to(sender);
 		f2.onSuccess(new PrintResult<SubGraph>(), AkkaSystem.system2.dispatcher());
 		f2.onFailure(new OnFailure() {
@@ -4419,7 +4421,9 @@ public void onReceive(Object message, ActorRef sender) {
 		},AkkaSystem.system2.dispatcher());
 		}
 		if(choice.equals("GOC")){
-		Future<SubGraph> f3 = this.subGraphWithKGOTerms((int)Math.ceil(messageScores.getGOC()/(messageScores.getSize())), AkkaSystem.system2.dispatcher());
+			int divisor = messageScores.getSize();
+			if (divisor ==0) divisor = 1;
+		Future<SubGraph> f3 = this.subGraphWithKGOTerms((int)Math.ceil(messageScores.getGOC()/divisor), AkkaSystem.system2.dispatcher());
 		akka.pattern.Patterns.pipe(f3, AkkaSystem.system2.dispatcher()).to(sender);
 		f3.onSuccess(new PrintResult<SubGraph>(), AkkaSystem.system2.dispatcher());
 		f3.onFailure(new OnFailure() {
