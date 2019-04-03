@@ -2341,7 +2341,8 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * args[7] -> Execution Mode
 	 * args[8] -> Database address in the home directory of the current user
 	 * args[9] -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
-	 * args[10] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
+	 * args[10] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations. 
+	 * 						 Setting the argument as "skipchains" skips the descendingchains section as well as the greedy section.
 	 * 
 	 * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
 	 * args[7] = 2 -> All previous alignments are deleted. The alignment process is executed afterwards.
