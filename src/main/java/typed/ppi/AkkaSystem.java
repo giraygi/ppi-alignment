@@ -2588,28 +2588,26 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			Future<Boolean> f7 = null;
 			Future<Boolean> f9 = null;
 			
-			if(!args[10].equals("skipchains")) {
-				f = firstAligner.alignCentralPowerNodes(2, 0, 0, 20, 0, '3');
-				as.descendParameterValuesOfChain(f, firstAligner, 5, 200, true);
-
-				f3 = sixthAligner.alignAlternativeCentralNodes(2, 0, 2.5, 2.5, "pagerank", '3');
-				as.descendParameterValuesOfChain(f3, sixthAligner, 5, 200, true);
-
-				f5 = eighthAligner.alignAlternativeCentralNodes(1, 0, 10000, 10000, "betweenness", '3');
-				as.descendParameterValuesOfChain(f5, eighthAligner, 5, 200, true);
-			
-
-				f7 = ninthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "harmonic", '3');
-				as.descendParameterValuesOfChain(f7, ninthAligner, 5, 200, true);
-
-				f9 = tenthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "closeness", '3');
-				as.descendParameterValuesOfChain(f9, tenthAligner, 5, 200, true);
-			}
-			
-			
-		
-			
 			try {
+				
+				if(!args[10].equals("skipchains")) {
+					f = firstAligner.alignCentralPowerNodes(2, 0, 0, 20, 0, '3');
+					as.descendParameterValuesOfChain(f, firstAligner, 5, 200, true);
+
+					f3 = sixthAligner.alignAlternativeCentralNodes(2, 0, 2.5, 2.5, "pagerank", '3');
+					as.descendParameterValuesOfChain(f3, sixthAligner, 5, 200, true);
+
+					f5 = eighthAligner.alignAlternativeCentralNodes(1, 0, 10000, 10000, "betweenness", '3');
+					as.descendParameterValuesOfChain(f5, eighthAligner, 5, 200, true);
+				
+
+					f7 = ninthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "harmonic", '3');
+					as.descendParameterValuesOfChain(f7, ninthAligner, 5, 200, true);
+
+					f9 = tenthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "closeness", '3');
+					as.descendParameterValuesOfChain(f9, tenthAligner, 5, 200, true);
+				}			
+				
 				if(args[10].equals("greedy")) {
 					System.out.println("Greedy Mode is Activated!!!");
 					Future<Boolean> f2 = f.andThen(new OnComplete<Boolean>() {
