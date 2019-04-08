@@ -1753,14 +1753,10 @@ Timeout sg =  new Timeout(Duration.create(60, "seconds"));
 			
 			try {
 				ecl = Await.result(ec.markAlignedEdges(marked++, AkkaSystem.system2.dispatcher()),sg.duration());
-				int divisor = 1;
-				if(bs.getBenchmarkScores().size>0)
-					divisor = bs.getBenchmarkScores().size;
-				bsl = Await.result(bs.markXBitScoreSimilarity((bestBitscore+1)/divisor, marked++,  AkkaSystem.system2.dispatcher()), sg.duration());
-				divisor = 1;
-				if(goc.getBenchmarkScores().size>0)
-					divisor = goc.getBenchmarkScores().size;
-				gocl = Await.result(goc.markKGOTerms((int) bestGOC/divisor, marked++, AkkaSystem.system2.dispatcher()), sg.duration());
+//				if(bs.getBenchmarkScores().size>0)
+				bsl = Await.result(bs.markXBitScoreSimilarity((bestBitscore+1)/bs.getBenchmarkScores().size, marked++,  AkkaSystem.system2.dispatcher()), sg.duration());
+//				if(goc.getBenchmarkScores().size>0)
+				gocl = Await.result(goc.markKGOTerms((int) bestGOC/goc.getBenchmarkScores().size, marked++, AkkaSystem.system2.dispatcher()), sg.duration());
 				icsl = Await.result(ics.markTopAlignedPowerNodes(100,marked++, centralityType, AkkaSystem.system2.dispatcher()), sg.duration());
 				
 				if(Math.random() < 0.8)
@@ -2341,8 +2337,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * args[7] -> Execution Mode
 	 * args[8] -> Database address in the home directory of the current user
 	 * args[9] -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
-	 * args[10] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations. 
-	 * 						 Setting the argument as "skipchains" skips the descendingchains section as well as the greedy section.
+	 * args[10] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
 	 * 
 	 * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
 	 * args[7] = 2 -> All previous alignments are deleted. The alignment process is executed afterwards.
@@ -2580,34 +2575,24 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			FiniteDuration interval = FiniteDuration.create(2000, TimeUnit.MILLISECONDS);
 			AkkaSystem.router = AkkaSystem.system2
 					.actorOf(new TailChoppingGroup(as.routeePaths, within, interval).props(), "router");
-			
-			
-			Future<Boolean> f = null;
-			Future<Boolean> f3 = null;
-			Future<Boolean> f5 = null;
-			Future<Boolean> f7 = null;
-			Future<Boolean> f9 = null;
+			Future<Boolean> f = firstAligner.alignCentralPowerNodes(2, 0, 0, 20, 0, '3');
+			as.descendParameterValuesOfChain(f, firstAligner, 5, 200, true);
+
+			Future<Boolean> f3 = sixthAligner.alignAlternativeCentralNodes(2, 0, 2.5, 2.5, "pagerank", '3');
+			as.descendParameterValuesOfChain(f3, sixthAligner, 5, 200, true);
+
+			Future<Boolean> f5 = eighthAligner.alignAlternativeCentralNodes(1, 0, 10000, 10000, "betweenness", '3');
+			as.descendParameterValuesOfChain(f5, eighthAligner, 5, 200, true);
+		
+
+			Future<Boolean> f7 = ninthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "harmonic", '3');
+			as.descendParameterValuesOfChain(f7, ninthAligner, 5, 200, true);
+
+			Future<Boolean> f9 = tenthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "closeness", '3');
+			as.descendParameterValuesOfChain(f9, tenthAligner, 5, 200, true);
+		
 			
 			try {
-				
-				if(!args[10].equals("skipchains")) {
-					f = firstAligner.alignCentralPowerNodes(2, 0, 0, 20, 0, '3');
-					as.descendParameterValuesOfChain(f, firstAligner, 5, 200, true);
-
-					f3 = sixthAligner.alignAlternativeCentralNodes(2, 0, 2.5, 2.5, "pagerank", '3');
-					as.descendParameterValuesOfChain(f3, sixthAligner, 5, 200, true);
-
-					f5 = eighthAligner.alignAlternativeCentralNodes(1, 0, 10000, 10000, "betweenness", '3');
-					as.descendParameterValuesOfChain(f5, eighthAligner, 5, 200, true);
-				
-
-					f7 = ninthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "harmonic", '3');
-					as.descendParameterValuesOfChain(f7, ninthAligner, 5, 200, true);
-
-					f9 = tenthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "closeness", '3');
-					as.descendParameterValuesOfChain(f9, tenthAligner, 5, 200, true);
-				}			
-				
 				if(args[10].equals("greedy")) {
 					System.out.println("Greedy Mode is Activated!!!");
 					Future<Boolean> f2 = f.andThen(new OnComplete<Boolean>() {
@@ -2774,20 +2759,18 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 							//  		throw problem;
 						}
 					}, AkkaSystem.system2.dispatcher());
-					if(!args[10].equals("skipchains")) {
-						try {
-							Await.result(f2, as.timeout2.duration());
-							Await.result(f4, as.timeout2.duration());
-							Await.result(f6, as.timeout2.duration());
-							Await.result(f8, as.timeout2.duration());
-							Await.result(f10, as.timeout2.duration());
-
-						} catch (Exception e1) {
-							System.out.println("Greedy Futurelar yalan oldu::: " + e1.getMessage());
-							;
-						}
-					}
 					
+					try {
+						Await.result(f2, as.timeout2.duration());
+						Await.result(f4, as.timeout2.duration());
+						Await.result(f6, as.timeout2.duration());
+						Await.result(f8, as.timeout2.duration());
+						Await.result(f10, as.timeout2.duration());
+
+					} catch (Exception e1) {
+						System.out.println("Greedy Futurelar yalan oldu::: " + e1.getMessage());
+						;
+					}
 				}
 			} catch (ArrayIndexOutOfBoundsException aioobe) {
 				// TODO Auto-generated catch block
