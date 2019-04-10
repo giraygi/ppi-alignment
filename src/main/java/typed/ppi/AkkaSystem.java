@@ -1686,6 +1686,15 @@ public BenchmarkScores calculateSubGraphBenchmarks(Aligner a, String markedQuery
 			bs.setBitScore(this.calculateBitScoreSum(Integer.toString(a.getAlignmentNo()),markedQuery));
 			bs.setSize(this.countAlignedNodes(Integer.toString(a.getAlignmentNo()),markedQuery));
 			
+			try(FileWriter fw = new FileWriter("calculateGlobalBenchmarks"+a.getAlignmentNo()+".txt", true);
+				    BufferedWriter bw = new BufferedWriter(fw);
+				    PrintWriter out = new PrintWriter(bw))
+				{
+					out.println(bs);
+				} catch (IOException e) {
+				    //exception handling left as an exercise for the reader
+				}
+			
 			System.out.println("işte karşınızda "+bs);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -2576,24 +2585,23 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			AkkaSystem.router = AkkaSystem.system2
 					.actorOf(new TailChoppingGroup(as.routeePaths, within, interval).props(), "router");
 			Future<Boolean> f = firstAligner.alignCentralPowerNodes(2, 0, 0, 20, 0, '3');
-			as.descendParameterValuesOfChain(f, firstAligner, 5, 200, true);
-
 			Future<Boolean> f3 = sixthAligner.alignAlternativeCentralNodes(2, 0, 2.5, 2.5, "pagerank", '3');
-			as.descendParameterValuesOfChain(f3, sixthAligner, 5, 200, true);
-
 			Future<Boolean> f5 = eighthAligner.alignAlternativeCentralNodes(1, 0, 10000, 10000, "betweenness", '3');
-			as.descendParameterValuesOfChain(f5, eighthAligner, 5, 200, true);
-		
-
 			Future<Boolean> f7 = ninthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "harmonic", '3');
-			as.descendParameterValuesOfChain(f7, ninthAligner, 5, 200, true);
-
-			Future<Boolean> f9 = tenthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "closeness", '3');
-			as.descendParameterValuesOfChain(f9, tenthAligner, 5, 200, true);
+			Future<Boolean> f9 = tenthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "closeness", '3');;
 		
 			
 			try {
-				if(args[10].equals("greedy")) {
+				
+				if(!args[10].equals("skipchains")) {				
+					as.descendParameterValuesOfChain(f, firstAligner, 5, 200, true);
+					as.descendParameterValuesOfChain(f3, sixthAligner, 5, 200, true);
+					as.descendParameterValuesOfChain(f5, eighthAligner, 5, 200, true);
+					as.descendParameterValuesOfChain(f7, ninthAligner, 5, 200, true);
+					as.descendParameterValuesOfChain(f9, tenthAligner, 5, 200, true);
+				}
+				
+				if(args[11].equals("greedy")) {
 					System.out.println("Greedy Mode is Activated!!!");
 					Future<Boolean> f2 = f.andThen(new OnComplete<Boolean>() {
 						public void onComplete(Throwable failure, Boolean success) {
@@ -2774,7 +2782,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 				}
 			} catch (ArrayIndexOutOfBoundsException aioobe) {
 				// TODO Auto-generated catch block
-				System.out.println("Greedy Mode is not Activated.");
+				System.out.println("Greedy Mode or SkipChains Mode is not Activated.");
 			}
 			
 			try {
