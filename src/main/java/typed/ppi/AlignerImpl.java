@@ -482,6 +482,7 @@ public Future<Long> markAlignedEdges(long markedQuery, ExecutionContextExecutor 
 			tm.failure(new Throwable("Herkesin tuttuğu kendine"));
 			TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
 			boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+				boolean uncaught = true;
 				ResultSummary rs = null;
 				Session markAlignedSession = AkkaSystem.driver.session();
 				try{
@@ -496,18 +497,19 @@ public Future<Long> markAlignedEdges(long markedQuery, ExecutionContextExecutor 
 							+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
 				} catch(Exception e){
 					System.err.println("Mark Aligned Edges::: "+e.getMessage());
+					uncaught = false;
 //					if(Math.random() < 0.5)
-//					markAlignedEdges(markedQuery, dispatcher) ;
+//						markAlignedEdges(markedQuery, dispatcher) ;
 				} finally {markAlignedSession.close();}
 				System.out.println(rs.counters().propertiesSet()+" properties were set on nodes and relationships for Aligned Edges");
-				return true;
+				return uncaught;
 			} );
 	if(success) 
 		{
 			markedQueries.add(as.calculateSubGraphBenchmarks((Aligner) AlignerImpl.this , String.valueOf(markedQuery)));
 			return markedQuery;	
 		}
-	else return 0L;	
+	else return -1L;	
 }
 }, dispatcher);
 return f;
@@ -606,6 +608,7 @@ public Future<SubGraph> subGraphWithDoubleAlignedEdges(ExecutionContextExecutor 
 				tm.failure(new Throwable("Herkesin tuttuğu kendine"));
 				TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
 				boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+					boolean uncaught = true;
 					ResultSummary rs = null;
 					Session markAlignedSession = AkkaSystem.driver.session();
 					try{															// 
@@ -625,18 +628,19 @@ public Future<SubGraph> subGraphWithDoubleAlignedEdges(ExecutionContextExecutor 
 								+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
 					} catch(Exception e){
 						System.err.println("Mark Aligned Edges::: "+e.getMessage());
+						uncaught = false;
 //						if(Math.random() < 0.5)
-//						markAlignedEdges(markedQuery, dispatcher) ;
+//							markAlignedEdges(markedQuery, dispatcher) ;
 					} finally {markAlignedSession.close();}
 					System.out.println(rs.counters().propertiesSet()+" properties were set on nodes and relationships for Double Aligned Edges");
-					return true;
+					return uncaught;
 				} );
 		if(success) 
 			{
 				markedQueries.add(as.calculateSubGraphBenchmarks((Aligner) AlignerImpl.this , String.valueOf(markedQuery)));
 				return markedQuery;	
 			}
-		else return 0L;	
+		else return -1L;	
 	}
 	}, dispatcher);
 	return f;
@@ -742,6 +746,7 @@ public Future<Long> markConservedStructures(ExecutionContextExecutor dispatcher,
 			
 	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
 	boolean success= template.with(AkkaSystem.graphDb).execute( transaction -> {
+		boolean uncaught = true;
 		StatementResult result;
 	try ( org.neo4j.driver.v1.Transaction tx = mcs.beginTransaction() )
     {
@@ -797,15 +802,17 @@ public Future<Long> markConservedStructures(ExecutionContextExecutor dispatcher,
 		tx.success(); tx.close();
 
     } catch (Exception e){
-//    	System.out.println("Mark Conserved Structures::: " + e.getMessage());
-//    	markConservedStructures(dispatcher,markedQuery);
+    	System.out.println("Mark Conserved Structures::: " + e.getMessage());
+    	uncaught = false;
+//    	if(Math.random() < 0.5)
+//    		markConservedStructures(dispatcher,markedQuery, simTreshold, annotationTreshold,powerTreshold);
     } finally {mcs.close();}
 	
-	return true;
+	return uncaught;
 	});
 if(success)
 return markedQuery;	
-else return 0L;
+else return -1L;
 
 
 }
@@ -821,6 +828,7 @@ public Future<Long> markConservedStructureQuery(ExecutionContextExecutor dispatc
 	
 	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
 	boolean success= template.with(AkkaSystem.graphDb).execute( transaction -> {
+		boolean uncaught = true;
 		ResultSummary rs = null; 
 		Session mcsq = AkkaSystem.driver.session();
 		try /*( org.neo4j.driver.v1.Transaction tx = mcsq.beginTransaction() )*/
@@ -952,18 +960,19 @@ public Future<Long> markConservedStructureQuery(ExecutionContextExecutor dispatc
 
 	    } catch (Exception e){
 	    	System.err.println("Mark Conserved Structure Query::: " + e.getMessage());
+	    	uncaught = false;
 //	    	if(Math.random() < 0.5)
-//	    	markConservedStructureQuery(dispatcher,markedQuery);
+//	    		markConservedStructureQuery(dispatcher,markedQuery);
 	    } finally {mcsq.close();}
 		System.out.println(rs.counters().propertiesSet()+" properties were set on nodes and relationships for Conserved Structure Query");
-		return true;
+		return uncaught;
 		});
 	if(success) 
 	{
 		markedQueries.add(as.calculateSubGraphBenchmarks((Aligner) AlignerImpl.this , String.valueOf(markedQuery)));
 		return markedQuery;	
 	}
-	else return 0L;	
+	else return -1L;	
 }
 }, dispatcher);
 return f;
@@ -1033,6 +1042,7 @@ public Future<Long> markXBitScoreSimilarity(double treshold, long markedQuery, E
 			tm.failure(new Throwable("Herkesin tuttuğu kendine"));
 			TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
 			boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+				boolean uncaught = true;
 				ResultSummary rs = null;
 				Session markXBitScoreSession = AkkaSystem.driver.session();
 				try{
@@ -1043,11 +1053,12 @@ public Future<Long> markXBitScoreSimilarity(double treshold, long markedQuery, E
 							+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
 				} catch(Exception e){
 					System.err.println("Mark X BitScore Similarity::: "+e.getMessage());
+					uncaught = false;
 //					if(Math.random() < 0.5)
-//					markXBitScoreSimilarity(treshold, markedQuery, dispatcher);
+//						markXBitScoreSimilarity(treshold, markedQuery, dispatcher);
 				} finally {markXBitScoreSession.close();}
 				System.out.println(rs.counters().propertiesSet()+" properties were set on nodes and relationships for BitScore");
-				return true;
+				return uncaught;
 			} );
 			
 
@@ -1056,7 +1067,7 @@ public Future<Long> markXBitScoreSimilarity(double treshold, long markedQuery, E
 				markedQueries.add(as.calculateSubGraphBenchmarks((Aligner) AlignerImpl.this , String.valueOf(markedQuery)));
 				return markedQuery;	
 			}
-	else return 0L;	
+	else return -1L;	
 }
 }, dispatcher);
 return f;
@@ -1121,6 +1132,7 @@ public Future<Long> markKGOTerms (int k, long markedQuery, ExecutionContextExecu
 			tm.failure(new Throwable("Herkesin tuttuğu kendine"));
 			TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
 			boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+				boolean uncaught = true;
 				ResultSummary rs = null;
 				Session markKGOTermsSession = AkkaSystem.driver.session();
 				try{
@@ -1130,18 +1142,19 @@ public Future<Long> markKGOTerms (int k, long markedQuery, ExecutionContextExecu
 							+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
 				} catch(Exception e){
 					System.err.println("Mark K GO Terms::: "+e.getMessage());
+					uncaught = false;
 //					if(Math.random() < 0.5)
 //						markKGOTerms(k, markedQuery,dispatcher);
 				} finally {markKGOTermsSession.close();}
 				System.out.println(rs.counters().propertiesSet()+" properties were set on nodes and relationships for GO Terms");
-				return true;
+				return uncaught;
 			} );
 			if(success) 
 			{
 				markedQueries.add(as.calculateSubGraphBenchmarks((Aligner) AlignerImpl.this , String.valueOf(markedQuery)));
 				return markedQuery;	
 			}
-	else return 0L;	
+	else return -1L;	
 }
 }, dispatcher);
 return f;
@@ -1217,6 +1230,7 @@ public Future<Long> markTopAlignedPowerNodes(int limit, long markedQuery, String
 			tm.failure(new Throwable("Herkesin tuttuğu kendine"));
 			TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
 			boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+				boolean uncaught = true;
 				ResultSummary rs = null;
 				Session markAPNSession = AkkaSystem.driver.session();
 				try{
@@ -1234,18 +1248,19 @@ public Future<Long> markTopAlignedPowerNodes(int limit, long markedQuery, String
 							+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
 				} catch(Exception e){
 					System.err.println("Mark Top Power Nodes::: "+e.getMessage());
+					uncaught = false;
 //					if(Math.random() < 0.5)
-//						markKGOTerms(k, markedQuery,dispatcher);
+//						markTopAlignedPowerNodes(limit, markedQuery, algorithm, dispatcher);
 				} finally {markAPNSession.close();}
 				System.out.println(rs.counters().propertiesSet()+" properties were set on nodes and relationships for Power Nodes");
-				return true;
+				return uncaught;
 			} );
 			if(success) 
 			{
 				markedQueries.add(as.calculateSubGraphBenchmarks((Aligner) AlignerImpl.this , String.valueOf(markedQuery)));
 				return markedQuery;	
 			}
-	else return 0L;	
+	else return -1L;	
 }
 }, dispatcher);
 return f;
@@ -1308,6 +1323,7 @@ public Future<Long> markAlignedPowerNodes(int minCommonAnnotations, int power2, 
 			tm.failure(new Throwable("Herkesin tuttuğu kendine"));
 			TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
 			boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+				boolean uncaught = true;
 				ResultSummary rs = null;
 				Session markAPNSession = AkkaSystem.driver.session();
 				try{
@@ -1317,18 +1333,19 @@ public Future<Long> markAlignedPowerNodes(int minCommonAnnotations, int power2, 
 							+ "a.markedQuery = case when not ANY(x IN a.markedQuery WHERE x = '"+markedQuery+"') then a.markedQuery+'"+markedQuery+"' else a.markedQuery end").consume();
 				} catch(Exception e){
 					System.err.println("Mark Power Nodes::: "+e.getMessage());
+					uncaught = false;
 //					if(Math.random() < 0.5)
-//						markKGOTerms(k, markedQuery,dispatcher);
+//						markAlignedPowerNodes( minCommonAnnotations, power2, power3, power4, markedQuery, dispatcher);
 				} finally {markAPNSession.close();}
 				System.out.println(rs.counters().propertiesSet()+" properties were set on nodes and relationships for Power Nodes");
-				return true;
+				return uncaught;
 			} );
 			if(success) 
 			{
 				markedQueries.add(as.calculateSubGraphBenchmarks((Aligner) AlignerImpl.this , String.valueOf(markedQuery)));
 				return markedQuery;	
 			}
-	else return 0L;	
+	else return -1L;	
 }
 }, dispatcher);
 return f;
@@ -1391,6 +1408,7 @@ public Future<Long> markAlternativeCentralNodes(int minCommonAnnotations, double
 			tm.failure(new Throwable("Herkesin tuttuğu kendine"));
 			TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
 			boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+				boolean uncaught = true;
 				ResultSummary rs = null;
 				Session markKGOTermsSession = AkkaSystem.driver.session();
 				try{
@@ -1400,18 +1418,19 @@ public Future<Long> markAlternativeCentralNodes(int minCommonAnnotations, double
 							+ "a.markedQuery = case when not ANY(x IN a.markedQuery WHERE x = '"+markedQuery+"') then a.markedQuery+'"+markedQuery+"' else a.markedQuery end").consume();
 				} catch(Exception e){
 					System.err.println("Mark K GO Terms::: "+e.getMessage());
+					uncaught = false;
 //					if(Math.random() < 0.5)
-//						markKGOTerms(k, markedQuery,dispatcher);
+//						markAlternativeCentralNodes(minCommonAnnotations, score1, score2, algorithm,markedQuery, dispatcher);
 				} finally {markKGOTermsSession.close();}
 				System.out.println(rs.counters().propertiesSet()+" properties were set on nodes and relationships for "+algorithm+" Central Nodes");
-				return true;
+				return uncaught;
 			} );
 			if(success) 
 			{
 				markedQueries.add(as.calculateSubGraphBenchmarks((Aligner) AlignerImpl.this , String.valueOf(markedQuery)));
 				return markedQuery;	
 			}
-	else return 0L;	
+	else return -1L;	
 }
 }, dispatcher);
 return f;
@@ -1486,6 +1505,7 @@ public Future<Long> markClusterEdges(int minCommonAnnotations, String clusterTyp
 			tm.failure(new Throwable("Herkesin tuttuğu kendine"));
 			TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
 			boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+				boolean uncaught = true;
 				ResultSummary rs = null;
 				Session markClusterEdgesSession = AkkaSystem.driver.session();
 				try{
@@ -1501,18 +1521,19 @@ public Future<Long> markClusterEdges(int minCommonAnnotations, String clusterTyp
 							+ "a2.markedQuery = case when not ANY(x IN a2.markedQuery WHERE x = '"+markedQuery+"') then a2.markedQuery+'"+markedQuery+"' else a2.markedQuery end").consume();
 				} catch(Exception e){
 					System.err.println("Mark Cluster Edges::: "+e.getMessage());
+					uncaught = false;
 //					if(Math.random() < 0.5)
-//						markKGOTerms(k, markedQuery,dispatcher);
+//						markClusterEdges(minCommonAnnotations, clusterType,clusterIDOfOrganism1, clusterIDOfOrganism2,markedQuery, dispatcher);
 				} finally {markClusterEdgesSession.close();}
 				System.out.println(rs.counters().propertiesSet()+" properties were set on nodes and relationships for Cluster Edges");
-				return true;
+				return uncaught;
 			} );
 			if(success) 
 			{
 				markedQueries.add(as.calculateSubGraphBenchmarks((Aligner) AlignerImpl.this , String.valueOf(markedQuery)));
 				return markedQuery;	
 			}
-	else return 0L;	
+	else return -1L;	
 }
 }, dispatcher);
 return f;

@@ -1718,7 +1718,7 @@ public Aligner getAligner(int alignerNo) {
 public Cancellable markBestSubGraphsInTime(int initialDelay, int interval) {
 	
 
-Timeout sg =  new Timeout(Duration.create(60, "seconds"));
+Timeout sg =  new Timeout(Duration.create(180, "seconds"));
 
 	Cancellable c = AkkaSystem.system2.scheduler().schedule((FiniteDuration) Duration.create(initialDelay+" seconds"),(FiniteDuration) Duration.create(interval+" seconds"),new Runnable() {
 		@Override
@@ -1743,11 +1743,11 @@ Timeout sg =  new Timeout(Duration.create(60, "seconds"));
 			if(size != null)
 			size.setMesaj("SIZE");
 			
-			Long ecl = null;
-			Long bsl = null;
-			Long gocl = null;
-			Long icsl = null;
-			Long s3l = null;
+			Long ecl = -1L;
+			Long bsl = -1L;
+			Long gocl = -1L;
+			Long icsl = -1L;
+			Long s3l = -1L;
 			
 			String centralityType = null;
 			int  n = new Random().nextInt(4);
@@ -1775,6 +1775,7 @@ Timeout sg =  new Timeout(Duration.create(60, "seconds"));
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				System.err.println("ECL: "+ecl+" - BSL: "+bsl+" - GOCL: "+gocl+" - ICSL: "+icsl);
+				markBestSubGraphsInTime(initialDelay, interval);
 			}
 
 		 // don’t forget to think about who is the sender (2nd argument)
