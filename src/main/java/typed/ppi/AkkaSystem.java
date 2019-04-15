@@ -1768,10 +1768,10 @@ Timeout sg =  new Timeout(Duration.create(180, "seconds"));
 				gocl = Await.result(goc.markKGOTerms((int) bestGOC/goc.getBenchmarkScores().size, marked++, AkkaSystem.system2.dispatcher()), sg.duration());
 				icsl = Await.result(ics.markTopAlignedPowerNodes(100,marked++, centralityType, AkkaSystem.system2.dispatcher()), sg.duration());
 				
-				if(Math.random() < 0.8)
+//				if(Math.random() < 0.8)
 					s3l = Await.result(s3.markTopAlignedPowerNodes(100,marked++, "power", AkkaSystem.system2.dispatcher()),sg.duration());
-				else
-					s3l = Await.result(s3.markConservedStructureQuery(AkkaSystem.system2.dispatcher(), marked++),sg.duration());
+//				else
+//					s3l = Await.result(s3.markConservedStructureQuery(AkkaSystem.system2.dispatcher(), marked++),sg.duration());
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				System.err.println("ECL: "+ecl+" - BSL: "+bsl+" - GOCL: "+gocl+" - ICSL: "+icsl);
@@ -2350,6 +2350,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * args[10] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
 	 * 
 	 * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
+	 * args[7] = 11 -> Starts from computing community detection and centrality algorithms.
 	 * args[7] = 2 -> All previous alignments are deleted. The alignment process is executed afterwards.
 	 * args[7] = 3 -> The markedqueries of the previous alignment process is loaded from db into the application and the process is continued afterwards.
 	 * args[7] = 33 -> The markedqueries of the previous alignment process is loaded from file to db and consecutively from db into the application and the process is continued afterwards.
@@ -2366,15 +2367,19 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.deleteAllNodesRelationships();
 		as.createGraph(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);	
 		as.computePowers();
-		as.removeAllAlignments();
-		as.computePageRank(20, 0.85);
-		as.computeBetweennessCentrality();
-		as.computeClosenessCentrality();
-		as.computeHarmonicCentrality();
-		as.computeLabelPropagationCommunities(1);
-		as.computeLouvainCommunities();
-		as.computeClusterSimilarities("louvain", 5);
-		as.computeClusterSimilarities("labelpropagation", 5);
+
+		}
+		
+		if(args[7].equals("1")||args[7].equals("11")){
+			as.removeAllAlignments();
+			as.computePageRank(20, 0.85);
+			as.computeBetweennessCentrality();
+			as.computeClosenessCentrality();
+			as.computeHarmonicCentrality();
+			as.computeLabelPropagationCommunities(1);
+			as.computeLouvainCommunities();
+			as.computeClusterSimilarities("louvain", 5);
+			as.computeClusterSimilarities("labelpropagation", 5);
 		}
 		
 		as.csLouvainGO = as.sortSimilarClusters("louvain", "commonGO");
@@ -2388,10 +2393,21 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		System.out.println("Size of Second Network: "+as.sizeOfSecondNetwork);
 		
 		if (args[7].equals("5")) {
+			int tolerance = 0;
+			try {
+				if(Integer.parseInt(args[10])>0)
+				tolerance = Integer.parseInt(args[10]);
+			} catch (NumberFormatException e) {
+				// TODO Auto-generated catch block
+				System.err.println(e.getMessage());
+			} catch (ArrayIndexOutOfBoundsException aioobe) {
+				// TODO Auto-generated catch block
+				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
+			}
 			for(int i =1;i<11;i++) {
 				Aligner a = new AlignerImpl(as, i);
 				
-				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork) {
+				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
 				a.addMeaninglessMapping(100, '3');
 				a.increaseBitScoreWithTopMappings(20, '3');
 				a.increaseECByAddingPair(0, 0, '3');
