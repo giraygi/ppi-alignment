@@ -2464,7 +2464,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		}
 		
 		
-		if (args[7].equals("1") || args[7].equals("2") ||args[7].equals("3")||args[7].equals("33")) {
+		if (args[7].equals("1") || args[7].equals("11")|| args[7].equals("2") ||args[7].equals("3")||args[7].equals("33")) {
 			
 			Aligner firstAligner = TypedActor.get(AkkaSystem.system2)
 					.typedActorOf(new TypedProps<AlignerImpl>(Aligner.class, new Creator<AlignerImpl>() {
