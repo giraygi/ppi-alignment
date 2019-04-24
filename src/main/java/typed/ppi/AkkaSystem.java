@@ -2020,7 +2020,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						routees.get(i).increaseECWithFunctionalParameters(m, m, n*50, n*50, '3');
 						
 						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower(m, n*50, m*5, p, '3');
+							routees.get(i).increaseFunctionalParametersWithPower(m, n*50, m*5, p, false, '3');
 						
 						if(Math.random() < 0.2)
 							routees.get(i).increaseECByAddingPair(n, (m-1)*50, '3');
@@ -2064,7 +2064,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						routees.get(i).increaseECByAddingPair(n, m*50, '3');
 						
 						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower(m+1, n*50, (m+1)*5, p,'3');
+							routees.get(i).increaseFunctionalParametersWithPower(m+1, n*50, (m+1)*5, p,false, '3');
 						
 					}
 					if(routees.get(i).getAlignmentNo()==5) {
@@ -2095,7 +2095,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							routees.get(i).increaseECByAddingPair(n, m*50, '3');
 						
 						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower(m+1, n*50, (m+1)*5, p,'3');
+							routees.get(i).increaseFunctionalParametersWithPower(m+1, n*50, (m+1)*5, p,false,'3');
 							
 					}
 					
@@ -2126,7 +2126,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						
 						// Ekledikten sonra sonuç görmedim.
 						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower(n, n*50,n*5, p,'3');
+							routees.get(i).increaseFunctionalParametersWithPower(n, n*50,n*5, p,false,'3');
 						
 						if(Math.random() < 0.2)
 							routees.get(i).increaseECByAddingPair(n-1, (n-1)*50, '3');

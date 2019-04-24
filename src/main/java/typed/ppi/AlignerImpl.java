@@ -2051,7 +2051,7 @@ public void increaseECWithFunctionalParameters(int k1, int k2, double sim1, doub
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 }
 
-public void increaseFunctionalParametersWithPower(int minCommonAnnotations, double sim,int power, char powerMode, char mode) {
+public void increaseFunctionalParametersWithPower(int minCommonAnnotations, double sim,int power, char powerMode, boolean orderbyBitScoreOrGOC, char mode) {
 	
 	System.out.println("increaseFunctionalParametersWithPower2 for Aligner "+this.alignmentNo);	
 	Session gocbs = AkkaSystem.driver.session();
@@ -2060,20 +2060,25 @@ public void increaseFunctionalParametersWithPower(int minCommonAnnotations, doub
 	Set<Node> aligned = new HashSet<Node>();
 	boolean success = false;
 	
+	
 	if(sim >0) {
 		
 		TransactionTemplate template2 = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );	
 		success = template2.with(AkkaSystem.graphDb).execute( transaction -> {
+			
 			StatementResult result;
+			String orderby = "length(FILTER(x in p.annotations WHERE x in n.annotations)) desc, t.similarity desc";
+			if (orderbyBitScoreOrGOC)
+				orderby = "t.similarity desc, length(FILTER(x in p.annotations WHERE x in n.annotations)) desc";
 			int countRows = 0;
 			try ( org.neo4j.driver.v1.Transaction tx = gocbs.beginTransaction() ) {
 				
 				markUnalignedNodes();
 				
 				if(powerMode == '4' || powerMode == '3' )
-					result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" and p.power"+powerMode+" >= "+power+" and n.power"+powerMode+" >= "+power+" return p,n order by length(FILTER(x in p.annotations WHERE x in n.annotations)) desc, t.similarity desc");
+					result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" and p.power"+powerMode+" >= "+power+" and n.power"+powerMode+" >= "+power+" return p,n order by "+orderby);
 				else
-					result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" and p.power2 >= "+power+" and n.power2 >= "+power+" return p,n order by length(FILTER(x in p.annotations WHERE x in n.annotations)) desc, t.similarity desc");
+					result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" and p.power2 >= "+power+" and n.power2 >= "+power+" return p,n order by "+orderby);
 				
 		//System.out.println("Number of records in query: "+result.list().size());
 		records.clear();
@@ -3169,9 +3174,78 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
 		} catch (IOException e) {
 		    //exception handling left as an exercise for the reader
 		}
-	
-	
 }
+
+public void removeBadMappingsRandomly(int k, double sim, boolean keepEdges, int limit){
+	System.out.println("removeBadMappingsRandomly for Aligner "+this.alignmentNo);
+	TransactionTemplate.Monitor tm = new TransactionTemplate.Monitor.Adapter();
+	tm.failure(new Throwable("Herkesin tuttuğu kendine"));
+	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
+	int removed = template.with(AkkaSystem.graphDb).execute( transaction -> {
+		Session rbm = AkkaSystem.driver.session();
+		ResultSummary rs = null; 
+		int count = 0;
+		String limitInfix ="";
+		if(limit>0)
+		    limitInfix = "with r,rand() as number limit "+2*limit+" match ()-[r:ALIGNS]-() where number > 0.5 ";
+	try ( org.neo4j.driver.v1.Transaction tx = rbm.beginTransaction())
+    {
+		if(keepEdges){
+			tx.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)<-[r2:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]-(o) set o.marked = o.marked +'"+this.alignmentNo+"', n.marked = n.marked +'"+this.alignmentNo+"', m.marked = m.marked +'"+this.alignmentNo+"', l.marked = l.marked +'"+this.alignmentNo+"'");			
+			rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+			count+=rs.counters().relationshipsDeleted();	
+			if(limit-count>0 || limit<1) {
+				if(limit-count>0)
+					limitInfix = "with r,rand() as number limit "+2*limit+" match ()-[r:ALIGNS]-() where number > 0.5 ";
+				if(limit<1)
+					limitInfix = "";
+				rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+				count+=rs.counters().relationshipsDeleted();
+			}
+			tx.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
+		} else {
+			rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+			count+=rs.counters().relationshipsDeleted();
+			if(limit-count>0 || limit<1) {
+				if(limit-count>0)
+					limitInfix = "with r,rand() as number limit "+2*limit+" match ()-[r:ALIGNS]-() where number > 0.5 ";
+				if(limit<1)
+					limitInfix = "";
+				rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+				count+=rs.counters().relationshipsDeleted();
+			}	
+		}
+		tx.success(); tx.close();
+    } catch (Exception e){
+    	System.out.println("removeBadMappingsRandomly::: " + e.getMessage());
+    	if(Math.random() < 0.5)
+    		removeBadMappings(k, sim, keepEdges,limit);
+      }finally {rbm.close();}
+	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
+	return count;
+} );
+	
+	if(removed>0&&(k>1||sim>1||!keepEdges))
+		noofCyclesAlignmentUnchanged = 0;	
+	
+	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
+		    BufferedWriter bw = new BufferedWriter(fw);
+		    PrintWriter out = new PrintWriter(bw))
+		{
+		if(keepEdges) {
+			System.err.println(removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsRandomly | "+ZonedDateTime.now()+"]: "+removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingRandomly Method.");
+		}
+		else {
+			System.err.println(removed+" mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsRandomly | "+ZonedDateTime.now()+"]: "+removed+" mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingRandomly Method.");
+		}
+		
+		} catch (IOException e) {
+		    //exception handling left as an exercise for the reader
+		}
+}
+
 // daha son haliyle denenmedi. rand() eklenerek rastgeleleştirilebilir.
 public void removeMappingsWithoutEdges(int limit){
 	System.out.println("removeAlignmentsWithoutEdges for Aligner "+this.alignmentNo);
@@ -3197,6 +3271,33 @@ public void removeMappingsWithoutEdges(int limit){
 } );	
 	System.out.println(removed+" mappings without edges were removed from aligner "+this.alignmentNo+" with removeMappingWithoutEdges Method.");
 }
+
+// daha son haliyle denenmedi. rand() eklenerek rastgeleleştirilebilir.
+public void removeMappingsWithoutEdgesRandomly(int limit){
+	System.out.println("removeMappingsWithoutEdgesRandomly "+this.alignmentNo);
+	TransactionTemplate.Monitor tm = new TransactionTemplate.Monitor.Adapter();
+	tm.failure(new Throwable("Herkesin tuttuğu kendine"));
+	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
+	int removed = template.with(AkkaSystem.graphDb).execute( transaction -> {
+		Session rmwe = AkkaSystem.driver.session();
+		ResultSummary rs = null;
+		String limitInfix = "with r,rand() as number limit "+2*limit+" match ()-[r:ALIGNS]-() where number > 0.5 ";
+	try ( org.neo4j.driver.v1.Transaction tx = rmwe.beginTransaction())
+    {	
+		tx.run("match (o:Organism2)-[u:INTERACTS_2]-(p:Organism2)-[t:ALIGNS]->(n:Organism1)-[r:INTERACTS_1]-(m:Organism1)<-[s:ALIGNS]-(o) where s.alignmentNumber = '"+alignmentNo+"' and t.alignmentNumber = '"+alignmentNo+"' set o.marked = o.marked +'"+this.alignmentNo+"', p.marked = p.marked +'"+this.alignmentNo+"', n.marked = n.marked +'"+this.alignmentNo+"', m.marked = m.marked +'"+this.alignmentNo+"'");	
+		rs = tx.run("match (n:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m:Organism1) where NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') "+limitInfix+"delete r").consume();
+		tx.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
+		tx.success(); tx.close();
+    } catch (Exception e){
+    	  System.out.println("removeMappingsWithoutEdgesRandomly::: "+e.getMessage());
+    	  removeMappingsWithoutEdges(limit);
+      }finally {rmwe.close();}
+	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
+	return rs.counters().relationshipsDeleted();
+} );	
+	System.out.println(removed+" mappings without edges were removed from aligner "+this.alignmentNo+" with removeMappingsWithoutEdgesRandomly Method.");
+}
+
 
 /*
  * ICS ve S3 olcutlerini iyilestirmek icin b�l�nen k�s�mlar�nda yer alan countInducedSubGraphEdgesOfANetwork metodundan d�n�len sonucu k���lt�r. 

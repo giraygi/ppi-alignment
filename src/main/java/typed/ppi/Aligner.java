@@ -50,7 +50,7 @@ public interface Aligner extends Receiver {
 	public void increaseBitScoreWithTopMappings(int limit, char mode) ;
 	public void increaseGOCWithTopMappings(int limit, char mode);
 	public void increaseECWithFunctionalParameters(int k1, int k2, double sim1, double sim2, char mode);
-	public void increaseFunctionalParametersWithPower(int minCommonAnnotations, double sim,int power, char powerMode, char mode); 
+	public void increaseFunctionalParametersWithPower(int minCommonAnnotations, double sim,int power, char powerMode, boolean orderbyBitScoreOrGOC, char mode); 
 	public void increaseConnectedEdges(int limit, int minCommonAnnotations, boolean doubleOrTriple, char mode);
 	public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mode);
 	public void increaseCentralEdges(int power2, int power3, int power4, char mode) ;
@@ -62,7 +62,9 @@ public interface Aligner extends Receiver {
 	public void alignClusterEdges(int minCommonAnnotations, String clusterType,long clusterIDOfOrganism1, long clusterIDOfOrganism2,boolean addPair, char mode);
 	public void addMeaninglessMapping(int limit, char mode);
 	public void removeBadMappings(int k, double sim, boolean keepEdges, int limit);
+	public void removeBadMappingsRandomly(int k, double sim, boolean keepEdges, int limit);
 	public void removeMappingsWithoutEdges(int limit);
+	public void removeMappingsWithoutEdgesRandomly(int limit);
 	public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold);
 	public void removeBadMappingsToReduceInduction2(int k, double sim, boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold);
 	public void reduceInduction1(int simTreshold, int annotationTreshold,int powerTreshold);
