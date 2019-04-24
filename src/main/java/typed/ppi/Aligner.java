@@ -55,7 +55,9 @@ public interface Aligner extends Receiver {
 	public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mode);
 	public void increaseCentralEdges(int power2, int power3, int power4, char mode) ;
 	public Future<Boolean>  alignCentralPowerNodes(int minCommonAnnotations, double sim, int power2, int power3, int power4, char mode);
+	public Future<Boolean> alignCentralPowerNodesFromTop(int minCommonAnnotations, double sim, char powerMode, int limit, char mode);
 	public Future<Boolean> alignAlternativeCentralNodes(int minCommonAnnotations, double sim, double score1, double score2, String algorithm, char mode);
+	public Future<Boolean> alignAlternativeCentralNodesFromTop(int minCommonAnnotations, double sim, int limit, String algorithm, char mode);
 	public void alignClusters(int minCommonAnnotations,double sim, String clusterType, long clusterIDOfOrganism1, long clusterIDOfOrganism2, char mode);
 	public void alignClusterEdges(int minCommonAnnotations, String clusterType,long clusterIDOfOrganism1, long clusterIDOfOrganism2,boolean addPair, char mode);
 	public void addMeaninglessMapping(int limit, char mode);

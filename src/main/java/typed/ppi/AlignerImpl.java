@@ -2668,6 +2668,73 @@ public Future<Boolean> alignCentralPowerNodes(int minCommonAnnotations, double s
 	else
 		return Futures.successful(false);
 }
+
+// slow due to sort operation
+public Future<Boolean> alignCentralPowerNodesFromTop(int minCommonAnnotations, double sim, char powerMode, int limit, char mode){
+	System.out.println("Align Central Power Nodes for Aligner "+this.alignmentNo);
+	
+	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
+	boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+		StatementResult result;
+		int countRows = 0;
+		Session acn = AkkaSystem.driver.session();
+		try ( org.neo4j.driver.v1.Transaction tx = acn.beginTransaction() ){		
+		markUnalignedNodes();
+		ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
+		ArrayList<Node> record = new ArrayList<Node>();
+		if (sim>0.0)
+			result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" return p,n,min(n.power"+powerMode+", p.power"+powerMode+") order by min(n.power"+powerMode+", p.power"+powerMode+") desc limit "+limit);
+		else
+			result = tx.run("match (p:Organism2),(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" return p,n,min(n.power4, p.power4) ,min(n.power3, p.power3) ,min(n.power2, p.power2)  order by min(n.power"+powerMode+", p.power"+powerMode+") desc limit "+limit);
+		while(result.hasNext()){
+			Record row = result.next();
+			record.clear();
+			for ( Entry<String,Object> column : row.asMap().entrySet() ){
+				if(column.getValue()!=null)
+					switch (column.getKey()) {
+					case "p":
+						record.add(0,row.get( column.getKey() ).asNode());
+						break;
+					case "n":
+						record.add(1,row.get( column.getKey() ).asNode());
+						break;
+					case "min(n.power4, p.power4)":
+						;
+						break;
+					case "min(n.power3, p.power3)":
+						;
+						break;
+					case "min(n.power2, p.power2)":
+						;
+						break;
+					default:
+						System.out.println("Unexpected column "+column.getKey());
+						break;
+					}
+				}
+			records.add(new ArrayList<Node>(record));
+			countRows++;
+			}
+		Set<Node> aligned = new HashSet<Node>();
+		System.out.println("Number of rows in alignCentralPowerNodes query:"+countRows+" of "+addResultsToAlignment(records,aligned,mode)+" were added.");
+		
+		unmarkAllNodes();
+			tx.success(); tx.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println("alignCentralNodes: " + e.getMessage());
+			return false;
+		} finally {acn.close();}
+		return true;
+	} );
+
+	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
+	if(success)
+		return Futures.successful(true);
+	else
+		return Futures.successful(false);
+}
+
 // denenmedi
 // algorithms: betweenness, harmonic, pagerank and closeness (not working),
 public Future<Boolean> alignAlternativeCentralNodes(int minCommonAnnotations, double sim, double score1, double score2, String algorithm, char mode){
@@ -2694,6 +2761,84 @@ System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignme
 					+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
 					+ " and p."+algorithm+" >"+score2+" and n."+algorithm+" >"+score1		
 					+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+"), length(FILTER(x in p.annotations WHERE x in n.annotations)) desc");
+		while(result.hasNext()){
+			Record row = result.next();
+			record.clear();
+			for ( Entry<String,Object> column : row.asMap().entrySet() ){
+				if(column.getValue()!=null)
+					switch (column.getKey()) {
+					case "p":
+						record.add(0,row.get( column.getKey() ).asNode());
+						break;
+					case "n":
+						record.add(1,row.get( column.getKey() ).asNode());
+						break;
+					case "min(p.pagerank, n.pagerank)":
+						;
+						break;
+					case "min(p.betweenness, n.betweenness)":
+						;
+						break;
+					case "min(p.closeness, n.closeness)":
+						;
+						break;
+					case "min(p.harmonic, n.harmonic)":
+						;
+						break;
+					default:
+						System.out.println("Unexpected column "+column.getKey());
+						break;
+					}
+				}
+			records.add(new ArrayList<Node>(record));
+			countRows++;
+			}
+		Set<Node> aligned = new HashSet<Node>();
+		System.out.println("Number of rows in alignAlternativeCentralNodes query: "+countRows+" of "+addResultsToAlignment(records,aligned,mode)+" were added.");
+		unmarkAllNodes();
+			tx.success(); tx.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println("alignAlternativeCentralNodes: " + e.getMessage());
+			return false;
+		} finally {acn.close();}
+		return true;
+	} );
+
+	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
+	if(success)
+		return Futures.successful(true);
+	else
+		return Futures.successful(false);
+}
+
+//slow due to sort operation
+public Future<Boolean> alignAlternativeCentralNodesFromTop(int minCommonAnnotations, double sim, int limit, String algorithm, char mode){
+System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignmentNo);
+	
+	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
+	boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+		StatementResult result;
+		int countRows = 0;
+		Session acn = AkkaSystem.driver.session();
+		try ( org.neo4j.driver.v1.Transaction tx = acn.beginTransaction() ){		
+		markUnalignedNodes();
+		
+		ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
+		ArrayList<Node> record = new ArrayList<Node>();
+		if(sim>0.0)
+			result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
+				+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
+				+ " and t.similarity >= "+sim 
+//				+ " and p."+algorithm+" >"+score2+" and n."+algorithm+" >"+score1		
+				+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+"), length(FILTER(x in p.annotations WHERE x in n.annotations)) desc"
+				+ " limit "+limit);
+		else
+			result = tx.run("match (p:Organism2),(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
+					+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
+//					+ " and p."+algorithm+" >"+score2+" and n."+algorithm+" >"+score1		
+					+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+"), length(FILTER(x in p.annotations WHERE x in n.annotations)) desc"
+					+ " limit "+limit);
 		while(result.hasNext()){
 			Record row = result.next();
 			record.clear();
