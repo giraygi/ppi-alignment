@@ -2674,8 +2674,8 @@ public Future<Boolean> alignCentralPowerNodes(int minCommonAnnotations, double s
 		return Futures.successful(false);
 }
 
-// slow due to sort operation
-public Future<Boolean> alignCentralPowerNodesFromTop(int minCommonAnnotations, double sim, char powerMode, int limit, char mode){
+// if sim = 0 it runs slow due to sort and join operation
+public Future<Boolean> alignCentralPowerNodesFromTop(int minCommonAnnotations, double sim, char powerMode, double percentile, int limit, char mode){
 	System.out.println("Align Central Power Nodes for Aligner "+this.alignmentNo);
 	
 	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
@@ -2688,9 +2688,25 @@ public Future<Boolean> alignCentralPowerNodesFromTop(int minCommonAnnotations, d
 		ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
 		ArrayList<Node> record = new ArrayList<Node>();
 		if (sim>0.0)
-			result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" and t.similarity >= "+sim+" return p,n,min(n.power"+powerMode+", p.power"+powerMode+") order by min(n.power"+powerMode+", p.power"+powerMode+") desc limit "+limit);
+			result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
+				+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"'))"
+				+ " and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+ " and t.similarity >= "+sim 
+				+ " with percentileCont(p.power"+powerMode+", "+percentile+") as percentile2, percentileCont(n.power"+powerMode+", "+percentile+") as percentile1"	
+				+ " match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where p.power"+powerMode+" >= percentile2 and n.power"+powerMode+" >= percentile1 and"
+				+ " (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and"
+				+ " length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+ " and t.similarity >= "+sim 
+				+ " return p,n,min(p.power"+powerMode+", n.power"+powerMode+") order by min(p.power"+powerMode+", n.power"+powerMode+") desc, length(FILTER(x in p.annotations WHERE x in n.annotations)) desc "
+				+ " limit "+limit);
 		else
-			result = tx.run("match (p:Organism2),(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" return p,n,min(n.power4, p.power4) ,min(n.power3, p.power3) ,min(n.power2, p.power2)  order by min(n.power"+powerMode+", p.power"+powerMode+") desc limit "+limit);
+			result = tx.run("match (p:Organism2) where ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
+					+ " with percentileCont(p.power"+powerMode+", "+percentile+") as percentile2"
+					+ " match (n:Organism1) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')"
+					+ " with percentileCont(n.power"+powerMode+", "+percentile+") as percentile1,percentile2"
+					+ " match (p:Organism2),(n:Organism1) where p.power"+powerMode+" >= percentile2 and n.power"+powerMode+" >= percentile1 and"
+					+ " (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and"
+					+ " length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
+					+ " return p,n,min(p.power"+powerMode+", n.power"+powerMode+") order by min(p.power"+powerMode+", n.power"+powerMode+") desc, length(FILTER(x in p.annotations WHERE x in n.annotations)) desc "
+					+ " limit "+limit);
 		while(result.hasNext()){
 			Record row = result.next();
 			record.clear();
@@ -2703,13 +2719,13 @@ public Future<Boolean> alignCentralPowerNodesFromTop(int minCommonAnnotations, d
 					case "n":
 						record.add(1,row.get( column.getKey() ).asNode());
 						break;
-					case "min(n.power4, p.power4)":
+					case "min(p.power4, n.power4)":
 						;
 						break;
-					case "min(n.power3, p.power3)":
+					case "min(p.power3, n.power3)":
 						;
 						break;
-					case "min(n.power2, p.power2)":
+					case "min(p.power2, n.power2)":
 						;
 						break;
 					default:
@@ -2817,8 +2833,8 @@ System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignme
 		return Futures.successful(false);
 }
 
-//slow due to sort operation
-public Future<Boolean> alignAlternativeCentralNodesFromTop(int minCommonAnnotations, double sim, int limit, String algorithm, char mode){
+//if sim = 0 it runs slow due to sort and join operation
+public Future<Boolean> alignAlternativeCentralNodesFromTop(int minCommonAnnotations, double sim, double percentile, int limit, String algorithm, char mode){
 System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignmentNo);
 	
 	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
@@ -2833,16 +2849,23 @@ System.out.println("Align Central "+algorithm+" Nodes for Aligner "+this.alignme
 		ArrayList<Node> record = new ArrayList<Node>();
 		if(sim>0.0)
 			result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
-				+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
-				+ " and t.similarity >= "+sim 
-//				+ " and p."+algorithm+" >"+score2+" and n."+algorithm+" >"+score1		
-				+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+"), length(FILTER(x in p.annotations WHERE x in n.annotations)) desc"
+				+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"'))"
+				+ " and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+ " and t.similarity >= "+sim 
+				+ " with percentileCont(p."+algorithm+", "+percentile+") as percentile2, percentileCont(n."+algorithm+", "+percentile+") as percentile1"
+				+ " match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where p."+algorithm+" >= percentile2 and n."+algorithm+" >= percentile1 and"
+				+ " (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and"
+				+ " length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+ " and t.similarity >= "+sim 
+				+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+") desc, length(FILTER(x in p.annotations WHERE x in n.annotations)) desc "
 				+ " limit "+limit);
 		else
-			result = tx.run("match (p:Organism2),(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
-					+ " and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
-//					+ " and p."+algorithm+" >"+score2+" and n."+algorithm+" >"+score1		
-					+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+"), length(FILTER(x in p.annotations WHERE x in n.annotations)) desc"
+			result = tx.run("match (p:Organism2) where ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"')"
+					+ " with percentileCont(p."+algorithm+", "+percentile+") as percentile2"
+					+ " match (n:Organism1) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')"
+					+ " with percentileCont(n."+algorithm+", "+percentile+") as percentile1,percentile2"
+					+ " match (p:Organism2),(n:Organism1) where p."+algorithm+" >= percentile2 and n."+algorithm+" >= percentile1 and"
+					+ " (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and"
+					+ " length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations
+					+ " return p,n,min(p."+algorithm+", n."+algorithm+") order by min(p."+algorithm+", n."+algorithm+") desc, length(FILTER(x in p.annotations WHERE x in n.annotations)) desc "
 					+ " limit "+limit);
 		while(result.hasNext()){
 			Record row = result.next();
