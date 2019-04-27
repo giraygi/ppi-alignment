@@ -66,6 +66,12 @@ public class AkkaSystem {
 	int sizeOfSecondNetwork = 0;
 	int maxCommonAnnotations = 0;
 	double maxSimilarity = 0.0;
+	double averageCommonAnnotations = 0;
+	double averageSimilarity = 0.0;
+	int minCommonAnnotations = 0;
+	double minSimilarity = 0.0;
+	int numberOfSimilarityLinks = 0;
+	int numberOfNodePairsWithBothSimilarityAndCommonAnnotations = 0;
 	int noofAligners;
 	static akka.actor.ActorSystem system2 = akka.actor.ActorSystem.create();
 	TypedActorExtension typed = TypedActor.get(system2);
@@ -145,7 +151,7 @@ public class AkkaSystem {
 			fr = new FileReader(proteinsOfOrganism2); 
 			br =  new BufferedReader(fr); 
 			line = null;
-			System.out.println("kamil1");
+			System.out.println("Nodes of the first organism are created.");
 			while((line = br.readLine())!=null)
 			{ 
 				tx.run("CREATE (a:Organism2 {proteinName:'"+line+"', annotations:[], power2: 0, power3: 0, power4: 0, marked:[], markedQuery:[]})");
@@ -154,7 +160,7 @@ public class AkkaSystem {
 			br =  new BufferedReader(fr); 
 			line = null;
 			proteinPair = null;
-			System.out.println("kamil2");
+			System.out.println("Nodes of the second organism are created.");
 			while((line = br.readLine())!=null)
 			{ 
 				proteinPair = line.split(" ");
@@ -163,7 +169,7 @@ public class AkkaSystem {
 				tx.run("match (n:Organism1 {proteinName: '"+proteinPair[0]+"'}), (m:Organism2 {proteinName: '"+proteinPair[1]+"'}) create (n)-[:SIMILARITY {similarity: "+Double.parseDouble(proteinPair[2])+", markedQuery:[]}]->(m) ");
 
 			}
-			System.out.println("kamil3");		
+			System.out.println("Similarities are created.");		
 			
 			tx.success(); tx.close();
 		} catch (Exception e) {
@@ -184,7 +190,7 @@ public class AkkaSystem {
 				//tx.run("CREATE (n)-[r:INTERACTS_1]->(m) with (n),(m),(r) where n.proteinName='"+proteinPair[0]+"' and m.proteinName='"+proteinPair[1]+"' return (r)");
 				tx.run("match (n:Organism1 {proteinName: '"+proteinPair[0]+"'}), (m:Organism1 {proteinName: '"+proteinPair[1]+"'}) create (n)-[:INTERACTS_1 {marked:[], markedQuery:[]}]->(m) ");
 			}
-			System.out.println("kamil4");
+			System.out.println("Interactions of the first organism are created.");
 			
 			tx.success(); tx.close();
 		} catch (Exception e) {
@@ -206,7 +212,7 @@ public class AkkaSystem {
 				//tx.run("CREATE (n)-[r:INTERACTS_2]->(m) with (n),(m),(r) where n.proteinName='"+proteinPair[0]+"' and m.proteinName='"+proteinPair[1]+"' return (r)");
 				tx.run("match (n:Organism2 {proteinName: '"+proteinPair[0]+"'}), (m:Organism2 {proteinName: '"+proteinPair[1]+"'}) create (n)-[:INTERACTS_2 {marked:[], markedQuery:[]}]->(m) ");
 			}
-			System.out.println("kamil5");
+			System.out.println("Interactions of the second organism are created.");
 			
 			tx.success(); tx.close();
 		} catch (Exception e) {
@@ -236,7 +242,7 @@ public class AkkaSystem {
 				tx.run("MATCH (n:Organism1 {proteinName: '"+proteinWithAnnotations[0]+"'}) SET n.annotations = "+proteinsAnnotations+" return (n)");
 								
 			}		
-			System.out.println("kamil6");
+			System.out.println("Annotations of the first organism are created.");
 			tx.success(); tx.close();
 		} catch (Exception e) {
 			System.out.println("could not create annotations of the first organism");
@@ -264,7 +270,7 @@ public class AkkaSystem {
 			System.out.println(proteinsAnnotations);
 			tx.run("MATCH (n:Organism2 {proteinName: '"+proteinWithAnnotations[0]+"'}) SET n.annotations = "+proteinsAnnotations+" return (n)");
 			}
-			System.out.println("kamil7");
+			System.out.println("Annotations of the second organism are created.");
 		    tx.success(); tx.close();
 		} catch(Exception e){
 			System.out.println("Could not create annotations of the second organism");
@@ -272,6 +278,9 @@ public class AkkaSystem {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	public void computeMetaData() {
 		try ( org.neo4j.driver.v1.Transaction tx = session.beginTransaction() )
 		{
 			StatementResult result;
@@ -281,12 +290,39 @@ public class AkkaSystem {
 			result = tx.run( "match (p:Organism1)-[t:SIMILARITY]->(n:Organism2) return max(t.similarity)");
 			maxSimilarity = Double.parseDouble(result.single().get("max(t.similarity)").toString());
 			System.out.println("Maximum Similarity: "+maxSimilarity);
+			
+			result = tx.run( "match (p:Organism1)-[t:SIMILARITY]->(n:Organism2) return avg(length(FILTER(x in p.annotations WHERE x in n.annotations)))");
+			averageCommonAnnotations = Double.parseDouble(result.single().get("avg(length(FILTER(x in p.annotations WHERE x in n.annotations)))").toString());
+			System.out.println("Average Number of Common Annotations: "+averageCommonAnnotations);
+			result = tx.run( "match (p:Organism1)-[t:SIMILARITY]->(n:Organism2) return avg(t.similarity)");
+			averageSimilarity = Double.parseDouble(result.single().get("avg(t.similarity)").toString());
+			System.out.println("Average Similarity: "+averageSimilarity);
+			
+			result = tx.run( "match (p:Organism1)-[t:SIMILARITY]->(n:Organism2) return min(length(FILTER(x in p.annotations WHERE x in n.annotations)))");
+			minCommonAnnotations = Integer.parseInt(result.single().get("min(length(FILTER(x in p.annotations WHERE x in n.annotations)))").toString());
+			System.out.println("Minimum Number of Common Annotations: "+minCommonAnnotations);
+			result = tx.run( "match (p:Organism1)-[t:SIMILARITY]->(n:Organism2) return min(t.similarity)");
+			minSimilarity = Double.parseDouble(result.single().get("min(t.similarity)").toString());
+			System.out.println("Minimum Similarity: "+minSimilarity);
+			
+			result = tx.run( "match (p:Organism1)-[t:SIMILARITY]->(n:Organism2) return count(t.similarity)");
+			numberOfSimilarityLinks = Integer.parseInt(result.single().get("count(t.similarity)").toString());
+			System.out.println("Number of Similarity Links: "+numberOfSimilarityLinks);
+			
+			result = tx.run( "match (p:Organism1)-[t:SIMILARITY]->(n:Organism2) where length(FILTER(x in p.annotations WHERE x in n.annotations)) >=1 return count(t.similarity)");
+			numberOfNodePairsWithBothSimilarityAndCommonAnnotations = Integer.parseInt(result.single().get("count(t.similarity)").toString());
+			System.out.println("Number of Node Pairs With Both Similarity and Common Annotations: "+numberOfNodePairsWithBothSimilarityAndCommonAnnotations);
+			
 			tx.success(); tx.close();
 		} catch (Exception e) {
-			System.out.println("Could not create metadata");
+			System.err.println("Could not create metadata::: "+e.getMessage());
 		}
-		
+		this.sizeOfFirstNetwork = this.countAllEdgesOfANetwork(true);
+		System.out.println("Size of First Network: "+this.sizeOfFirstNetwork);
+		this.sizeOfSecondNetwork = this.countAllEdgesOfANetwork(false);
+		System.out.println("Size of Second Network: "+this.sizeOfSecondNetwork);
 	}
+	
 	
 	public void computePowers(){
 		try ( org.neo4j.driver.v1.Transaction tx = session.beginTransaction() )
@@ -2387,10 +2423,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.csLabelPropagationGO = as.sortSimilarClusters("labelpropagation", "commonGO");
 		as.csLabelPropagationBitScore = as.sortSimilarClusters("labelpropagation", "BitScore");
 		
-		as.sizeOfFirstNetwork = as.countAllEdgesOfANetwork(true);
-		System.out.println("Size of First Network: "+as.sizeOfFirstNetwork);
-		as.sizeOfSecondNetwork = as.countAllEdgesOfANetwork(false);
-		System.out.println("Size of Second Network: "+as.sizeOfSecondNetwork);
+		as.computeMetaData();
 		
 		if (args[7].equals("5")) {
 			int tolerance = 0;
