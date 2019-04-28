@@ -191,6 +191,14 @@ public class AlignerImpl implements Aligner, Receiver {
 		return count;
 	} );
 		System.out.println(added+" mappings were added with addAlignment(String alignment)");
+		
+		if(added<=0) {
+			noofCyclesAlignmentUnchanged++;
+			this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
+		}
+		else
+			noofCyclesAlignmentUnchanged = 0;
+		
 		this.bs = as.calculateGlobalBenchmarks(this);	
 	}
 	// eksik olabilir. uygulama içinde test edilmedi
@@ -209,17 +217,10 @@ public void addAlignment(SubGraph alignment){
 			Object[] as = diff.aligns.toArray();
 			
 			for (Object relationship : as) {
-//				System.out.println(((Relationship) relationship).startNodeId()+" - "+((Relationship) relationship).endNodeId());
 				rs = tx.run("match (n:Organism2),(m:Organism1) where id(n) = "+((Relationship) relationship).startNodeId()+" and id(m) = "+((Relationship) relationship).endNodeId()+" create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: n.proteinName+'*"+alignmentNo+"*'+m.proteinName,markedQuery:[]}]->(m)").consume();
 				count+=rs.counters().relationshipsCreated();
 			}
-			
-//			while(diff.aligns.iterator().hasNext()){
-//			rel = diff.aligns.iterator().next();
-//			System.out.println(rel.startNodeId()+" - "+rel.endNodeId());
-//			tx.run("match (n:Organism2),(m:Organism1) where id(n) = "+rel.startNodeId()+" and id(m) = "+rel.endNodeId()+" create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: n.proteinName+'*"+alignmentNo+"*'+m.proteinName,markedQuery:[]}]->(m)");
-//			count++;
-//			}
+
 		tx.success(); tx.close();
 		} catch (Exception e){
 			System.out.println("Add Alignment SubGraph::: " + e.getMessage());
@@ -236,27 +237,8 @@ public void addAlignment(SubGraph alignment){
 			}
 				
 		}
-			
-		/*
-		 SubGraph unaligned = findUnalignedNodes();
-		unaligned.nodes1.removeAll(alignment.nodes1);
-		unaligned.nodes2.removeAll(alignment.nodes2);
-		Relationship temp;
-		try ( org.neo4j.driver.v1.Transaction tx = session.beginTransaction()  )
-		{	
-		while(alignment.aligns.iterator().hasNext()){
-			temp = alignment.aligns.iterator().next();
-			tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where id(n) = "+temp.startNodeId()+" and id(m) = "+temp.endNodeId()+" create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: n.proteinName+'*"+alignmentNo+"*'+m.proteinName,markedQuery:[]}]->(m)");	
-			}
-		tx.success(); tx.close();
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-		this.bs = as.calculateGlobalBenchmarks(this); 
-		 * */
 		return count;
 	} );
-	
 	
 	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
 		    BufferedWriter bw = new BufferedWriter(fw);
@@ -268,8 +250,10 @@ public void addAlignment(SubGraph alignment){
 		}
 	
 	System.out.println(added+" mappings are added from SubGraph "+alignment.type+" of aligner "+alignment.senderNo+" to aligner "+this.alignmentNo);
-	if(added<=0)
+	if(added<=0) {
 		noofCyclesAlignmentUnchanged++;
+		this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
+	}
 	else
 		noofCyclesAlignmentUnchanged = 0;
 	this.bs = as.calculateGlobalBenchmarks(this);	
@@ -307,7 +291,10 @@ public void addAlignment(int alignmentNo) {
 	
 	System.out.println(added+" mappings are added from aligner "+alignmentNo+" to aligner "+this.alignmentNo);
 	if(added<=0)
+	{
 		noofCyclesAlignmentUnchanged++;
+		this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
+	}
 	else
 		noofCyclesAlignmentUnchanged = 0;
 }
@@ -347,7 +334,10 @@ public void addAlignment(long markedQuery, int minFrequency){
 	
 	System.out.println(added+" mappings are added from markedQuery "+markedQuery+" to aligner "+this.alignmentNo);
 	if(added<=0)
+	{
 		noofCyclesAlignmentUnchanged++;
+		this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
+	}
 	else
 		noofCyclesAlignmentUnchanged = 0;
 }
@@ -3292,7 +3282,20 @@ public void removeMappingsWithoutEdges(int limit){
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return rs.counters().relationshipsDeleted();
 } );	
-	System.out.println(removed+" mappings without edges were removed from aligner "+this.alignmentNo+" with removeMappingWithoutEdges Method.");
+	
+	if(removed>0)
+		noofCyclesAlignmentUnchanged = 0;	
+	
+	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
+		    BufferedWriter bw = new BufferedWriter(fw);
+		    PrintWriter out = new PrintWriter(bw))
+		{
+			System.err.println(removed+" mappings without edges were removed from aligner "+this.alignmentNo+" with removeMappingWithoutEdges Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveMappingsWithoutEdges | "+ZonedDateTime.now()+"]: "+removed+" mappings without edges were removed from aligner "+this.alignmentNo+" with removeMappingWithoutEdges Method.");
+		
+		} catch (IOException e) {
+		    //exception handling left as an exercise for the reader
+		}
 }
 
 // daha son haliyle denenmedi. rand() eklenerek rastgeleleştirilebilir.
@@ -3318,7 +3321,19 @@ public void removeMappingsWithoutEdgesRandomly(int limit){
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return rs.counters().relationshipsDeleted();
 } );	
-	System.out.println(removed+" mappings without edges were removed from aligner "+this.alignmentNo+" with removeMappingsWithoutEdgesRandomly Method.");
+	if(removed>0)
+		noofCyclesAlignmentUnchanged = 0;	
+	
+	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
+		    BufferedWriter bw = new BufferedWriter(fw);
+		    PrintWriter out = new PrintWriter(bw))
+		{
+			System.err.println(removed+" mappings without edges were removed from aligner "+this.alignmentNo+" with removeMappingWithoutEdgesRandomly Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveMappingsWithoutEdgesRandomly | "+ZonedDateTime.now()+"]: "+removed+" mappings without edges were removed from aligner "+this.alignmentNo+" with removeMappingWithoutEdgesRandomly Method.");
+		
+		} catch (IOException e) {
+		    //exception handling left as an exercise for the reader
+		}
 }
 
 
@@ -3327,7 +3342,7 @@ public void removeMappingsWithoutEdgesRandomly(int limit){
  * ikinci aşamada addMeaninglessMappings ile birlikte çalıştırılır.
  * */
 
-public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold){
+public void removeBadMappingsToReduceInduction1(boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold){
 	System.out.println("removeBadAlignmentToReduceInduction1 for Aligner "+this.alignmentNo);
 	
 	TransactionTemplate.Monitor tm = new TransactionTemplate.Monitor.Adapter();
@@ -3336,6 +3351,7 @@ public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepE
 	int removed = template.with(AkkaSystem.graphDb).execute( transaction -> {
 		Session rmwe = AkkaSystem.driver.session();
 		StatementResult result;
+		ResultSummary rs = null; 
 		int count = 0;
 		try ( org.neo4j.driver.v1.Transaction tx = rmwe.beginTransaction())
 	    {
@@ -3376,14 +3392,18 @@ public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepE
 							}
 						}
 					temp = compareSimilarityContribution(t, a,simTreshold, annotationTreshold,powerTreshold);
-					if (temp==t)
-						tx.run("match ()-[a:ALIGNS]-() where id(a) ="+a+" delete a");
-					else /*if (temp==a)*/
-						tx.run("match ()-[t:ALIGNS]-() where id(t) ="+t+" delete t");
+//					System.out.println(temp);
+					if (temp==t) {
+						rs = tx.run("match ()-[a:ALIGNS]-() where id(a) ="+a+" delete a").consume();
+						count+=rs.counters().relationshipsDeleted();
+					}
+					else if (temp==a) {
+						rs = tx.run("match ()-[t:ALIGNS]-() where id(t) ="+t+" delete t").consume();
+						count+=rs.counters().relationshipsDeleted();
+					}
+						
 					t = 0;
 					a = 0;
-					if(temp!=0)
-						count++;
 					temp = 0;
 					}
 				
@@ -3393,23 +3413,26 @@ public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepE
 	    } catch (Exception e){
 	    	System.out.println("removeBadMappingsToReduceInduction1: " + e.getMessage());
 	    	if(Math.random() < 0.5)
-	    		removeBadMappingsToReduceInduction1(k, sim, keepEdges,simTreshold, annotationTreshold,powerTreshold);
+	    		removeBadMappingsToReduceInduction1(keepEdges,simTreshold, annotationTreshold,powerTreshold);
 	      }
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return count;
 } );	
+	
+	if(removed>0)
+		noofCyclesAlignmentUnchanged = 0;	
 	
 	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
 		    BufferedWriter bw = new BufferedWriter(fw);
 		    PrintWriter out = new PrintWriter(bw))
 		{
 		if(keepEdges) {
-			System.err.println(removed+" induced mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
-			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsToReduceInduction1 | "+ZonedDateTime.now()+"]: "+removed+" induced mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingToReduceInduction1 Method.");
+			System.err.println(removed+" induced mappings without edges having less than "+annotationTreshold+" annotations and "+simTreshold+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsToReduceInduction1 | "+ZonedDateTime.now()+"]: "+removed+" induced mappings without edges having less than "+annotationTreshold+" annotations and "+simTreshold+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingToReduceInduction1 Method.");
 		}
 		else {
-			System.err.println(removed+" induced mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
-			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsToReduceInduction1 | "+ZonedDateTime.now()+"]: "+removed+" induced mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingToReduceInduction1 Method.");
+			System.err.println(removed+" induced mappings having less than "+annotationTreshold+" annotations and "+simTreshold+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsToReduceInduction1 | "+ZonedDateTime.now()+"]: "+removed+" induced mappings having less than "+annotationTreshold+" annotations and "+simTreshold+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingToReduceInduction1 Method.");
 		}
 		
 		} catch (IOException e) {
@@ -3419,7 +3442,7 @@ public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepE
 	this.bs = as.calculateGlobalBenchmarks(this);
 }
 // Diğer ağ için
-public void removeBadMappingsToReduceInduction2(int k, double sim, boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold){
+public void removeBadMappingsToReduceInduction2(boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold){
 	System.out.println("removeBadAlignmentToReduceInduction2 for Aligner "+this.alignmentNo);
 	StatementResult result;
 	
@@ -3470,9 +3493,25 @@ public void removeBadMappingsToReduceInduction2(int k, double sim, boolean keepE
     } catch (Exception e){
     	System.out.println("removeBadMappingsToReduceInduction2: " + e.getMessage());
     	if(Math.random() < 0.5)
-    		removeBadMappingsToReduceInduction2(k, sim, keepEdges,simTreshold, annotationTreshold,powerTreshold);
+    		removeBadMappingsToReduceInduction2(keepEdges,simTreshold, annotationTreshold,powerTreshold);
       }
 	this.bs = as.calculateGlobalBenchmarks(this);
+}
+
+public void removeBadMappingsWhenUnimproved(int limit, int noofCycles) {
+	
+	if(noofCycles <=  this.noofCyclesAlignmentUnchanged) {
+		double prob = Math.random();
+		System.err.println("Opening Some Search Space!!!!!");
+		if(prob < 0.33)
+			this.removeBadMappingsRandomly(0, as.minSimilarity+30, true,limit);
+		else if (prob < 0.67)
+			this.removeBadMappingsRandomly((int)Math.floor(as.averageCommonAnnotations/2), 0, true,limit);
+		else
+			this.removeBadMappingsRandomly(0, 0, false,(int)Math.floor(limit/2));	
+		this.setNoofCyclesAlignmentUnchanged(0);
+	}
+	
 }
 
 /*
@@ -3763,39 +3802,65 @@ private long compareSimilarityContribution(long relationshipID1, long relationsh
 	    	  System.err.println("compareSimilarityContribution::: "+e.getMessage());
 	    	  compareSimilarityContribution(relationshipID1, relationshipID2,simTreshold,annotationTreshold,powerTreshold);
 	      } finally {
-//		System.out.println("-------------");
-//		System.out.println("Common Annotations1: "+commonAnnotations1);
-//		System.out.println("Common Annotations2: "+commonAnnotations2);
-//		System.out.println("similarity1: "+similarity1);
-//		System.out.println("similarity2: "+similarity2);
-//		System.out.println("-------------");
 	    	  csc.close();
 	      }
 		
-		if(powersum1<powerTreshold&&powersum2<powerTreshold)
-			return 0L;
-		if(similarity1<simTreshold&&similarity2<simTreshold)
-			return 0L;
-		if(commonAnnotations1<annotationTreshold&&commonAnnotations2<annotationTreshold)
-			return 0L;
+		if(powersum1>powerTreshold&&powersum2>powerTreshold) {
+//			System.out.println("ps1: "+powersum1+" ps2: "+powersum2);
+			return -1L;
+		} else
+		if(similarity1>simTreshold&&similarity2>simTreshold){
+//			System.out.println("sim1: "+similarity1+" sim2: "+similarity2);
+			return -1L;
+		} else
+		if(commonAnnotations1>annotationTreshold&&commonAnnotations2>annotationTreshold){
+//			System.out.println("commonAnnotations1: "+commonAnnotations1+" commonAnnotations2: "+commonAnnotations2);
+			return -1L;
+		} else {
+//			System.out.println("ca1: "+commonAnnotations1+" ca2: "+commonAnnotations2+" sim1: "+similarity1+" sim2: "+similarity2+" ps1: "+powersum1+" ps2: "+powersum2);
+		}
 		
-		if (commonAnnotations1*similarity1+powersum1 > commonAnnotations2*similarity2+powersum2)
-			return relationshipID1;
-		else if (commonAnnotations1*similarity1 + powersum1< commonAnnotations2*similarity2+powersum2)
-			return relationshipID2;
+		if ((commonAnnotations1+1)*(similarity1+1)*(powersum1+1) > (commonAnnotations2+1)*(similarity2+1)*(powersum2+1))
+			{
+//				System.out.println("winnerformula: 1");
+				return relationshipID1;
+			}
+		else if ((commonAnnotations1+1)*(similarity1+1) *(powersum1+1)< (commonAnnotations2+1)*(similarity2+1)+(powersum2+1))
+			{
+//				System.out.println("winnerformula: 2");
+				return relationshipID2;
+			}
 		else if (powersum1>powersum2)
-			return relationshipID1;
+			{
+//				System.out.println("winnerpowersum: 1");
+				return relationshipID1;
+			}
 		else if (powersum1<powersum2)
-			return relationshipID2;
+			{
+//				System.out.println("winnerpowersum: 2");
+				return relationshipID2;
+			}
 		else if (similarity1 > similarity2)
-			return relationshipID1;
+			{
+				System.out.println("winnersimilarity: 1");
+				return relationshipID1;
+			}
 		else if (similarity1 < similarity2)
-			return relationshipID2;
+			{
+//				System.out.println("winnersimilarity: 2");
+				return relationshipID2;
+			}
 		else if (commonAnnotations1 > commonAnnotations2)
-			return relationshipID1;
+			{
+//				System.out.println("winnerannotations: 1");
+				return relationshipID1;
+			}
 		else if (commonAnnotations1 < commonAnnotations2)
-			return relationshipID2;
-			return (long) 0;
+			{
+//				System.out.println("winnerannotations: 2");
+				return relationshipID2;
+			}
+			return -1L;
 	} );	
 	return greater;
 }
@@ -4478,8 +4543,10 @@ private int addResultsToAlignment(ArrayList<ArrayList<Node>> records,Set<Node> a
 		}
 		return 0;
 	} );
+	
 	if(added<=0) {
 		noofCyclesAlignmentUnchanged++;
+		this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
 		if(noofCyclesAlignmentUnchanged>15)
 			System.err.println("Alignment "+this.alignmentNo+" did not improve itself for "+noofCyclesAlignmentUnchanged+" cycles.");
 		} else {
@@ -4777,7 +4844,7 @@ private static Future<SubGraph> future(Callable<SubGraph> callable, ExecutionCon
 	} catch (Exception e) {
 		// TODO Auto-generated catch block
 		System.err.println("fevzi");
-		SubGraph hezimet = new SubGraph(new AkkaSystem(3,AkkaSystem.databaseAddress),TypedActor.<AlignerImpl>self(),(long) 5);
+		SubGraph hezimet = new SubGraph(new AkkaSystem(3,AkkaSystem.databaseAddress,100,25),TypedActor.<AlignerImpl>self(),(long) 5);
 		hezimet.type = "hep kazanamayız!!!";
 		return Futures.successful(hezimet);
 	}

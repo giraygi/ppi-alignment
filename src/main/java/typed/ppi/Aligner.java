@@ -65,8 +65,8 @@ public interface Aligner extends Receiver {
 	public void removeBadMappingsRandomly(int k, double sim, boolean keepEdges, int limit);
 	public void removeMappingsWithoutEdges(int limit);
 	public void removeMappingsWithoutEdgesRandomly(int limit);
-	public void removeBadMappingsToReduceInduction1(int k, double sim, boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold);
-	public void removeBadMappingsToReduceInduction2(int k, double sim, boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold);
+	public void removeBadMappingsToReduceInduction1(boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold);
+	public void removeBadMappingsToReduceInduction2(boolean keepEdges,int simTreshold, int annotationTreshold,int powerTreshold);
 	public void reduceInduction1(int simTreshold, int annotationTreshold,int powerTreshold);
 	public void reduceInduction2();
 	public void removeInductiveMappings1(int simTreshold, int annotationTreshold,int powerTreshold);

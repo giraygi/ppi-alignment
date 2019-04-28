@@ -73,6 +73,8 @@ public class AkkaSystem {
 	int numberOfSimilarityLinks = 0;
 	int numberOfNodePairsWithBothSimilarityAndCommonAnnotations = 0;
 	int noofAligners;
+	int toleranceLimitForImprovement = 100;
+	int toleranceCycleForImprovement = 25;
 	static akka.actor.ActorSystem system2 = akka.actor.ActorSystem.create();
 	TypedActorExtension typed = TypedActor.get(system2);
 //	ExecutionContext ec = system2.dispatchers().lookup(Dispatchers.DefaultDispatcherId());
@@ -103,9 +105,11 @@ public class AkkaSystem {
 	
 	
 	
-	public AkkaSystem(int noofAligners, String args){
+	public AkkaSystem(int noofAligners, String args, int toleranceLimitForUnimprovedAligners,int toleranceCycleForUnimprovedAligners){
 		this.noofAligners = noofAligners;
 		this.init(args);
+		this.toleranceLimitForImprovement = toleranceLimitForUnimprovedAligners;
+		this.toleranceCycleForImprovement = toleranceCycleForUnimprovedAligners;
 	}
 	
 	public void init(String args){
@@ -2029,198 +2033,213 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 				{
 				
 				if(routees.get(i).getAlignmentNo()==1) {
-					Random rand = new Random();
+					Random rand1 = new Random();
 					Random rand2 = new Random();
-					Random rand3 = new Random();
-					int  n = rand.nextInt(3);
-					int m = rand2.nextInt(3);
-					double s = rand3.nextDouble()*50;
-//					if(s<3) s = 0;
-					if(Math.random() < 0.2)
-					routees.get(i).alignCentralPowerNodes(n, s,0, 30*(m+1)/4, 0, '3');
-					
-					if(Math.random() < 0.2)
-						routees.get(i).alignCentralPowerNodes(n, s, 0, 0, 30*(m+1)/4, '3');
-					
-					routees.get(i).increaseECByAddingPair(n, m*50, '3');
+					int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations/2));
+					double s = rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
+					if(Math.random() < 0.5)
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, '3', 0.3,1000, '3');
+					else
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, '4', 0.3,1000, '3');
+					routees.get(i).increaseECByAddingPair(n, s, '3');
 				}
 					
 					if(routees.get(i).getAlignmentNo()==2) {
-						Random rand = new Random();
-						Random rand2 = new Random();
-						Random rand3 = new Random();
-						int  n = rand.nextInt(5);
-						int m = rand2.nextInt(5)+1;
-						char p = (char) (rand3.nextInt(3)+2);
-						if(Math.random() < 0.8)
-						routees.get(i).increaseECWithFunctionalParameters(m, m, n*50, n*50, '3');
-						
-						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower(m, n*50, m*5, p, false, '3');
-						
-						if(Math.random() < 0.2)
-							routees.get(i).increaseECByAddingPair(n, (m-1)*50, '3');
-					}
-					if(routees.get(i).getAlignmentNo()==3) {
-						Random rand = new Random();
-						int  n = rand.nextInt(5) + 1;
-						routees.get(i).increaseGOCAndBitScore(n, '3');
-						
-						routees.get(i).increaseBitScoreWithTopMappings(10, '3');
-						
-						if(Math.random() < 0.2)
-							routees.get(i).increaseECByAddingPair(n-1, (n-1)*50, '3');
-					}
-					
-					if(routees.get(i).getAlignmentNo()==4) {
-						Random rand = new Random();
+						Random rand1 = new Random();
 						Random rand2 = new Random();
 						Random rand3 = new Random();
 						Random rand4 = new Random();
-						int  n = rand.nextInt(7);
+						Random rand5 = new Random();
+						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations));
+						double s = rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
+						int  m = rand3.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations));
+						double t = rand4. nextInt(4)*AkkaSystem.this.averageSimilarity/4;
+						char c = (char) (rand5.nextInt(3)+2);
+						
+							routees.get(i).increaseECWithFunctionalParameters((int)Math.floor(n/2), (int)Math.floor(m/2), s, t, '3');
+						
+						if(Math.random() < 0.4)
+							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, m*5, c, false, '3');
+						
+						if(Math.random() < 0.4)
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2),s, '3');
+					}
+					if(routees.get(i).getAlignmentNo()==3) {
+						Random rand1 = new Random();
+						Random rand2 = new Random();
+						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations));
+						double s =  rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
+						routees.get(i).increaseGOCAndBitScore((int)Math.floor(n/2), '3');
+						
+						routees.get(i).increaseBitScoreWithTopMappings(50, '3');
+						
+						if(Math.random() < 0.4)
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
+					}
+					
+					if(routees.get(i).getAlignmentNo()==4) {
+						Random rand1 = new Random();
+						Random rand2 = new Random();
+						Random rand3 = new Random();
+						Random rand4 = new Random();
+						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations));
 						int m = rand2.nextInt(7);
 						char p = (char) (rand3.nextInt(3)+2);
-						double s = rand4.nextDouble()*100;
+						double s = rand4.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
 						boolean addPair = Math.random() < 0.5;
 						boolean edges = Math.random() < 0.5;
 						boolean tossBSGOC = Math.random() < 0.5; // BS daha ağırlıklı olmalı. GOC için aşağıdaki if leri tekrarla
 						if(tossBSGOC) {
 							if(edges)
-								routees.get(i).alignClusterEdges(n, "labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism2, addPair, '3');
+								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters(n, s,"labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters((int)Math.floor(n/2), s,"labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism2, '3');
 						} else {
 							if(edges)
-								routees.get(i).alignClusterEdges(n, "labelpropagation", AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism2, addPair, '3');
+								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "labelpropagation", AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters(n, s,"labelpropagation", AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters((int)Math.floor(n/2), s,"labelpropagation", AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism2, '3');
 						}
 						
-						if(Math.random() < 0.2)
-						routees.get(i).increaseECByAddingPair(n, m*50, '3');
+						if(Math.random() < 0.5)
+							   routees.get(i).increaseBitScoreWithTopMappings(50, '3');
 						
-						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower(m+1, n*50, (m+1)*5, p,false, '3');
+						if(Math.random() < 0.4)
+							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, (m+1)*5, p,false, '3');
+						
+						if(Math.random() < 0.5)
+						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
+						
 						
 					}
 					if(routees.get(i).getAlignmentNo()==5) {
-						Random rand = new Random();
+						Random rand1 = new Random();
 						Random rand2 = new Random();
 						Random rand3 = new Random();
 						Random rand4 = new Random();
-						int  n = rand.nextInt(7);
+						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations));
 						int m = rand2.nextInt(7);
 						char p = (char) (rand3.nextInt(3)+2);
-						double s = rand4.nextDouble()*100;
+						double s = rand4.nextInt(4)*AkkaSystem.this.averageSimilarity/4;;
 						boolean addPair = Math.random() < 0.5;
 						boolean edges = Math.random() < 0.5;
 						boolean tossBSGOC = Math.random() < 0.5;
 						if(tossBSGOC) {
 							if(edges)
-								routees.get(i).alignClusterEdges(n, "louvain", AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism2, addPair, '3');
+								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "louvain", AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters(n, s,"louvain", AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters((int)Math.floor(n/2), s,"louvain", AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism2, '3');
 						} else {
 							if(edges)
-								routees.get(i).alignClusterEdges(n, "louvain", AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism2, addPair, '3');
+								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "louvain", AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters(n, s,"louvain", AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters((int)Math.floor(n/2), s,"louvain", AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism2, '3');
 						}
 						
-						if(Math.random() < 0.2)
-							routees.get(i).increaseECByAddingPair(n, m*50, '3');
+						if(Math.random() < 0.5)
+							   routees.get(i).increaseBitScoreWithTopMappings(50, '3');
 						
-						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower(m+1, n*50, (m+1)*5, p,false,'3');
+						if(Math.random() < 0.4)
+							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, (m+1)*5, p,false, '3');
+						
+						if(Math.random() < 0.5)
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
 							
 					}
 					
 					if(routees.get(i).getAlignmentNo()==6)
 					{
-						Random rand = new Random();
+						Random rand1 = new Random();
 						Random rand2 = new Random();
 						Random rand3 = new Random();
-						int  n = rand.nextInt(3);
-						int m = rand2.nextInt(3);
-						double s = rand3.nextDouble()*50;
-//						if(s<5) s = 0;
-						if(Math.random() < 0.2)
-						routees.get(i).alignAlternativeCentralNodes(n, s, 2.5*(m+1)/4, 2.5*(m+1)/4, "pagerank", '3');
 						
-						if(Math.random() < 0.2)
-							routees.get(i).alignCentralPowerNodes(n, s, 0, 0, 40*(m+1)/4, '3');
+						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations/2));
+						double s =  rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
+						char p = (char) (rand3.nextInt(3)+2);
+
+						if(Math.random() < 0.6)
+						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, 1000, "pagerank", '3');
 						
-						routees.get(i).increaseECByAddingPair(n, m*50, '3');
+						if(Math.random() < 0.4)
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
+						
+						routees.get(i).increaseECByAddingPair(n, s, '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==7) {
-						Random rand = new Random();
+						Random rand1 = new Random();
 						Random rand2 = new Random();
-						int  n = rand.nextInt(5) + 1;
+						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations));
+						double s =  rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
 						char p = (char) (rand2.nextInt(3)+2);
 						routees.get(i).increaseBitScoreAndGOC(n, '3');
 						
 						// Ekledikten sonra sonuç görmedim.
-						if(Math.random() < 0.3)
-							routees.get(i).increaseFunctionalParametersWithPower(n, n*50,n*5, p,false,'3');
+						if(Math.random() < 0.5)
+							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s ,n*5, p,false,'3');
+						if(Math.random() < 0.5)
+						   routees.get(i).increaseBitScoreWithTopMappings(50, '3');
 						
-						if(Math.random() < 0.2)
-							routees.get(i).increaseECByAddingPair(n-1, (n-1)*50, '3');
+						if(Math.random() < 0.4)
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
 						
 					}
 					
 					if(routees.get(i).getAlignmentNo()==8)
 					{
-						Random rand = new Random();
+						Random rand1 = new Random();
 						Random rand2 = new Random();
 						Random rand3 = new Random();
-						int  n = rand.nextInt(3);
-						int m = rand2.nextInt(3);
-						double s = rand3.nextDouble()*50;
-//						if(s<5) s = 0;
-						if(Math.random() < 0.2)
-						routees.get(i).alignAlternativeCentralNodes(n, s,10000*(m+1)/4, 10000*(m+1)/4, "betweenness", '3');
 						
-						if(Math.random() < 0.2)
-							routees.get(i).alignCentralPowerNodes(n, s,0, 0, 40*(m+1)/4, '3');
+						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations/2));
+						double s =  rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
+						char p = (char) (rand3.nextInt(3)+2);
+
+						if(Math.random() < 0.6)
+						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, 1000, "betweenness", '3');
 						
-						routees.get(i).increaseECByAddingPair(n, m*50, '3');
+						if(Math.random() < 0.4)
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
+						
+						routees.get(i).increaseECByAddingPair(n, s, '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==9)
 					{
-						Random rand = new Random();
+						Random rand1 = new Random();
 						Random rand2 = new Random();
 						Random rand3 = new Random();
-						int  n = rand.nextInt(3);
-						int m = rand2.nextInt(3);
-						double s = rand3.nextDouble()*50;
-//						if(s<5) s = 0;
-						if(Math.random() < 0.2)
-						routees.get(i).alignAlternativeCentralNodes(2, s, 0.3*(m+1)/4,0.3*(m+1)/4, "harmonic", '3');
 						
-						if(Math.random() < 0.2)
-							routees.get(i).alignCentralPowerNodes(n, s, 0, 0, 50*(m+1)/4, '3');
+						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations/2));
+						double s =  rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
+						char p = (char) (rand3.nextInt(3)+2);
+
+						if(Math.random() < 0.6)
+						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, 1000, "harmonic", '3');
 						
-						routees.get(i).increaseECByAddingPair(n, m*50, '3');
+						if(Math.random() < 0.4)
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
+						
+						routees.get(i).increaseECByAddingPair(n, s, '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==10)
 					{
-						Random rand = new Random();
+						Random rand1 = new Random();
 						Random rand2 = new Random();
 						Random rand3 = new Random();
-						int  n = rand.nextInt(3);
-						int m = rand2.nextInt(3);
-						double s = rand3.nextDouble()*50;
-//						if(s<5) s = 0;
-						if(Math.random() < 0.2)
-						routees.get(i).alignAlternativeCentralNodes(2, s,0.3*(m+1)/4,0.3*(m+1)/4, "closeness", '3');
 						
-						if(Math.random() < 0.2)
-							routees.get(i).alignCentralPowerNodes(n, s, 0, 0, 50*(m+1)/4, '3');
+						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations/2));
+						double s =  rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
+						char p = (char) (rand3.nextInt(3)+2);
+
+						if(Math.random() < 0.6)
+						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, 1000, "closeness", '3');
 						
-						routees.get(i).increaseECByAddingPair(n, m*50, '3');
+						if(Math.random() < 0.4)
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
+						
+						routees.get(i).increaseECByAddingPair(n, s, '3');
 					}
 					
 //					if(Math.random() < 0.1)
@@ -2230,28 +2249,28 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 //							routees.get(i).removeWeakerOfManyToManyAlignments();
 							
 							if(Math.random() < 0.5)
-								routees.get(i).removeBadMappings(1, 1, true,0);
+								routees.get(i).removeBadMappingsRandomly(1, 1, true,0);
 							else
 								routees.get(i).removeLatterOfManyToManyAlignments();
 							
 							if(Math.random()<0.2)
-								routees.get(i).removeBadMappingsToReduceInduction1(0,0, true,0,0,0);
+								routees.get(i).removeBadMappingsToReduceInduction1(true,(int)AkkaSystem.this.minSimilarity-1,(int)Math.floor(AkkaSystem.this.averageCommonAnnotations/2), 50);
 							
-							if(routees.get(i).getNoofCyclesAlignmentUnchanged()>25){
-								// durağanlık durumunun neleri kapsaması gerektiği belirlenecek. Ona göre noofCyclesın artırıldığı ya da azaltıldığı yerler gözden geçirilecek.
-								// daha sonra durağanlık durumunda yapılacak ekstra silme işlemi ya da ekleme işlemine karar verilecek
-								System.err.println("Opening Some Search Space!!!!!");
-								double prob = Math.random();
-								
-								if(prob < 0.33)
-									routees.get(i).removeBadMappings(0, 50, true,100);
-								else if (prob < 0.67)
-									routees.get(i).removeBadMappings(2, 0, true,100);
-								else
-									routees.get(i).removeBadMappings(0, 0, false,50);
-								
-								routees.get(i).setNoofCyclesAlignmentUnchanged(0);
-							}	
+//							if(routees.get(i).getNoofCyclesAlignmentUnchanged()>25){
+//								// durağanlık durumunun neleri kapsaması gerektiği belirlenecek. Ona göre noofCyclesın artırıldığı ya da azaltıldığı yerler gözden geçirilecek.
+//								// daha sonra durağanlık durumunda yapılacak ekstra silme işlemi ya da ekleme işlemine karar verilecek
+//								System.err.println("Opening Some Search Space!!!!!");
+//								double prob = Math.random();
+//								
+//								if(prob < 0.33)
+//									routees.get(i).removeBadMappingsRandomly(0, 50, true,100);
+//								else if (prob < 0.67)
+//									routees.get(i).removeBadMappingsRandomly(2, 0, true,100);
+//								else
+//									routees.get(i).removeBadMappingsRandomly(0, 0, false,50);
+//								
+//								routees.get(i).setNoofCyclesAlignmentUnchanged(0);
+//							}	
 				}
 		}
 		}, AkkaSystem.system2.dispatcher());
@@ -2397,7 +2416,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * */
 	public static void main(String[] args) {
 		databaseAddress = args[8];	
-		final AkkaSystem as = new AkkaSystem(1,args[8]);
+		final AkkaSystem as = new AkkaSystem(1,args[8],100,25);
 		if(args[7].equals("1"))
 		{
 		as.deleteAllNodesRelationships();
@@ -2444,10 +2463,11 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 				a.addMeaninglessMapping(100, '3');
 				a.increaseBitScoreWithTopMappings(20, '3');
 				a.increaseECByAddingPair(0, 0, '3');
-				a.removeBadMappingsToReduceInduction1(0, 0, true, 0, 0, 0);
+				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
 				a.removeBadMappings(1, 1, true, 100);
 			} 	
 			}
+		
 //			Aligner a = new AlignerImpl(as, 91);
 //			a.removeAlignment();
 //			a.createAlignment("sana.align");
@@ -2634,11 +2654,21 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			FiniteDuration interval = FiniteDuration.create(2000, TimeUnit.MILLISECONDS);
 			AkkaSystem.router = AkkaSystem.system2
 					.actorOf(new TailChoppingGroup(as.routeePaths, within, interval).props(), "router");
-			Future<Boolean> f = firstAligner.alignCentralPowerNodes(2, 0, 0, 20, 0, '3');
-			Future<Boolean> f3 = sixthAligner.alignAlternativeCentralNodes(2, 0, 2.5, 2.5, "pagerank", '3');
-			Future<Boolean> f5 = eighthAligner.alignAlternativeCentralNodes(1, 0, 10000, 10000, "betweenness", '3');
-			Future<Boolean> f7 = ninthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "harmonic", '3');
-			Future<Boolean> f9 = tenthAligner.alignAlternativeCentralNodes(2, 0, 0.3, 0.3, "closeness", '3');;
+			
+			
+			Random rand1 = new Random();
+			Random rand2 = new Random();
+			Random rand3 = new Random();
+			
+			int  n = rand1.nextInt((int)Math.floor(as.averageCommonAnnotations));
+			double s =  rand2.nextInt(4)*as.averageSimilarity/4;
+			char p = (char) (rand3.nextInt(3)+2);
+			
+			Future<Boolean> f = firstAligner.alignCentralPowerNodesFromTop(n, s, p, 0.3,1000, '3');
+			Future<Boolean> f3 = sixthAligner.alignAlternativeCentralNodesFromTop(n, s, 0.3, 1000, "pagerank", '3');
+			Future<Boolean> f5 = eighthAligner.alignAlternativeCentralNodesFromTop(n, s, 0.3, 1000, "betweenness", '3');
+			Future<Boolean> f7 = ninthAligner.alignAlternativeCentralNodesFromTop(n, s, 0.3, 1000, "harmonic", '3');
+			Future<Boolean> f9 = tenthAligner.alignAlternativeCentralNodesFromTop(n, s, 0.3, 1000, "closeness", '3');
 		
 			
 			try {
