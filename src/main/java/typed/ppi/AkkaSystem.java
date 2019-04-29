@@ -327,6 +327,25 @@ public class AkkaSystem {
 		System.out.println("Size of Second Network: "+this.sizeOfSecondNetwork);
 	}
 	
+	public int computeOrderOfClusterForGivenAverageFactor(ArrayList<ClusterSimilarity> cs, double averageFactor){
+		double sum = 0.0;
+		for (int i = 0;i<cs.size();i++) {
+				sum+=cs.get(i).similarity;
+		}
+		
+		double average = sum/cs.size();
+		double aggregateAverage = average*averageFactor;
+		
+		for (int i = 0;i<cs.size();i++) {
+		if	((cs.get(i).similarity)<aggregateAverage) {
+			return i;
+		}
+			
+	}
+		
+		return 0;
+	}
+	
 	
 	public void computePowers(){
 		try ( org.neo4j.driver.v1.Transaction tx = session.beginTransaction() )
@@ -2041,7 +2060,11 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, '3', 0.3,1000, '3');
 					else
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, '4', 0.3,1000, '3');
-					routees.get(i).increaseECByAddingPair(n, s, '3');
+					if(Math.random() < 0.5)
+						routees.get(i).increaseECByAddingPair(n, s, '3');
+					else
+						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
+					
 				}
 					
 					if(routees.get(i).getAlignmentNo()==2) {
@@ -2071,7 +2094,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						double s =  rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
 						routees.get(i).increaseGOCAndBitScore((int)Math.floor(n/2), '3');
 						
-						routees.get(i).increaseBitScoreWithTopMappings(50, '3');
+						routees.get(i).increaseBitScoreWithTopMappings(200, '3');
 						
 						if(Math.random() < 0.4)
 							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
@@ -2082,8 +2105,10 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						Random rand2 = new Random();
 						Random rand3 = new Random();
 						Random rand4 = new Random();
+						Random rand5 = new Random();
 						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations));
-						int m = rand2.nextInt(7);
+						int m = rand2.nextInt(AkkaSystem.this.computeOrderOfClusterForGivenAverageFactor(AkkaSystem.this.csLabelPropagationGO,1.0));
+						int o = rand5.nextInt(AkkaSystem.this.computeOrderOfClusterForGivenAverageFactor(AkkaSystem.this.csLabelPropagationBitScore,1.0));
 						char p = (char) (rand3.nextInt(3)+2);
 						double s = rand4.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
 						boolean addPair = Math.random() < 0.5;
@@ -2091,9 +2116,9 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						boolean tossBSGOC = Math.random() < 0.5; // BS daha ağırlıklı olmalı. GOC için aşağıdaki if leri tekrarla
 						if(tossBSGOC) {
 							if(edges)
-								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism2, addPair, '3');
+								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(o).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(o).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters((int)Math.floor(n/2), s,"labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters((int)Math.floor(n/2), s,"labelpropagation", AkkaSystem.this.csLabelPropagationBitScore.get(o).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationBitScore.get(o).clusterIDOfOrganism2, '3');
 						} else {
 							if(edges)
 								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "labelpropagation", AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLabelPropagationGO.get(m).clusterIDOfOrganism2, addPair, '3');
@@ -2102,7 +2127,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						}
 						
 						if(Math.random() < 0.5)
-							   routees.get(i).increaseBitScoreWithTopMappings(50, '3');
+							   routees.get(i).increaseBitScoreWithTopMappings(200, '3');
 						
 						if(Math.random() < 0.4)
 							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, (m+1)*5, p,false, '3');
@@ -2117,8 +2142,10 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						Random rand2 = new Random();
 						Random rand3 = new Random();
 						Random rand4 = new Random();
+						Random rand5 = new Random();
 						int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations));
-						int m = rand2.nextInt(7);
+						int m = rand2.nextInt(AkkaSystem.this.computeOrderOfClusterForGivenAverageFactor(AkkaSystem.this.csLouvainGO,1.0));
+						int o = rand5.nextInt(AkkaSystem.this.computeOrderOfClusterForGivenAverageFactor(AkkaSystem.this.csLouvainBitScore,1.0));	
 						char p = (char) (rand3.nextInt(3)+2);
 						double s = rand4.nextInt(4)*AkkaSystem.this.averageSimilarity/4;;
 						boolean addPair = Math.random() < 0.5;
@@ -2126,9 +2153,9 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						boolean tossBSGOC = Math.random() < 0.5;
 						if(tossBSGOC) {
 							if(edges)
-								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "louvain", AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism2, addPair, '3');
+								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "louvain", AkkaSystem.this.csLouvainBitScore.get(o).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(o).clusterIDOfOrganism2, addPair, '3');
 							else
-								routees.get(i).alignClusters((int)Math.floor(n/2), s,"louvain", AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(m).clusterIDOfOrganism2, '3');
+								routees.get(i).alignClusters((int)Math.floor(n/2), s,"louvain", AkkaSystem.this.csLouvainBitScore.get(o).clusterIDOfOrganism1, AkkaSystem.this.csLouvainBitScore.get(o).clusterIDOfOrganism2, '3');
 						} else {
 							if(edges)
 								routees.get(i).alignClusterEdges((int)Math.floor(n/2), "louvain", AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism1, AkkaSystem.this.csLouvainGO.get(m).clusterIDOfOrganism2, addPair, '3');
@@ -2137,7 +2164,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						}
 						
 						if(Math.random() < 0.5)
-							   routees.get(i).increaseBitScoreWithTopMappings(50, '3');
+							   routees.get(i).increaseBitScoreWithTopMappings(200, '3');
 						
 						if(Math.random() < 0.4)
 							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, (m+1)*5, p,false, '3');
@@ -2163,7 +2190,10 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						if(Math.random() < 0.4)
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
 						
-						routees.get(i).increaseECByAddingPair(n, s, '3');
+						if(Math.random() < 0.5)
+							routees.get(i).increaseECByAddingPair(n, s, '3');
+						else
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==7) {
@@ -2178,7 +2208,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						if(Math.random() < 0.5)
 							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s ,n*5, p,false,'3');
 						if(Math.random() < 0.5)
-						   routees.get(i).increaseBitScoreWithTopMappings(50, '3');
+						   routees.get(i).increaseBitScoreWithTopMappings(200, '3');
 						
 						if(Math.random() < 0.4)
 							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
@@ -2201,7 +2231,10 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						if(Math.random() < 0.4)
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
 						
-						routees.get(i).increaseECByAddingPair(n, s, '3');
+						if(Math.random() < 0.5)
+							routees.get(i).increaseECByAddingPair(n, s, '3');
+						else
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==9)
@@ -2220,7 +2253,10 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						if(Math.random() < 0.4)
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
 						
-						routees.get(i).increaseECByAddingPair(n, s, '3');
+						if(Math.random() < 0.5)
+							routees.get(i).increaseECByAddingPair(n, s, '3');
+						else
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==10)
@@ -2239,7 +2275,10 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						if(Math.random() < 0.4)
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
 						
-						routees.get(i).increaseECByAddingPair(n, s, '3');
+						if(Math.random() < 0.5)
+							routees.get(i).increaseECByAddingPair(n, s, '3');
+						else
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
 					}
 					
 //					if(Math.random() < 0.1)
