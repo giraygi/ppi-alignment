@@ -167,7 +167,8 @@ public class AlignerImpl implements Aligner, Receiver {
 		int added = template.with(AkkaSystem.graphDb).execute( transaction -> {
 			Session add = AkkaSystem.driver.session();
 			int count = 0;
-		try ( org.neo4j.driver.v1.Transaction tx = add.beginTransaction()  )
+			ResultSummary rs = null;
+		try
 		{		
 			markUnalignedNodes();
 			fr = new FileReader(alignment);
@@ -177,16 +178,17 @@ public class AlignerImpl implements Aligner, Receiver {
 			while((line = br.readLine())!=null)
 			{
 				proteinPair = line.split(" ");		
-				tx.run("match (n:Organism2 {proteinName: '"+proteinPair[0]+"'}), (m:Organism1 {proteinName: '"+proteinPair[1]+"'}) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+proteinPair[0]+"*"+alignmentNo+"*"+proteinPair[1]+"',markedQuery:[]}]->(m)");
-				count++;
+				rs = add.run("match (n:Organism2 {proteinName: '"+proteinPair[0]+"'}), (m:Organism1 {proteinName: '"+proteinPair[1]+"'}) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+proteinPair[0]+"*"+alignmentNo+"*"+proteinPair[1]+"',markedQuery:[]}]->(m)").consume();
+				count+=rs.counters().relationshipsCreated();
 			}	
-			tx.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
-			tx.success(); tx.close();
 		} catch (Exception e){
 			System.err.println( "Add Alignment int::: " + e.getMessage());
 			if (Math.random() < 0.5)
 				addAlignment(alignment);
-		}	finally {add.close();}
+		}	finally {
+			unmarkAllNodes();
+			add.close();
+			}
 		this.bs = as.calculateGlobalBenchmarks(this);
 		return count;
 	} );
@@ -211,17 +213,15 @@ public void addAlignment(SubGraph alignment){
 		SubGraph diff  = findAlignedNodesRelationships().difference(alignment);
 		int count = 0;
 		ResultSummary rs;
-		try ( org.neo4j.driver.v1.Transaction tx = aa.beginTransaction()  )
+		try
 		{	
 			
 			Object[] as = diff.aligns.toArray();
-			
 			for (Object relationship : as) {
-				rs = tx.run("match (n:Organism2),(m:Organism1) where id(n) = "+((Relationship) relationship).startNodeId()+" and id(m) = "+((Relationship) relationship).endNodeId()+" create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: n.proteinName+'*"+alignmentNo+"*'+m.proteinName,markedQuery:[]}]->(m)").consume();
+				rs = aa.run("match (n:Organism2),(m:Organism1) where id(n) = "+((Relationship) relationship).startNodeId()+" and id(m) = "+((Relationship) relationship).endNodeId()+" create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: n.proteinName+'*"+alignmentNo+"*'+m.proteinName,markedQuery:[]}]->(m)").consume();
 				count+=rs.counters().relationshipsCreated();
 			}
-
-		tx.success(); tx.close();
+			
 		} catch (Exception e){
 			System.out.println("Add Alignment SubGraph::: " + e.getMessage());
 			if (Math.random() < 0.5)
@@ -265,6 +265,7 @@ public void addAlignment(int alignmentNo) {
 	int added = template.with(AkkaSystem.graphDb).execute( transaction -> {
 		Session aa = AkkaSystem.driver.session();
 		ResultSummary rs = null; 
+		boolean successfull = true;
 	try ( org.neo4j.driver.v1.Transaction tx = aa.beginTransaction()  )
 	{
 	markUnalignedNodes();
@@ -275,9 +276,12 @@ public void addAlignment(int alignmentNo) {
 	System.err.println( "Add Alignment int::: " + e.getMessage());
 	if (Math.random() < 0.5)
 		addAlignment(alignmentNo);
+	successfull = false;
 }finally {aa.close();}
 	this.bs = as.calculateGlobalBenchmarks(this);
-	return rs.counters().relationshipsCreated();
+	if(successfull)
+		return rs.counters().relationshipsCreated();
+	else return 0;
 } );
 	
 	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
@@ -307,6 +311,7 @@ public void addAlignment(long markedQuery, int minFrequency){
 	int added = template.with(AkkaSystem.graphDb).execute( transaction -> {
 		Session aa = AkkaSystem.driver.session();
 		ResultSummary rs = null; 
+		boolean successfull = true;
 	try ( org.neo4j.driver.v1.Transaction tx = aa.beginTransaction()  )
 	{
 	markUnalignedNodes();
@@ -317,10 +322,13 @@ public void addAlignment(long markedQuery, int minFrequency){
 } catch (Exception e){
 	System.err.println("Add Alignment long::: " + e.getMessage());
 	if (Math.random() < 0.5)
-	addAlignment(markedQuery,minFrequency);
+		addAlignment(markedQuery,minFrequency);
+	successfull = false;
 }finally {aa.close();}
 	this.bs = as.calculateGlobalBenchmarks(this);
-	return rs.counters().relationshipsCreated();
+	if(successfull)
+		return rs.counters().relationshipsCreated();
+	else return 0;
 } );
 	
 	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
@@ -3511,7 +3519,6 @@ public void removeBadMappingsWhenUnimproved(int limit, int noofCycles) {
 		double prob = Math.random();
 		System.err.println("Opening Some Search Space!!!!!");
 		
-		
 		if(prob<0.25)
 			this.removeBadMappingsToReduceInduction1(true,(int)as.minSimilarity-1,(int)Math.floor(as.averageCommonAnnotations/2), 50);
 		else if(prob < 0.5)
@@ -3922,13 +3929,12 @@ public void removeLatterOfManyToManyAlignments(){
 		ResultSummary rs = null;
 		int count = 0;
 	
-	try ( org.neo4j.driver.v1.Transaction tx = rwlma.beginTransaction())
+	try
     {
-		rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1), (o:Organism2)-[q:ALIGNS]->(p:Organism1) where startNode(r) = startNode(q) and r.alignmentNumber = '"+alignmentNo+"' and q.alignmentNumber = '"+alignmentNo+"' and id(r) >= id(q) delete r").consume();
+		rs = rwlma.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1), (o:Organism2)-[q:ALIGNS]->(p:Organism1) where startNode(r) = startNode(q) and r.alignmentNumber = '"+alignmentNo+"' and q.alignmentNumber = '"+alignmentNo+"' and id(r) >= id(q) delete r").consume();
 		count+=rs.counters().relationshipsDeleted();
-		rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1), (o:Organism2)-[q:ALIGNS]->(p:Organism1) where endNode(r) = endNode(q) and r.alignmentNumber = '"+alignmentNo+"' and q.alignmentNumber = '"+alignmentNo+"' and id(r) >= id(q) delete r").consume();
+		rs = rwlma.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1), (o:Organism2)-[q:ALIGNS]->(p:Organism1) where endNode(r) = endNode(q) and r.alignmentNumber = '"+alignmentNo+"' and q.alignmentNumber = '"+alignmentNo+"' and id(r) >= id(q) delete r").consume();
 		count+=rs.counters().relationshipsDeleted();
-		tx.success(); tx.close();
     } catch (Exception e){
     	System.err.println("removeLatterOfManyToManyAlignments::: "+e.getMessage());
     	if(Math.random() < 0.5)
@@ -4451,40 +4457,46 @@ private int addResultsToAlignment2(ArrayList<ArrayList<Node>> records,Set<Node> 
 private int addResultsToAlignment3(ArrayList<ArrayList<Node>> records,Set<Node> aligned){
 	Session arta3 = AkkaSystem.driver.session();
 	int count = 0;
-	
-	try ( org.neo4j.driver.v1.Transaction tx = arta3.beginTransaction() ){
+	ResultSummary rs;
+	try {
 		if(!records.isEmpty())
 		if(records.get(0).size()==2)
 			for (int i = 0; i<records.size();i++){
 				if (!aligned.contains(records.get(i).get(0))&&!aligned.contains(records.get(i).get(1)))
 				{
-					tx.run("match (n:Organism2 {proteinName: '"+records.get(i).get(0).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(1).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(0).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(1).get("proteinName").asString()+"',markedQuery:[]}]->(m)");
+					rs = arta3.run("match (n:Organism2 {proteinName: '"+records.get(i).get(0).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(1).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(0).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(1).get("proteinName").asString()+"',markedQuery:[]}]->(m)").consume();
 					aligned.add(records.get(i).get(0)); aligned.add(records.get(i).get(1));
-					count++;
+					count+=rs.counters().relationshipsCreated();
 				}
 			}
 		else if(records.get(0).size()==4)
 		for (int i = 0; i<records.size();i++){
 		if (!aligned.contains(records.get(i).get(0))&&!aligned.contains(records.get(i).get(1))&&!aligned.contains(records.get(i).get(2))&&!aligned.contains(records.get(i).get(3)))
 		{
-			tx.run("match (n:Organism2 {proteinName: '"+records.get(i).get(0).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(1).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(0).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(1).get("proteinName").asString()+"',markedQuery:[]}]->(m)");
-			tx.run("match (n:Organism2 {proteinName: '"+records.get(i).get(2).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(3).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(2).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(3).get("proteinName").asString()+"',markedQuery:[]}]->(m)");
-			aligned.add(records.get(i).get(0)); aligned.add(records.get(i).get(1)); aligned.add(records.get(i).get(2)); aligned.add(records.get(i).get(3));
-			count++;count++;
+			rs = arta3.run("match (n:Organism2 {proteinName: '"+records.get(i).get(0).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(1).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(0).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(1).get("proteinName").asString()+"',markedQuery:[]}]->(m)").consume();
+			aligned.add(records.get(i).get(0)); aligned.add(records.get(i).get(1)); 
+			count+=rs.counters().relationshipsCreated();
+			rs = arta3.run("match (n:Organism2 {proteinName: '"+records.get(i).get(2).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(3).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(2).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(3).get("proteinName").asString()+"',markedQuery:[]}]->(m)").consume();
+			aligned.add(records.get(i).get(2)); aligned.add(records.get(i).get(3));
+			count+=rs.counters().relationshipsCreated();
+			
 		}
 	}
 		else if(records.get(0).size()==6)
 			for (int i = 0; i<records.size();i++){
 			if (!aligned.contains(records.get(i).get(0))&&!aligned.contains(records.get(i).get(1))&&!aligned.contains(records.get(i).get(2))&&!aligned.contains(records.get(i).get(3))&&!aligned.contains(records.get(i).get(4))&&!aligned.contains(records.get(i).get(5)))
 			{
-				tx.run("match (n:Organism2 {proteinName: '"+records.get(i).get(0).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(1).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(0).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(1).get("proteinName").asString()+"',markedQuery:[]}]->(m)");
-				tx.run("match (n:Organism2 {proteinName: '"+records.get(i).get(2).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(3).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(2).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(3).get("proteinName").asString()+"',markedQuery:[]}]->(m)");
-				tx.run("match (n:Organism2 {proteinName: '"+records.get(i).get(4).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(5).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(4).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(5).get("proteinName").asString()+"',markedQuery:[]}]->(m)");
-				aligned.add(records.get(i).get(0)); aligned.add(records.get(i).get(1)); aligned.add(records.get(i).get(2)); aligned.add(records.get(i).get(3)); aligned.add(records.get(i).get(4)); aligned.add(records.get(i).get(5));
-				count++;count++;count++;
+				rs = arta3.run("match (n:Organism2 {proteinName: '"+records.get(i).get(0).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(1).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(0).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(1).get("proteinName").asString()+"',markedQuery:[]}]->(m)").consume();
+				aligned.add(records.get(i).get(0)); aligned.add(records.get(i).get(1)); 
+				count+=rs.counters().relationshipsCreated();
+				rs = arta3.run("match (n:Organism2 {proteinName: '"+records.get(i).get(2).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(3).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(2).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(3).get("proteinName").asString()+"',markedQuery:[]}]->(m)").consume();
+				aligned.add(records.get(i).get(2)); aligned.add(records.get(i).get(3)); 
+				count+=rs.counters().relationshipsCreated();
+				rs = arta3.run("match (n:Organism2 {proteinName: '"+records.get(i).get(4).get("proteinName").asString()+"'}), (m:Organism1 {proteinName: '"+records.get(i).get(5).get("proteinName").asString()+"'}) create (n)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: '"+records.get(i).get(4).get("proteinName").asString()+"*"+alignmentNo+"*"+records.get(i).get(5).get("proteinName").asString()+"',markedQuery:[]}]->(m)").consume();
+				aligned.add(records.get(i).get(4)); aligned.add(records.get(i).get(5));
+				count+=rs.counters().relationshipsCreated();	
 			}
 		}
-	tx.success(); tx.close();
 	} catch (Exception e) {
 		System.err.println("addResultsToAlignment3::: "+e.getMessage()+"\n caused by: "+e.getCause().getMessage());
 		addResultsToAlignment3(records,aligned);

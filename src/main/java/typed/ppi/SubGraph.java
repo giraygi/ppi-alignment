@@ -149,32 +149,40 @@ public class SubGraph implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();	
-		builder.append("SubGraph nodes1= ");
-		 for (Node n : this.nodes1) {
-		    builder.append(n.toString().replaceAll("\n", "")+" ");
-		}
-		builder.append("\n nodes2= ");
-		for (Node n : this.nodes2) {
-		    builder.append(n.toString().replaceAll("\n", "")+" ");
-		}
-		builder.append("\n interactions1= ");
-		for (Relationship r : this.interactions1) {
-		    builder.append(r.toString().replaceAll("\n", "")+" ");
-		}
-		builder.append("\n interactions2= ");
-		for (Relationship r : this.interactions2) {
-		    builder.append(r.toString().replaceAll("\n", "")+" ");
-		}
-		builder.append("\n alignments= ");
-		for (Relationship r : this.aligns) {
-		    builder.append(r.toString().replaceAll("\n", "")+" ");
-		}
-		builder.append("\n similarities= ");
-		for (Relationship r : this.similarity) {
-		    builder.append(r.toString().replaceAll("\n", "")+" ");
-		}
-		builder.append("\n sender: "+this.senderNo);
-		builder.append("\n type: "+this.type);
+		builder.append("SubGraph info:");
+//		builder.append("\n");
+//		builder.append(" *** nodes1= ");
+//		 for (Node n : this.nodes1) {
+//		    builder.append(n.toString().replaceAll("\n", "")+" ");
+//		}
+//		builder.append("\n");
+//		builder.append(" *** nodes2= ");
+//		for (Node n : this.nodes2) {
+//		    builder.append(n.toString().replaceAll("\n", "")+" ");
+//		}
+//		builder.append("\n");
+//		builder.append(" *** interactions1= ");
+//		for (Relationship r : this.interactions1) {
+//		    builder.append(r.toString().replaceAll("\n", "")+" ");
+//		}
+//		builder.append("\n");
+//		builder.append(" *** interactions2= ");
+//		for (Relationship r : this.interactions2) {
+//		    builder.append(r.toString().replaceAll("\n", "")+" ");
+//		}
+//		builder.append("\n");
+//		builder.append(" *** alignments= ");
+//		for (Relationship r : this.aligns) {
+//		    builder.append(r.toString().replaceAll("\n", "")+" ");
+//		}
+//		builder.append("\n");
+//		builder.append(" *** similarities= ");
+//		for (Relationship r : this.similarity) {
+//		    builder.append(r.toString().replaceAll("\n", "")+" ");
+//		}
+//		builder.append("\n");
+		builder.append(" *** sender: "+this.senderNo);
+		builder.append(" *** type: "+this.type);
 		return builder.toString().replaceAll("\n", "");
 	}
 	
