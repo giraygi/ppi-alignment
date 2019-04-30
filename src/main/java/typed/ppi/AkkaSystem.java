@@ -2292,9 +2292,6 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							else
 								routees.get(i).removeLatterOfManyToManyAlignments();
 							
-							if(Math.random()<0.2)
-								routees.get(i).removeBadMappingsToReduceInduction1(true,(int)AkkaSystem.this.minSimilarity-1,(int)Math.floor(AkkaSystem.this.averageCommonAnnotations/2), 50);
-							
 //							if(routees.get(i).getNoofCyclesAlignmentUnchanged()>25){
 //								// durağanlık durumunun neleri kapsaması gerektiği belirlenecek. Ona göre noofCyclesın artırıldığı ya da azaltıldığı yerler gözden geçirilecek.
 //								// daha sonra durağanlık durumunda yapılacak ekstra silme işlemi ya da ekleme işlemine karar verilecek
@@ -2455,7 +2452,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * */
 	public static void main(String[] args) {
 		databaseAddress = args[8];	
-		final AkkaSystem as = new AkkaSystem(1,args[8],100,25);
+		final AkkaSystem as = new AkkaSystem(1,args[8],100,20);
 		if(args[7].equals("1"))
 		{
 		as.deleteAllNodesRelationships();

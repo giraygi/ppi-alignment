@@ -3131,39 +3131,41 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
 		String limitInfix ="";
 		if(limit>0)
 			limitInfix = "with r limit "+limit+" match ()-[r:ALIGNS]-() ";
-	try ( org.neo4j.driver.v1.Transaction tx = rbm.beginTransaction())
+	try 
     {
 		if(keepEdges){
-			tx.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)<-[r2:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]-(o) set o.marked = o.marked +'"+this.alignmentNo+"', n.marked = n.marked +'"+this.alignmentNo+"', m.marked = m.marked +'"+this.alignmentNo+"', l.marked = l.marked +'"+this.alignmentNo+"'");			
-			rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+			rbm.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)<-[r2:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]-(o) set o.marked = o.marked +'"+this.alignmentNo+"', n.marked = n.marked +'"+this.alignmentNo+"', m.marked = m.marked +'"+this.alignmentNo+"', l.marked = l.marked +'"+this.alignmentNo+"'");			
+			rs = rbm.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
 			count+=rs.counters().relationshipsDeleted();	
 			if(limit-count>0 || limit<1) {
 				if(limit-count>0)
 					limitInfix = "with r limit "+(limit-count)+" match ()-[r:ALIGNS]-() ";
 				if(limit<1)
 					limitInfix = "";
-				rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+				rs = rbm.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
 				count+=rs.counters().relationshipsDeleted();
 			}
-			tx.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
 		} else {
-			rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+			rs = rbm.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
 			count+=rs.counters().relationshipsDeleted();
 			if(limit-count>0 || limit<1) {
 				if(limit-count>0)
 					limitInfix = "with r limit "+(limit-count)+" match ()-[r:ALIGNS]-() ";
 				if(limit<1)
 					limitInfix = "";
-				rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+				rs = rbm.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
 				count+=rs.counters().relationshipsDeleted();
 			}	
 		}
-		tx.success(); tx.close();
     } catch (Exception e){
     	System.out.println("removeBadMappings: " + e.getMessage());
     	if(Math.random() < 0.5)
     		removeBadMappings(k, sim, keepEdges,limit);
-      }finally {rbm.close();}
+      }finally {
+    	  if(keepEdges)
+    		  unmarkAllNodes();
+    	  rbm.close();
+    	  }
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return count;
 } );
@@ -3201,39 +3203,41 @@ public void removeBadMappingsRandomly(int k, double sim, boolean keepEdges, int 
 		String limitInfix ="";
 		if(limit>0)
 		    limitInfix = "with r,rand() as number limit "+2*limit+" match ()-[r:ALIGNS]-() where number > 0.5 ";
-	try ( org.neo4j.driver.v1.Transaction tx = rbm.beginTransaction())
+	try 
     {
 		if(keepEdges){
-			tx.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)<-[r2:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]-(o) set o.marked = o.marked +'"+this.alignmentNo+"', n.marked = n.marked +'"+this.alignmentNo+"', m.marked = m.marked +'"+this.alignmentNo+"', l.marked = l.marked +'"+this.alignmentNo+"'");			
-			rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+			rbm.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)<-[r2:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]-(o) set o.marked = o.marked +'"+this.alignmentNo+"', n.marked = n.marked +'"+this.alignmentNo+"', m.marked = m.marked +'"+this.alignmentNo+"', l.marked = l.marked +'"+this.alignmentNo+"'");			
+			rs = rbm.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
 			count+=rs.counters().relationshipsDeleted();	
 			if(limit-count>0 || limit<1) {
 				if(limit-count>0)
 					limitInfix = "with r,rand() as number limit "+2*limit+" match ()-[r:ALIGNS]-() where number > 0.5 ";
 				if(limit<1)
 					limitInfix = "";
-				rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+				rs = rbm.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
 				count+=rs.counters().relationshipsDeleted();
 			}
-			tx.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
 		} else {
-			rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+			rs = rbm.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and not (m:Organism1)-[:SIMILARITY]->(n) and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
 			count+=rs.counters().relationshipsDeleted();
 			if(limit-count>0 || limit<1) {
 				if(limit-count>0)
 					limitInfix = "with r,rand() as number limit "+2*limit+" match ()-[r:ALIGNS]-() where number > 0.5 ";
 				if(limit<1)
 					limitInfix = "";
-				rs = tx.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
+				rs = rbm.run("match (n:Organism2)-[r:ALIGNS]->(m:Organism1)-[s:SIMILARITY]->(n) where length(FILTER(x in n.annotations WHERE x in m.annotations)) < "+k+" and s.similarity < "+sim+" and r.alignmentNumber = '"+alignmentNo+"' "+limitInfix+"delete r").consume();
 				count+=rs.counters().relationshipsDeleted();
 			}	
 		}
-		tx.success(); tx.close();
     } catch (Exception e){
     	System.out.println("removeBadMappingsRandomly::: " + e.getMessage());
     	if(Math.random() < 0.5)
     		removeBadMappings(k, sim, keepEdges,limit);
-      }finally {rbm.close();}
+      }finally {
+    	  if(keepEdges)
+    		  unmarkAllNodes();
+    	  rbm.close();
+    	  }
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return count;
 } );
@@ -3246,11 +3250,11 @@ public void removeBadMappingsRandomly(int k, double sim, boolean keepEdges, int 
 		    PrintWriter out = new PrintWriter(bw))
 		{
 		if(keepEdges) {
-			System.err.println(removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			System.err.println(removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingRandomly Method.");
 			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsRandomly | "+ZonedDateTime.now()+"]: "+removed+" mappings without edges having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingRandomly Method.");
 		}
 		else {
-			System.err.println(removed+" mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMapping Method.");
+			System.err.println(removed+" mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingRandomly Method.");
 			out.println("["+noofCyclesAlignmentUnchanged+" | RemoveBadMappingsRandomly | "+ZonedDateTime.now()+"]: "+removed+" mappings having less than "+k+" annotations and "+sim+" similarity were removed from aligner "+this.alignmentNo+" with removeBadMappingRandomly Method.");
 		}
 		
@@ -3353,10 +3357,10 @@ public void removeBadMappingsToReduceInduction1(boolean keepEdges,int simTreshol
 		StatementResult result;
 		ResultSummary rs = null; 
 		int count = 0;
-		try ( org.neo4j.driver.v1.Transaction tx = rmwe.beginTransaction())
+		try
 	    {
 			if(keepEdges){
-				tx.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)<-[r2:ALIGNS]-(o) "
+				rmwe.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)<-[r2:ALIGNS]-(o) "
 						+ "where r.alignmentNumber = '"+alignmentNo+"' and r2.alignmentNumber = '"+alignmentNo+"' set o.marked = o.marked + '"+this.alignmentNo+"', n.marked = n.marked + '"+this.alignmentNo+"', m.marked = m.marked + '"+this.alignmentNo+"', l.marked = l.marked + '"+this.alignmentNo+"'");
 //				result = tx.run( "optional match (n)-[ss:SIMILARITY]->(p:Organism2)-[t:ALIGNS]->(n:Organism1)-[r:INTERACTS_1]->(m:Organism1)<-[a:ALIGNS]-(o:Organism2)<-[s:SIMILARITY]-(m) "
 //				+ "where (s.similarity < "+sim+" or s.similarity = null) and (ss.similarity < "+sim+" or ss.similarity = null) "
@@ -3365,7 +3369,7 @@ public void removeBadMappingsToReduceInduction1(boolean keepEdges,int simTreshol
 //				+"and p.marked = false and o.marked = false "
 //				+ "and a.alignmentNumber = '"+alignmentNo+"' and t.alignmentNumber = '"+alignmentNo+"' return t,a");
 			}
-				result = tx.run( "match (p:Organism2)-[t:ALIGNS]->(n:Organism1)-[r:INTERACTS_1]->(m:Organism1)<-[a:ALIGNS]-(o:Organism2) "
+				result = rmwe.run( "match (p:Organism2)-[t:ALIGNS]->(n:Organism1)-[r:INTERACTS_1]->(m:Organism1)<-[a:ALIGNS]-(o:Organism2) "
 				+ "where NOT ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN o.marked WHERE x = '"+this.alignmentNo+"') " //(p.marked = false or n = false ) and (o.marked = false or m = false)
 				+ "and a.alignmentNumber = '"+alignmentNo+"' and t.alignmentNumber = '"+alignmentNo+"' return id(t),id(a)");
 				
@@ -3394,11 +3398,11 @@ public void removeBadMappingsToReduceInduction1(boolean keepEdges,int simTreshol
 					temp = compareSimilarityContribution(t, a,simTreshold, annotationTreshold,powerTreshold);
 //					System.out.println(temp);
 					if (temp==t) {
-						rs = tx.run("match ()-[a:ALIGNS]-() where id(a) ="+a+" delete a").consume();
+						rs = rmwe.run("match ()-[a:ALIGNS]-() where id(a) ="+a+" delete a").consume();
 						count+=rs.counters().relationshipsDeleted();
 					}
 					else if (temp==a) {
-						rs = tx.run("match ()-[t:ALIGNS]-() where id(t) ="+t+" delete t").consume();
+						rs = rmwe.run("match ()-[t:ALIGNS]-() where id(t) ="+t+" delete t").consume();
 						count+=rs.counters().relationshipsDeleted();
 					}
 						
@@ -3407,13 +3411,16 @@ public void removeBadMappingsToReduceInduction1(boolean keepEdges,int simTreshol
 					temp = 0;
 					}
 				
-				if(keepEdges)
-				tx.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
-			tx.success(); tx.close();
+//				if(keepEdges)
+//					rmwe.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
 	    } catch (Exception e){
 	    	System.out.println("removeBadMappingsToReduceInduction1: " + e.getMessage());
 	    	if(Math.random() < 0.5)
 	    		removeBadMappingsToReduceInduction1(keepEdges,simTreshold, annotationTreshold,powerTreshold);
+	      } finally {
+	    	  if(keepEdges)
+	    		  unmarkAllNodes();
+	    	  rmwe.close();
 	      }
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 	return count;
@@ -3503,9 +3510,13 @@ public void removeBadMappingsWhenUnimproved(int limit, int noofCycles) {
 	if(noofCycles <=  this.noofCyclesAlignmentUnchanged) {
 		double prob = Math.random();
 		System.err.println("Opening Some Search Space!!!!!");
-		if(prob < 0.33)
+		
+		
+		if(prob<0.25)
+			this.removeBadMappingsToReduceInduction1(true,(int)as.minSimilarity-1,(int)Math.floor(as.averageCommonAnnotations/2), 50);
+		else if(prob < 0.5)
 			this.removeBadMappingsRandomly(0, as.minSimilarity+30, true,limit);
-		else if (prob < 0.67)
+		else if (prob < 0.75)
 			this.removeBadMappingsRandomly((int)Math.floor(as.averageCommonAnnotations/2), 0, true,limit);
 		else
 			this.removeBadMappingsRandomly(0, 0, false,(int)Math.floor(limit/2));	
