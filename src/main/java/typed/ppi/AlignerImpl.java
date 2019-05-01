@@ -718,7 +718,7 @@ public Future<SubGraph> subGraphWithStrongInducedEdges(ExecutionContextExecutor 
 						}
 					
 					sgwcs.type = "Subgraph with Stronger Induced Edges";
-					System.out.println(sgwcs);
+//					System.out.println(sgwcs);
 					tx.success(); tx.close();
 			      } catch (Exception e){
 			    	  System.out.println("SubGraph With Strong Induced Edges::: " + e.getMessage());
@@ -1010,7 +1010,7 @@ public Future<SubGraph> subGraphWithXBitScoreSimilarity(double treshold, Executi
 							default:
 								break;
 							}		
-							System.out.printf( "%s = %s%n", column.getKey() , row.get(column.getKey() ) );
+//							System.out.printf( "%s = %s%n", column.getKey() , row.get(column.getKey() ) );
 					}
 						sgwxbs.type = "SubGraph with "+treshold+" Bitscore Similarity";
 						tx.success(); tx.close();
