@@ -625,7 +625,7 @@ public Future<SubGraph> subGraphWithDoubleAlignedEdges(ExecutionContextExecutor 
 								+ "w.markedQuery = case when not ANY(x IN w.markedQuery WHERE x = '"+markedQuery+"') then w.markedQuery+'"+markedQuery+"' else w.markedQuery end, "
 								+ "r.markedQuery = case when not ANY(x IN r.markedQuery WHERE x = '"+markedQuery+"') then r.markedQuery+'"+markedQuery+"' else r.markedQuery end").consume();
 					} catch(Exception e){
-						System.err.println("Mark Aligned Edges::: "+e.getMessage());
+						System.err.println("Mark Double Aligned Edges::: "+e.getMessage());
 						uncaught = false;
 //						if(Math.random() < 0.5)
 //							markAlignedEdges(markedQuery, dispatcher) ;
@@ -3941,9 +3941,20 @@ public void removeLatterOfManyToManyAlignments(){
     		removeLatterOfManyToManyAlignments();
       } finally {rwlma.close();}
     return count;
-} );
-	if(removed>0)
-		System.err.println(removed+" Subsequent Mappings are Removed from "+this.alignmentNo+" !!!");
+} );	
+	
+	try(FileWriter fw = new FileWriter("add"+this.alignmentNo+".txt", true);
+		    BufferedWriter bw = new BufferedWriter(fw);
+		    PrintWriter out = new PrintWriter(bw))
+		{
+		if(removed>0)	
+			System.err.println(removed+" subsequent mappings were removed from aligner "+this.alignmentNo+" with removeLatterOfManyToManyAlignments Method.");
+			out.println("["+noofCyclesAlignmentUnchanged+" | removeLatterOfManyToManyAlignments | "+ZonedDateTime.now()+"]: "+removed+" subsequent mappings were removed from aligner "+this.alignmentNo+" with removeLatterOfManyToManyAlignments Method.");
+		
+		} catch (IOException e) {
+		    //exception handling left as an exercise for the reader
+		}
+	
 	this.bs = as.calculateGlobalBenchmarks(this);
 }
 

@@ -1098,10 +1098,14 @@ public void loadOldMarkedQueriesFromDBToApplication() {
 						if(Long.valueOf((String)o)>lastValueOfReceived)
 							lastValueOfReceived = Long.valueOf((String)o).intValue();
 						markedQueries.add(new BenchmarkScores(aligner.getAlignmentNo(),Long.valueOf((String)o).longValue()));
+						if(Long.valueOf((String)o).longValue()>AkkaSystem.marked)
+							AkkaSystem.marked = Integer.valueOf((String)o).intValue()+1;
 					}
 					aligner.addMarkedQueries(markedQueries);
+					
 				}				
-			}	
+			}
+			System.out.println("loaded number of marked queries: "+AkkaSystem.marked);
 			AlignerImpl.received = lastValueOfReceived+1;
 		} catch(Exception e){
 			System.err.println("Load Marked Queries::: "+e.getMessage());
@@ -1830,6 +1834,7 @@ Timeout sg =  new Timeout(Duration.create(180, "seconds"));
 //				if(Math.random() < 0.8)
 					s3l = Await.result(s3.markTopAlignedPowerNodes(100,marked++, "power", AkkaSystem.system2.dispatcher()),sg.duration());
 //				else
+//					s3l = Await.result(s3.markDoubleAlignedEdges(marked++,AkkaSystem.system2.dispatcher()),sg.duration());
 //					s3l = Await.result(s3.markConservedStructureQuery(AkkaSystem.system2.dispatcher(), marked++),sg.duration());
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -2438,7 +2443,8 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * args[7] -> Execution Mode
 	 * args[8] -> Database address in the home directory of the current user
 	 * args[9] -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
-	 * args[10] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
+	 * args[10] -> Setting the argument as "skipchains" deactivates the descendParameterValuesOfChain section of the alignment initializations.
+	 * args[11] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
 	 * 
 	 * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
 	 * args[7] = 11 -> Starts from computing community detection and centrality algorithms.
