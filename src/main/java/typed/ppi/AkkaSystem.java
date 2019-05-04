@@ -2499,33 +2499,33 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.computeMetaData();
 		
 		if (args[7].equals("5")) {
-//			int tolerance = 0;
-//			try {
-//				if(Integer.parseInt(args[10])>0)
-//				tolerance = Integer.parseInt(args[10]);
-//			} catch (NumberFormatException e) {
-//				// TODO Auto-generated catch block
-//				System.err.println(e.getMessage());
-//			} catch (ArrayIndexOutOfBoundsException aioobe) {
-//				// TODO Auto-generated catch block
-//				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
-//			}
-//			for(int i =1;i<11;i++) {
-//				Aligner a = new AlignerImpl(as, i);
-//				
-//				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
-//				a.addMeaninglessMapping(100, '3');
-//				a.increaseBitScoreWithTopMappings(20, '3');
-//				a.increaseECByAddingPair(0, 0, '3');
-//				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
-//				a.removeBadMappings(1, 1, true, 100);
-//			} 	
-//			}
-			
-			Random rand4 = new Random();
-			double s = rand4.nextInt(4)*as.averageSimilarity/4;
-			System.out.println(s);
-			System.out.println(as.averageSimilarity/4);
+			int tolerance = 0;
+			try {
+				if(Integer.parseInt(args[10])>0)
+				tolerance = Integer.parseInt(args[10]);
+			} catch (NumberFormatException e) {
+				// TODO Auto-generated catch block
+				System.err.println(e.getMessage());
+			} catch (ArrayIndexOutOfBoundsException aioobe) {
+				// TODO Auto-generated catch block
+				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
+			}
+			for(int i =1;i<11;i++) {
+				Aligner a = new AlignerImpl(as, i);
+				
+				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
+				a.addMeaninglessMapping(100, '3');
+				a.increaseBitScoreWithTopMappings(20, '3');
+				a.increaseECByAddingPair(0, 0, '3');
+				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
+				a.removeBadMappings(1, 1, true, 100);
+			} 	
+			}
+//			
+//			Random rand4 = new Random();
+//			double s = rand4.nextInt(4)*as.averageSimilarity/4;
+//			System.out.println(s);
+//			System.out.println(as.averageSimilarity/4);
 		
 //			Aligner a = new AlignerImpl(as, 91);
 //			a.removeAlignment();
