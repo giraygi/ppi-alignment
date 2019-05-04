@@ -229,11 +229,23 @@ public void addAlignment(SubGraph alignment){
 		} finally {
 			aa.close();
 			if(alignment.type.contains("Top PowerNode Pairs")) {
-				Random rand = new Random();
-				Random rand2 = new Random();
-				int  n = rand.nextInt(3);
-				int m = rand2.nextInt(3);
-				this.increaseECByAddingPair(n, m*40, '3');
+				
+				Double prob1 = Math.random();
+				Double prob2 = Math.random();
+				
+				int  n = (int)Math.floor(this.as.averageCommonAnnotations/2);
+				int m =(int)Math.ceil((this.as.minSimilarity+this.as.averageSimilarity)/2);
+				
+				if(prob1 < 0.33)
+					n = 0;
+				else if(prob1 < 0.67)
+					n = (int)Math.floor(this.as.averageCommonAnnotations/3);
+				if(prob2 < 0.33)
+					m = 0;
+				else if(prob2 < 0.67)
+					m = (int)Math.ceil(this.as.minSimilarity);
+				
+				this.increaseECByAddingPair(n, m, '3');
 			}
 				
 		}

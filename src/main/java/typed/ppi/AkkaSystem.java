@@ -2152,7 +2152,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						int m = rand2.nextInt(AkkaSystem.this.computeOrderOfClusterForGivenAverageFactor(AkkaSystem.this.csLouvainGO,1.0));
 						int o = rand5.nextInt(AkkaSystem.this.computeOrderOfClusterForGivenAverageFactor(AkkaSystem.this.csLouvainBitScore,1.0));	
 						char p = (char) (rand3.nextInt(3)+2);
-						double s = rand4.nextInt(4)*AkkaSystem.this.averageSimilarity/4;;
+						double s = rand4.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
 						boolean addPair = Math.random() < 0.5;
 						boolean edges = Math.random() < 0.5;
 						boolean tossBSGOC = Math.random() < 0.5;
@@ -2321,7 +2321,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 }
 
 public Future<Boolean> chainMappings(Future<Boolean> f, Aligner a, int minCommonAnnotations, double sim) {
-		
+		System.out.println(minCommonAnnotations+" - "+sim);
 	Future<Boolean> chain = f.andThen(new OnComplete<Boolean>() {
     	public void onComplete(Throwable failure, Boolean success) {
     		if (success && failure==null) {
@@ -2345,29 +2345,41 @@ public Future<Boolean> chainMappings(Future<Boolean> f, Aligner a, int minCommon
 	return chain;
 }
 
-public void descendParameterValuesOfChain(Future<Boolean> f, Aligner a, int minCommonAnnotations, double sim, boolean gocOrBS) {
+public void descendParameterValuesOfChain(Future<Boolean> f, Aligner a, int minCommonAnnotations, double sim, int noofSteps, boolean gocOrBS) {
 	Future<Boolean> temp = f;
 	int min = minCommonAnnotations;
 	double simbs = sim;
+	double stepSim = (sim - AkkaSystem.this.minSimilarity)/noofSteps;
+	int stepAnnotation = (int)(Math.ceil(minCommonAnnotations - AkkaSystem.this.minCommonAnnotations)/noofSteps);
+	if (stepAnnotation < 1) stepAnnotation = 1;
+	if (stepSim < 30) stepSim = 30;
 	if(!gocOrBS)
-	while(simbs>0) {
+	while(simbs>=minSimilarity) {
 		min = minCommonAnnotations;
-		while (min>=0) {
+		while (min>=AkkaSystem.this.minCommonAnnotations) {
+			if(simbs<AkkaSystem.this.minSimilarity)
+				simbs = 0;
+			if(min<AkkaSystem.this.minCommonAnnotations)
+				min = 0;
 			temp = chainMappings(temp,a,min,simbs);
 			System.out.println("added: "+min+" - "+simbs);
-			min--;
+			min-=stepAnnotation;
 		}
-		simbs = simbs - 40;
+		simbs = simbs - stepSim;
 	}
 	else {
-		while(min>=0) {
+		while(min>=AkkaSystem.this.minCommonAnnotations) {
 			simbs = sim;
-			while (simbs>0) {
+			while (simbs>=minSimilarity) {
+				if(simbs<AkkaSystem.this.minSimilarity)
+					simbs = 0;
+				if(min<AkkaSystem.this.minCommonAnnotations)
+					min = 0;
 				temp = chainMappings(temp,a,min,simbs);
 				System.out.println("added: "+min+" - "+simbs);
-				simbs = simbs-40;
+				simbs = simbs-stepSim;
 			}
-			min--;
+			min-=stepAnnotation;
 		}
 	}
 	
@@ -2487,28 +2499,33 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.computeMetaData();
 		
 		if (args[7].equals("5")) {
-			int tolerance = 0;
-			try {
-				if(Integer.parseInt(args[10])>0)
-				tolerance = Integer.parseInt(args[10]);
-			} catch (NumberFormatException e) {
-				// TODO Auto-generated catch block
-				System.err.println(e.getMessage());
-			} catch (ArrayIndexOutOfBoundsException aioobe) {
-				// TODO Auto-generated catch block
-				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
-			}
-			for(int i =1;i<11;i++) {
-				Aligner a = new AlignerImpl(as, i);
-				
-				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
-				a.addMeaninglessMapping(100, '3');
-				a.increaseBitScoreWithTopMappings(20, '3');
-				a.increaseECByAddingPair(0, 0, '3');
-				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
-				a.removeBadMappings(1, 1, true, 100);
-			} 	
-			}
+//			int tolerance = 0;
+//			try {
+//				if(Integer.parseInt(args[10])>0)
+//				tolerance = Integer.parseInt(args[10]);
+//			} catch (NumberFormatException e) {
+//				// TODO Auto-generated catch block
+//				System.err.println(e.getMessage());
+//			} catch (ArrayIndexOutOfBoundsException aioobe) {
+//				// TODO Auto-generated catch block
+//				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
+//			}
+//			for(int i =1;i<11;i++) {
+//				Aligner a = new AlignerImpl(as, i);
+//				
+//				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
+//				a.addMeaninglessMapping(100, '3');
+//				a.increaseBitScoreWithTopMappings(20, '3');
+//				a.increaseECByAddingPair(0, 0, '3');
+//				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
+//				a.removeBadMappings(1, 1, true, 100);
+//			} 	
+//			}
+			
+			Random rand4 = new Random();
+			double s = rand4.nextInt(4)*as.averageSimilarity/4;
+			System.out.println(s);
+			System.out.println(as.averageSimilarity/4);
 		
 //			Aligner a = new AlignerImpl(as, 91);
 //			a.removeAlignment();
@@ -2716,11 +2733,11 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			try {
 				
 				if(!args[10].equals("skipchains")) {				
-					as.descendParameterValuesOfChain(f, firstAligner, 5, 200, true);
-					as.descendParameterValuesOfChain(f3, sixthAligner, 5, 200, true);
-					as.descendParameterValuesOfChain(f5, eighthAligner, 5, 200, true);
-					as.descendParameterValuesOfChain(f7, ninthAligner, 5, 200, true);
-					as.descendParameterValuesOfChain(f9, tenthAligner, 5, 200, true);
+					as.descendParameterValuesOfChain(f, firstAligner, (int)Math.floor(as.averageCommonAnnotations), as.averageSimilarity, (int)Math.ceil(as.averageSimilarity/as.minSimilarity),true);
+					as.descendParameterValuesOfChain(f3, sixthAligner, (int)Math.floor(as.averageCommonAnnotations), as.averageSimilarity, (int)Math.ceil(as.averageSimilarity/as.minSimilarity),true);
+					as.descendParameterValuesOfChain(f5, eighthAligner, (int)Math.floor(as.averageCommonAnnotations), as.averageSimilarity, (int)Math.ceil(as.averageSimilarity/as.minSimilarity),true);
+					as.descendParameterValuesOfChain(f7, ninthAligner, (int)Math.floor(as.averageCommonAnnotations), as.averageSimilarity, (int)Math.ceil(as.averageSimilarity/as.minSimilarity),true);
+					as.descendParameterValuesOfChain(f9, tenthAligner, (int)Math.floor(as.averageCommonAnnotations), as.averageSimilarity, (int)Math.ceil(as.averageSimilarity/as.minSimilarity),true);
 				}
 				
 				if(args[11].equals("greedy")) {
