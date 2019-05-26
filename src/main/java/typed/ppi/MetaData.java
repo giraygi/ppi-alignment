@@ -6,6 +6,9 @@ public class MetaData {
 	
 	double noofPercentileSteps = 10.0;
 	
+	double[] annotatedSimilarity;
+	double[] similarity;
+	
 	double[] organism1Power2;
 	double[] organism1Power3;
 	double[] organism1Power4;
@@ -24,6 +27,8 @@ public class MetaData {
 	
 	MetaData(){
 		noofPercentileSteps = 10.0;
+		annotatedSimilarity = new double[10];
+		similarity = new double[10];
 		organism1Power2 = new double[10];
 		organism1Power3 = new double[10];
 		organism1Power4 = new double[10];
@@ -43,6 +48,8 @@ public class MetaData {
 	
 	MetaData(int n) {
 		noofPercentileSteps = (double)n;
+		annotatedSimilarity = new double[n];
+		similarity = new double[n];
 		organism1Power2 = new double[n];
 		organism1Power3 = new double[n];
 		organism1Power4 = new double[n];

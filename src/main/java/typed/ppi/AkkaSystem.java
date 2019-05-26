@@ -111,7 +111,7 @@ public class AkkaSystem {
 		this.init(args);
 		this.toleranceLimitForImprovement = toleranceLimitForUnimprovedAligners;
 		this.toleranceCycleForImprovement = toleranceCycleForUnimprovedAligners;
-		md  = new MetaData(20);
+		md  = new MetaData(200);
 	}
 	
 	public void init(String args){
@@ -327,6 +327,30 @@ public class AkkaSystem {
 		System.out.println("Size of First Network: "+this.sizeOfFirstNetwork);
 		this.sizeOfSecondNetwork = this.countAllEdgesOfANetwork(false);
 		System.out.println("Size of Second Network: "+this.sizeOfSecondNetwork);
+	}
+	
+	public void computeFunctionalMetaData() {
+		try ( org.neo4j.driver.v1.Transaction tx = session.beginTransaction() )
+		{
+			StatementResult result;	
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {	
+				result = tx.run( "match (p:Organism1)-[t:SIMILARITY]->(n:Organism2) return percentileCont(length(FILTER(x in p.annotations WHERE x in n.annotations)),"+(i+1)/md.noofPercentileSteps+")");
+				md.annotatedSimilarity[i] = Double.parseDouble(result.single().get("percentileCont(length(FILTER(x in p.annotations WHERE x in n.annotations)),"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Annotated Similarity "+md.annotatedSimilarity[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {	
+				result = tx.run( "match (p:Organism1)-[t:SIMILARITY]->(n:Organism2) return percentileCont(t.similarity,"+(i+1)/md.noofPercentileSteps+")");
+				md.similarity[i] = Double.parseDouble(result.single().get("percentileCont(t.similarity,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Similarity "+md.similarity[i] );
+			}
+			
+			tx.success(); tx.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+				
 	}
 	
 	public void computePowerMetaData() {
@@ -2611,6 +2635,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.computeMetaData();
 		as.computePowerMetaData();
 		as.computeClusterMetaData();
+		as.computeFunctionalMetaData();
 		
 		if (args[7].equals("5")) {
 			int tolerance = 0;
@@ -2635,6 +2660,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 				a.removeBadMappings(1, 1, true, 100);
 			} 	
 			}
+
 			
 
 //			
