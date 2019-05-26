@@ -102,6 +102,7 @@ public class AkkaSystem {
 	static Timeout timeout = new Timeout(Duration.create(360, "seconds"));
 	Timeout timeout2 = new Timeout(Duration.create(360, "seconds"));
 	static int marked = 0; 
+	MetaData md;
 	
 	
 	
@@ -110,6 +111,7 @@ public class AkkaSystem {
 		this.init(args);
 		this.toleranceLimitForImprovement = toleranceLimitForUnimprovedAligners;
 		this.toleranceCycleForImprovement = toleranceCycleForUnimprovedAligners;
+		md  = new MetaData(20);
 	}
 	
 	public void init(String args){
@@ -325,6 +327,116 @@ public class AkkaSystem {
 		System.out.println("Size of First Network: "+this.sizeOfFirstNetwork);
 		this.sizeOfSecondNetwork = this.countAllEdgesOfANetwork(false);
 		System.out.println("Size of Second Network: "+this.sizeOfSecondNetwork);
+	}
+	
+	public void computePowerMetaData() {
+		try ( org.neo4j.driver.v1.Transaction tx = session.beginTransaction() )
+		{
+			StatementResult result;
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (p:Organism1) return percentileCont(p.power2,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism1Power2[i] = Double.parseDouble(result.single().get("percentileCont(p.power2,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism1Power2: "+md.organism1Power2[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (n:Organism2) return percentileCont(n.power2,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism2Power2[i] = Double.parseDouble(result.single().get("percentileCont(n.power2,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism2Power2: "+md.organism2Power2[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (p:Organism1) return percentileCont(p.power3,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism1Power3[i] = Double.parseDouble(result.single().get("percentileCont(p.power3,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism1Power3: "+md.organism1Power3[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (n:Organism2) return percentileCont(n.power3,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism2Power3[i] = Double.parseDouble(result.single().get("percentileCont(n.power3,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism2Power3: "+md.organism2Power3[i] );
+			}
+			
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (p:Organism1) return percentileCont(p.power4,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism1Power4[i] = Double.parseDouble(result.single().get("percentileCont(p.power4,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism1Power4: "+md.organism1Power4[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (n:Organism2) return percentileCont(n.power4,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism2Power4[i] = Double.parseDouble(result.single().get("percentileCont(n.power4,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism2Power4: "+md.organism2Power4[i] );
+			}
+			
+			tx.success(); tx.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void computeClusterMetaData() {
+		
+		try ( org.neo4j.driver.v1.Transaction tx = session.beginTransaction() )
+		{
+			StatementResult result;
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (p:Organism1) return percentileCont(p.pagerank,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism1Pagerank[i] = Double.parseDouble(result.single().get("percentileCont(p.pagerank,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism1Pagerank: "+md.organism1Pagerank[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (n:Organism2) return percentileCont(n.pagerank,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism2Pagerank[i] = Double.parseDouble(result.single().get("percentileCont(n.pagerank,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism2Pagerank: "+md.organism2Pagerank[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (p:Organism1) return percentileCont(p.betweenness,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism1Betweenness[i] = Double.parseDouble(result.single().get("percentileCont(p.betweenness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism1Betweenness: "+md.organism1Betweenness[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (n:Organism2) return percentileCont(n.betweenness,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism2Betweenness[i] = Double.parseDouble(result.single().get("percentileCont(n.betweenness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism2Betweenness: "+md.organism2Betweenness[i] );
+			}
+			
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (p:Organism1) return percentileCont(p.closeness,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism1Closeness[i] = Double.parseDouble(result.single().get("percentileCont(p.closeness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism1Closeness: "+md.organism1Closeness[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (n:Organism2) return percentileCont(n.closeness,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism2Closeness[i] = Double.parseDouble(result.single().get("percentileCont(n.closeness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism2Closeness: "+md.organism2Closeness[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (p:Organism1) return percentileCont(p.harmonic,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism1Harmonic[i] = Double.parseDouble(result.single().get("percentileCont(p.harmonic,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism1Harmonic: "+md.organism1Harmonic[i] );
+			}
+			
+			for (int i = 0;i<md.noofPercentileSteps;i++) {
+				result = tx.run( "match (n:Organism2) return percentileCont(n.harmonic,"+(i+1)/md.noofPercentileSteps+")");
+				md.organism2Harmonic[i] = Double.parseDouble(result.single().get("percentileCont(n.harmonic,"+(i+1)/md.noofPercentileSteps+")").toString());
+				System.out.println(i+". Organism2Harmonic: "+md.organism2Harmonic[i] );
+			}
+			
+			tx.success(); tx.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public int computeOrderOfClusterForGivenAverageFactor(ArrayList<ClusterSimilarity> cs, double averageFactor){
@@ -2497,6 +2609,8 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.csLabelPropagationBitScore = as.sortSimilarClusters("labelpropagation", "BitScore");
 		
 		as.computeMetaData();
+		as.computePowerMetaData();
+		as.computeClusterMetaData();
 		
 		if (args[7].equals("5")) {
 			int tolerance = 0;
@@ -2521,6 +2635,8 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 				a.removeBadMappings(1, 1, true, 100);
 			} 	
 			}
+			
+
 //			
 //			Random rand4 = new Random();
 //			double s = rand4.nextInt(4)*as.averageSimilarity/4;
