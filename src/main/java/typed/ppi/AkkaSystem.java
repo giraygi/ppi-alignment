@@ -14,6 +14,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,6 +27,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Driver;
@@ -2527,6 +2532,21 @@ public void descendParameterValuesOfChain(Future<Boolean> f, Aligner a, int minC
 	}
 	
 }
+// initializes all previously recorded alignments in a given folder with the given file extension
+public void initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
+	try (Stream<Path> walk = Files.walk(Paths.get(path))) {
+		List<String> result = walk.map(x -> x.toString())
+				.filter(f -> f.endsWith("."+extension)).collect(Collectors.toList());
+		result.forEach(System.out::println);
+		for (String string : result) {
+			Aligner a = new AlignerImpl(this,firstAlignerNo++);
+			a.addAlignment(string);
+		}
+
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
+}
 
 public static void removeLogFiles() {
 	
@@ -2591,7 +2611,8 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * args[7] -> Execution Mode
 	 * args[8] -> Database address in the home directory of the current user
 	 * args[9] -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
-	 * args[10] -> Setting the argument as "skipchains" deactivates the descendParameterValuesOfChain section of the alignment initializations.
+	 * args[10] -> Setting the argument as "skipchains" deactivates the descendParameterValuesOfChain section of the alignment initializations when args[7] = 1.
+	 * args[10] -> Tolerance value for the number of unexisting mappings when args[7] = 5.
 	 * args[11] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
 	 * 
 	 * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
