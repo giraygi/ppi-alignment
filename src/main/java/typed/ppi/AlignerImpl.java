@@ -2411,6 +2411,8 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 	boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
 		StatementResult result;
 		Session ieca = AkkaSystem.driver.session();
+		String suffix = ",min(o.power2,l.power2) order by min(o.power2,l.power2) desc";
+		suffix = "";
 		try ( org.neo4j.driver.v1.Transaction tx = ieca.beginTransaction())
 	    {
 			if(sim > 0) {
@@ -2418,7 +2420,7 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 			ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
 			ArrayList<Node> record = new ArrayList<Node>();
 			result = tx.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)-[s:SIMILARITY]->(o) where NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN o.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN l.marked WHERE x = '"+this.alignmentNo+"') "
-			+ "and length(FILTER(x in o.annotations WHERE x in l.annotations)) >= "+minCommonAnnotations+" and s.similarity >="+sim+" and not (o)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(l) return o,l");
+			+ "and length(FILTER(x in o.annotations WHERE x in l.annotations)) >= "+minCommonAnnotations+" and s.similarity >="+sim+" and not (o)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(l) return o,l"+suffix);
 			//+ "create (o)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: toString(o.proteinName)+'*'+'"+alignmentNo+"'+'*'+toString(l.proteinName), markedQuery: []}]->(l) set o.marked = true, l.marked = true");
 			//on create set o.marked = true, l.marked = true
 			
@@ -2433,6 +2435,9 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 							break;
 						case "l":
 							record.add(1,row.get( column.getKey() ).asNode());
+							break;
+						case "min(o.power2,l.power2)":
+							;
 							break;
 						default:
 							System.out.println("Unexpected column"+column.getKey());
@@ -2450,7 +2455,7 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 				ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
 				ArrayList<Node> record = new ArrayList<Node>();
 				result = tx.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1) where NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN o.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN l.marked WHERE x = '"+this.alignmentNo+"') "
-				+ "and length(FILTER(x in o.annotations WHERE x in l.annotations)) >= "+minCommonAnnotations+" and not (o)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(l) return o,l");
+				+ "and length(FILTER(x in o.annotations WHERE x in l.annotations)) >= "+minCommonAnnotations+" and not (o)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(l) return o,l"+suffix);
 				//+ "create (o)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: toString(o.proteinName)+'*'+'"+alignmentNo+"'+'*'+toString(l.proteinName), markedQuery: []}]->(l) set o.marked = true, l.marked = true");
 				//on create set o.marked = true, l.marked = true
 				
@@ -2465,6 +2470,9 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 								break;
 							case "l":
 								record.add(1,row.get( column.getKey() ).asNode());
+								break;
+							case "min(o.power2,l.power2)":
+								;
 								break;
 							default:
 								System.out.println("Unexpected column"+column.getKey());
@@ -2492,6 +2500,8 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 	
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 }
+
+
 // Merkezi düğüm bulmak için kullanılırsa işlevsel ölçütler düşük kalır. Test edilmedi. Pek işe yaramıyor gibi.
 public void increaseCentralEdges(int power2, int power3, int power4, char mode) {
 	

@@ -22,6 +22,8 @@ public class BenchmarkScores {
 	double S3 = 0;
 	double GOC = 0;
 	double bitScore = 0;
+	int LCCS = 0;
+
 	int size = 1;
 	
 	public BenchmarkScores(int alignmentNo) {
@@ -47,6 +49,7 @@ public class BenchmarkScores {
 		EC = bs.EC;
 		ICS = bs.ICS;
 		S3 = bs.S3;
+		LCCS = bs.LCCS;
 		GOC = bs.GOC;
 		bitScore = bs.bitScore;
 		size = bs.size; 
@@ -58,6 +61,7 @@ public class BenchmarkScores {
 		EC = 0;
 		ICS = 0;
 		S3 = 0;
+		LCCS = 0;
 		GOC = 0;
 		bitScore = 0;
 		size = 1;
@@ -85,6 +89,14 @@ public class BenchmarkScores {
 
 	public void setS3(double s3) {
 		S3 = s3;
+	}
+	
+	public int getLCCS() {
+		return LCCS;
+	}
+
+	public void setLCCS(int lCCS) {
+		LCCS = lCCS;
 	}
 
 	public double getGOC() {
@@ -190,6 +202,7 @@ public boolean isEqualTo(BenchmarkScores bs) {
 		temp.EC = this.EC - bs.EC;
 		temp.ICS = this.ICS - bs.ICS;
 		temp.S3 = this.S3 - bs.S3;
+		temp.LCCS = this.LCCS - bs.LCCS;
 		temp.GOC = this.GOC - bs.GOC;
 		temp.bitScore = this.bitScore - bs.bitScore;
 		temp.size = this.size - bs.size;
@@ -205,7 +218,7 @@ public boolean isEqualTo(BenchmarkScores bs) {
 	@Override
 	public String toString() {
 		return "BenchmarkScores [alignmentNo=" + alignmentNo + ", markedQuery=" + markedQuery + ", EC=" + EC + ", ICS="
-				+ ICS + ", S3=" + S3 + ", GOC=" + GOC + ", bitScore=" + bitScore + ", size=" + size + "]";
+				+ ICS + ", S3=" + S3 + ", LCCS = "+LCCS+", GOC=" + GOC + ", bitScore=" + bitScore + ", size=" + size + "]";
 	}
 	
 	public String differenceFromAlignmentFile(String differentiatingAlignmentFile, String resultFile) {

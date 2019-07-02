@@ -116,7 +116,7 @@ public class AkkaSystem {
 		this.init(args);
 		this.toleranceLimitForImprovement = toleranceLimitForUnimprovedAligners;
 		this.toleranceCycleForImprovement = toleranceCycleForUnimprovedAligners;
-		md  = new MetaData(200);
+		md  = new MetaData(2);
 	}
 	
 	public void init(String args){
@@ -1812,6 +1812,44 @@ public int calculateGOEnrichment(String alignmentNumber) {
 	return count;
 }
 
+public int calculateLCCS(String alignmentNumber) {
+	Session clccs = driver.session();
+	StatementResult result;
+	int count = 0;
+	int cluster2 = 0;
+	int cluster1 = 0;
+	try 
+    {
+		clccs.run("MATCH (p) REMOVE p.lccs2 return (p)");
+		clccs.run("MATCH (p) REMOVE p.lccs1 return (p)");
+		clccs.run("CALL algo.unionFind(\n" + 
+				"  'MATCH (p:Organism2)-[r:ALIGNS {alignmentNumber:"+alignmentNumber+" }]->() RETURN id(p) as id',\n" + 
+				"  'MATCH (p1:Organism2)-[:INTERACTS_2]-(p2:Organism2) RETURN id(p1) as source, id(p2) as target',\n" + 
+				"  {write: true, writeProperty:'lccs2'}\n" + 
+				");");
+		result = clccs.run("match (n:Organism2) with distinct(n.lccs2) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
+		cluster2 = Integer.parseInt(result.single().get("clusterid").toString());
+		System.out.println("geldi mi: "+cluster2);
+
+		clccs.run("CALL algo.unionFind(\n" + 
+				"  'MATCH ()-[r:ALIGNS {alignmentNumber:"+alignmentNumber+" }]->(q:Organism1) RETURN id(q) as id',\n" + 
+				"  'MATCH (p1:Organism1)-[:INTERACTS_1]-(p2:Organism1) RETURN id(p1) as source, id(p2) as target',\n" + 
+				"  {write: true, writeProperty:'lccs1'}\n" + 
+				");");
+		result = clccs.run("match (n:Organism1) with distinct(n.lccs1) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
+		cluster1 = Integer.parseInt(result.single().get("clusterid").toString());
+		
+		System.out.println(cluster1);
+		
+		System.out.println(cluster2);
+		result = clccs.run("match (p:Organism1)<-[r:ALIGNS]-(q:Organism2) where p.lccs1 ="+cluster1+" and q.lccs2 = "+cluster2+" and  r.alignmentNumber ='"+alignmentNumber+"' return count(distinct(q)) as lccs");
+		count = Integer.parseInt(result.single().get("lccs").toString());
+    } catch (Exception e){
+    	  e.printStackTrace();
+      } finally {clccs.close();}
+	return count;
+}
+
 public void calculateGlobalBenchmarks(String alignmentNo){
 	System.out.println("Global Benchmark Scores for alignment "+alignmentNo);
 	System.out.println("EC: "+(double) this.countAlignedEdges(alignmentNo)/(double) this.sizeOfSecondNetwork+" aligned edges: "+this.countAlignedEdges(alignmentNo)+" all edges: "+this.countAllEdgesOfANetwork(false));
@@ -1833,6 +1871,7 @@ public BenchmarkScores calculateGlobalBenchmarks(Aligner a){
 			bs.setEC((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/(double) this.sizeOfSecondNetwork);
 			bs.setICS((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/(double) this.countInducedSubGraphEdgesOfANetwork(false,Integer.toString(a.getAlignmentNo())));
 			bs.setS3((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/((double) this.sizeOfSecondNetwork + (double) this.countInducedSubGraphEdgesOfANetwork(false,Integer.toString(a.getAlignmentNo())) - (double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))));
+			bs.setLCCS(this.calculateLCCS(Integer.toString(a.getAlignmentNo())));
 			bs.setGOC(this.calculateGOCScore(Integer.toString(a.getAlignmentNo())));
 			bs.setBitScore(this.calculateBitScoreSum(Integer.toString(a.getAlignmentNo())));
 			bs.setSize(this.countAlignedNodes(Integer.toString(a.getAlignmentNo())));
@@ -2533,7 +2572,8 @@ public void descendParameterValuesOfChain(Future<Boolean> f, Aligner a, int minC
 	
 }
 // initializes all previously recorded alignments in a given folder with the given file extension
-public void initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
+public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
+	int count = 0;
 	try (Stream<Path> walk = Files.walk(Paths.get(path))) {
 		List<String> result = walk.map(x -> x.toString())
 				.filter(f -> f.endsWith("."+extension)).collect(Collectors.toList());
@@ -2541,11 +2581,13 @@ public void initializePreviousAlignmentsFromFolder(int firstAlignerNo, String pa
 		for (String string : result) {
 			Aligner a = new AlignerImpl(this,firstAlignerNo++);
 			a.addAlignment(string);
+			count++;
 		}
 
 	} catch (IOException e) {
 		e.printStackTrace();
 	}
+	return count;
 }
 
 public static void removeLogFiles() {
@@ -2659,30 +2701,30 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.computeFunctionalMetaData();
 		
 		if (args[7].equals("5")) {
-			int tolerance = 0;
-			try {
-				if(Integer.parseInt(args[10])>0)
-				tolerance = Integer.parseInt(args[10]);
-			} catch (NumberFormatException e) {
-				// TODO Auto-generated catch block
-				System.err.println(e.getMessage());
-			} catch (ArrayIndexOutOfBoundsException aioobe) {
-				// TODO Auto-generated catch block
-				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
-			}
-			for(int i =1;i<11;i++) {
-				Aligner a = new AlignerImpl(as, i);
-				
-				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
-				a.addMeaninglessMapping(100, '3');
-				a.increaseBitScoreWithTopMappings(20, '3');
-				a.increaseECByAddingPair(0, 0, '3');
-				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
-				a.removeBadMappings(1, 1, true, 100);
-			} 	
-			}
-
-			
+//			int tolerance = 0;
+//			try {
+//				if(Integer.parseInt(args[10])>0)
+//				tolerance = Integer.parseInt(args[10]);
+//			} catch (NumberFormatException e) {
+//				// TODO Auto-generated catch block
+//				System.err.println(e.getMessage());
+//			} catch (ArrayIndexOutOfBoundsException aioobe) {
+//				// TODO Auto-generated catch block
+//				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
+//			}
+//			for(int i =1;i<11;i++) {
+//				Aligner a = new AlignerImpl(as, i);
+//				
+//				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
+//				a.addMeaninglessMapping(100, '3');
+//				a.increaseBitScoreWithTopMappings(20, '3');
+//				a.increaseECByAddingPair(0, 0, '3');
+//				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
+//				a.removeBadMappings(1, 1, true, 100);
+//			} 	
+//			}
+			as.removeAllAlignments();
+			as.initializePreviousAlignmentsFromFolder(1, "spinal/cedmversionii", "txt");
 
 //			
 //			Random rand4 = new Random();
