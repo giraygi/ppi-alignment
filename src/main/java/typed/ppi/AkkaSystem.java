@@ -2574,15 +2574,27 @@ public void descendParameterValuesOfChain(Future<Boolean> f, Aligner a, int minC
 // initializes all previously recorded alignments in a given folder with the given file extension
 public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
 	int count = 0;
-	try (Stream<Path> walk = Files.walk(Paths.get(path))) {
+	try (Stream<Path> walk = Files.walk(Paths.get(path));
+			FileWriter fw = new FileWriter("statistics.csv", true);
+		    BufferedWriter bw = new BufferedWriter(fw);
+		    PrintWriter out = new PrintWriter(bw)) {
 		List<String> result = walk.map(x -> x.toString())
 				.filter(f -> f.endsWith("."+extension)).collect(Collectors.toList());
 		result.forEach(System.out::println);
+		out.println(path);
+		out.println("FileName,AlgNo,EC,ICS,S3,LCCS,GOC,BS,Size");
 		for (String string : result) {
 			Aligner a = new AlignerImpl(this,firstAlignerNo++);
 			a.addAlignment(string);
+			
+			out.println(string.substring(path.length()+1)+","+a.getAlignmentNo()+","+a.getBenchmarkScores().getEC()+","+a.getBenchmarkScores().getICS()+","+a.getBenchmarkScores().getS3()+","+a.getBenchmarkScores().getLCCS()+","+a.getBenchmarkScores().getGOC()+","+a.getBenchmarkScores().getBitScore()+","+a.getBenchmarkScores().getSize());
 			count++;
 		}
+		count++;
+		count++;
+		out.println("Files,Average,=AVERAGE(C3:C"+count+"),=AVERAGE(D3:D"+count+"),=AVERAGE(E3:E"+count+"),=AVERAGE(F3:F"+count+"),=AVERAGE(G3:G"+count+"),=AVERAGE(H3:H"+count+"),=AVERAGE(I3:I"+count+")");
+		out.println("Files,Max,=MAX(C3:C"+count+"),=MAX(D3:D"+count+"),=MAX(E3:E"+count+"),=MAX(F3:F"+count+"),=MAX(G3:G"+count+"),=MAX(H3:H"+count+"),=MAX(I3:I"+count+")");
+		out.println("Files,Min,=MIN(C3:C"+count+"),=MIN(D3:D"+count+"),=MIN(E3:E"+count+"),=MIN(F3:F"+count+"),=MIN(G3:G"+count+"),=MIN(H3:H"+count+"),=MIN(I3:I"+count+")");
 
 	} catch (IOException e) {
 		e.printStackTrace();
@@ -2724,7 +2736,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 //			} 	
 //			}
 			as.removeAllAlignments();
-			as.initializePreviousAlignmentsFromFolder(1, "spinal/cedmversionii", "txt");
+			int populationSize = as.initializePreviousAlignmentsFromFolder(1, "spinal/cedmversionii", "txt");
 
 //			
 //			Random rand4 = new Random();
