@@ -1816,34 +1816,73 @@ public int calculateLCCS(String alignmentNumber) {
 	Session clccs = driver.session();
 	StatementResult result;
 	int count = 0;
+	try ( org.neo4j.driver.v1.Transaction computeLCCS = clccs.beginTransaction() )
+    {
+		computeLCCS.run("match (p:Organism1)<-[r:ALIGNS]-(q:Organism2) where r.alignmentNumber ='"+alignmentNumber+"' set q :LCCS2 return q");
+		computeLCCS.run("CALL algo.unionFind('LCCS2','INTERACTS_2', {write: true, writeProperty:'lccs2'});");
+		result = computeLCCS.run("match (n:Organism2)  where n.lccs2 is not null with distinct(n.lccs2) as clusterid, count(n) as clustersize return clustersize order by clustersize desc limit 1");
+		count = Integer.parseInt(result.single().get("clustersize").toString());	
+		computeLCCS.success();
+		computeLCCS.close();
+    } catch (Exception e){
+    	  e.printStackTrace();
+      } finally {clccs.close();}
+	return count;
+}
+// Two sided LCCS that takes the intersection of the largest connected components of both networks.
+public int calculateLCCS2(String alignmentNumber) {
+	Session clccs = driver.session();
+	StatementResult result;
+	int count = 0;
 	int cluster2 = 0;
 	int cluster1 = 0;
-	try 
+	try  ( org.neo4j.driver.v1.Transaction computeLCCS = clccs.beginTransaction() )
     {
-		clccs.run("MATCH (p) REMOVE p.lccs2 return (p)");
-		clccs.run("MATCH (p) REMOVE p.lccs1 return (p)");
-		clccs.run("CALL algo.unionFind(\n" + 
-				"  'MATCH (p:Organism2)-[r:ALIGNS {alignmentNumber:"+alignmentNumber+" }]->() RETURN id(p) as id',\n" + 
-				"  'MATCH (p1:Organism2)-[:INTERACTS_2]-(p2:Organism2) RETURN id(p1) as source, id(p2) as target',\n" + 
-				"  {write: true, writeProperty:'lccs2'}\n" + 
-				");");
-		result = clccs.run("match (n:Organism2) with distinct(n.lccs2) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
-		cluster2 = Integer.parseInt(result.single().get("clusterid").toString());
-		System.out.println("geldi mi: "+cluster2);
-
-		clccs.run("CALL algo.unionFind(\n" + 
-				"  'MATCH ()-[r:ALIGNS {alignmentNumber:"+alignmentNumber+" }]->(q:Organism1) RETURN id(q) as id',\n" + 
-				"  'MATCH (p1:Organism1)-[:INTERACTS_1]-(p2:Organism1) RETURN id(p1) as source, id(p2) as target',\n" + 
-				"  {write: true, writeProperty:'lccs1'}\n" + 
-				");");
-		result = clccs.run("match (n:Organism1) with distinct(n.lccs1) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
-		cluster1 = Integer.parseInt(result.single().get("clusterid").toString());
+		computeLCCS.run("match (p:Organism1)<-[r:ALIGNS]-(q:Organism2) where r.alignmentNumber ='"+alignmentNumber+"' set q :LCCS2 return q");
+		computeLCCS.run("CALL algo.unionFind('LCCS2','INTERACTS_2', {write: true, writeProperty:'lccs2'});");
+		result = computeLCCS.run("match (n:Organism2)  where n.lccs2 is not null with distinct(n.lccs2) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
+		cluster2 = Integer.parseInt(result.single().get("clusterid").toString());	
+		System.out.println("C2: "+cluster2);
 		
-		System.out.println(cluster1);
+		computeLCCS.run("match (p:Organism1)<-[r:ALIGNS]-(q:Organism2) where r.alignmentNumber ='"+alignmentNumber+"' set p :LCCS1 return p");
+		computeLCCS.run("CALL algo.unionFind('LCCS1','INTERACTS_1', {write: true, writeProperty:'lccs1'});");
+		result = computeLCCS.run("match (n:Organism1) where n.lccs1 is not null with distinct(n.lccs1) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
+		cluster1 = Integer.parseInt(result.single().get("clusterid").toString());	
+		System.out.println("C1: "+cluster1);
 		
-		System.out.println(cluster2);
-		result = clccs.run("match (p:Organism1)<-[r:ALIGNS]-(q:Organism2) where p.lccs1 ="+cluster1+" and q.lccs2 = "+cluster2+" and  r.alignmentNumber ='"+alignmentNumber+"' return count(distinct(q)) as lccs");
+		
+		result = computeLCCS.run("match (p:Organism1)<-[r:ALIGNS]-(q:Organism2) where p.lccs1 ="+cluster1+" and q.lccs2 = "+cluster2+" and  r.alignmentNumber ='"+alignmentNumber+"' return count(distinct(q)) as lccs");
 		count = Integer.parseInt(result.single().get("lccs").toString());
+		computeLCCS.run("MATCH (n:LCCS2) REMOVE n:LCCS2 RETURN n");
+		computeLCCS.run("MATCH (n:LCCS1) REMOVE n:LCCS1 RETURN n");
+		computeLCCS.run("MATCH (p) REMOVE p.lccs2 return (p)");
+		computeLCCS.run("MATCH (p) REMOVE p.lccs1 return (p)");
+//		clccs.run("CALL algo.unionFind(\n" + 
+//				"  'MATCH (p:Organism2)-[r:ALIGNS {alignmentNumber:"+alignmentNumber+" }]->() RETURN id(p) as id',\n" + 
+//				"  'MATCH (p1:Organism2)-[:INTERACTS_2]-(p2:Organism2) RETURN id(p1) as source, id(p2) as target',\n" + 
+//				"  {write: true, writeProperty:'lccs2'}\n" + 
+//				");");
+//		result = clccs.run("match (n:Organism2) with distinct(n.lccs2) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
+//		cluster2 = Integer.parseInt(result.single().get("clusterid").toString());
+//		System.out.println("geldi mi: "+cluster2);
+//
+//		clccs.run("CALL algo.unionFind(\n" + 
+//				"  'MATCH ()-[r:ALIGNS {alignmentNumber:"+alignmentNumber+" }]->(q:Organism1) RETURN id(q) as id',\n" + 
+//				"  'MATCH (p1:Organism1)-[:INTERACTS_1]-(p2:Organism1) RETURN id(p1) as source, id(p2) as target',\n" + 
+//				"  {write: true, writeProperty:'lccs1'}\n" + 
+//				");");
+//		result = clccs.run("match (n:Organism1) with distinct(n.lccs1) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
+//		cluster1 = Integer.parseInt(result.single().get("clusterid").toString());
+//		
+//		System.out.println(cluster1);
+//		
+//		System.out.println(cluster2);
+//		result = clccs.run("match (p:Organism1)<-[r:ALIGNS]-(q:Organism2) where p.lccs1 ="+cluster1+" and q.lccs2 = "+cluster2+" and  r.alignmentNumber ='"+alignmentNumber+"' return count(distinct(q)) as lccs");
+//		count = Integer.parseInt(result.single().get("lccs").toString());
+		
+		computeLCCS.success();
+		computeLCCS.close();
+		
     } catch (Exception e){
     	  e.printStackTrace();
       } finally {clccs.close();}
@@ -1871,7 +1910,7 @@ public BenchmarkScores calculateGlobalBenchmarks(Aligner a){
 			bs.setEC((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/(double) this.sizeOfSecondNetwork);
 			bs.setICS((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/(double) this.countInducedSubGraphEdgesOfANetwork(false,Integer.toString(a.getAlignmentNo())));
 			bs.setS3((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/((double) this.sizeOfSecondNetwork + (double) this.countInducedSubGraphEdgesOfANetwork(false,Integer.toString(a.getAlignmentNo())) - (double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))));
-			bs.setLCCS(this.calculateLCCS(Integer.toString(a.getAlignmentNo())));
+			bs.setLCCS(this.calculateLCCS2(Integer.toString(a.getAlignmentNo())));
 			bs.setGOC(this.calculateGOCScore(Integer.toString(a.getAlignmentNo())));
 			bs.setBitScore(this.calculateBitScoreSum(Integer.toString(a.getAlignmentNo())));
 			bs.setSize(this.countAlignedNodes(Integer.toString(a.getAlignmentNo())));
@@ -2574,8 +2613,11 @@ public void descendParameterValuesOfChain(Future<Boolean> f, Aligner a, int minC
 // initializes all previously recorded alignments in a given folder with the given file extension
 public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
 	int count = 0;
+	File file = new File(path);
+	String parentPath = file.getAbsoluteFile().getName();
+	
 	try (Stream<Path> walk = Files.walk(Paths.get(path));
-			FileWriter fw = new FileWriter("statistics.csv", true);
+			FileWriter fw = new FileWriter("statistics_"+parentPath+"_"+extension+".csv", true);
 		    BufferedWriter bw = new BufferedWriter(fw);
 		    PrintWriter out = new PrintWriter(bw)) {
 		List<String> result = walk.map(x -> x.toString())
