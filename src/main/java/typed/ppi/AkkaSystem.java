@@ -2614,10 +2614,10 @@ public void descendParameterValuesOfChain(Future<Boolean> f, Aligner a, int minC
 public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
 	int count = 0;
 	File file = new File(path);
-	String parentPath = file.getAbsoluteFile().getName();
+	String parentPath = file.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '_');
 	
 	try (Stream<Path> walk = Files.walk(Paths.get(path));
-			FileWriter fw = new FileWriter("statistics_"+parentPath+"_"+extension+".csv", true);
+			FileWriter fw = new FileWriter(path+File.separator+"statistics_"+parentPath+"_"+extension+".csv", true);
 		    BufferedWriter bw = new BufferedWriter(fw);
 		    PrintWriter out = new PrintWriter(bw)) {
 		List<String> result = walk.map(x -> x.toString())
@@ -2778,7 +2778,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 //			} 	
 //			}
 			as.removeAllAlignments();
-			int populationSize = as.initializePreviousAlignmentsFromFolder(1, "spinal/cedmversionii", "txt");
+			int populationSize = as.initializePreviousAlignmentsFromFolder(1, "hubalign/cedm", "alignment");
 
 //			
 //			Random rand4 = new Random();
