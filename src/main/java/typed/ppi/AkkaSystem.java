@@ -1912,6 +1912,7 @@ public BenchmarkScores calculateGlobalBenchmarks(Aligner a){
 			bs.setS3((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/((double) this.sizeOfSecondNetwork + (double) this.countInducedSubGraphEdgesOfANetwork(false,Integer.toString(a.getAlignmentNo())) - (double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))));
 			bs.setLCCS(this.calculateLCCS2(Integer.toString(a.getAlignmentNo())));
 			bs.setGOC(this.calculateGOCScore(Integer.toString(a.getAlignmentNo())));
+			bs.setGOEnrichment(this.calculateGOEnrichment(Integer.toString(a.getAlignmentNo())));
 			bs.setBitScore(this.calculateBitScoreSum(Integer.toString(a.getAlignmentNo())));
 			bs.setSize(this.countAlignedNodes(Integer.toString(a.getAlignmentNo())));
 			
@@ -2624,19 +2625,19 @@ public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String pat
 				.filter(f -> f.endsWith("."+extension)).collect(Collectors.toList());
 		result.forEach(System.out::println);
 		out.println(path);
-		out.println("FileName,AlgNo,EC,ICS,S3,LCCS,GOC,BS,Size");
+		out.println("FileName,AlgNo,EC,ICS,S3,LCCS,GOC,GOEnrichment,BS,Size");
 		for (String string : result) {
 			Aligner a = new AlignerImpl(this,firstAlignerNo++);
 			a.addAlignment(string);
 			
-			out.println(string.substring(path.length()+1)+","+a.getAlignmentNo()+","+a.getBenchmarkScores().getEC()+","+a.getBenchmarkScores().getICS()+","+a.getBenchmarkScores().getS3()+","+a.getBenchmarkScores().getLCCS()+","+a.getBenchmarkScores().getGOC()+","+a.getBenchmarkScores().getBitScore()+","+a.getBenchmarkScores().getSize());
+			out.println(string.substring(path.length()+1)+","+a.getAlignmentNo()+","+a.getBenchmarkScores().getEC()+","+a.getBenchmarkScores().getICS()+","+a.getBenchmarkScores().getS3()+","+a.getBenchmarkScores().getLCCS()+","+a.getBenchmarkScores().getGOC()+","+a.getBenchmarkScores().getGOEnrichment()+","+a.getBenchmarkScores().getBitScore()+","+a.getBenchmarkScores().getSize());
 			count++;
 		}
 		count++;
 		count++;
-		out.println("Files,Average,=AVERAGE(C3:C"+count+"),=AVERAGE(D3:D"+count+"),=AVERAGE(E3:E"+count+"),=AVERAGE(F3:F"+count+"),=AVERAGE(G3:G"+count+"),=AVERAGE(H3:H"+count+"),=AVERAGE(I3:I"+count+")");
-		out.println("Files,Max,=MAX(C3:C"+count+"),=MAX(D3:D"+count+"),=MAX(E3:E"+count+"),=MAX(F3:F"+count+"),=MAX(G3:G"+count+"),=MAX(H3:H"+count+"),=MAX(I3:I"+count+")");
-		out.println("Files,Min,=MIN(C3:C"+count+"),=MIN(D3:D"+count+"),=MIN(E3:E"+count+"),=MIN(F3:F"+count+"),=MIN(G3:G"+count+"),=MIN(H3:H"+count+"),=MIN(I3:I"+count+")");
+		out.println("Files,Average,=AVERAGE(C3:C"+count+"),=AVERAGE(D3:D"+count+"),=AVERAGE(E3:E"+count+"),=AVERAGE(F3:F"+count+"),=AVERAGE(G3:G"+count+"),=AVERAGE(H3:H"+count+"),=AVERAGE(I3:I"+count+"),=AVERAGE(J3:J"+count+")");
+		out.println("Files,Max,=MAX(C3:C"+count+"),=MAX(D3:D"+count+"),=MAX(E3:E"+count+"),=MAX(F3:F"+count+"),=MAX(G3:G"+count+"),=MAX(H3:H"+count+"),=MAX(I3:I"+count+"),=MAX(J3:J"+count+")");
+		out.println("Files,Min,=MIN(C3:C"+count+"),=MIN(D3:D"+count+"),=MIN(E3:E"+count+"),=MIN(F3:F"+count+"),=MIN(G3:G"+count+"),=MIN(H3:H"+count+"),=MIN(I3:I"+count+"),=MIN(J3:J"+count+")");
 
 	} catch (IOException e) {
 		e.printStackTrace();
@@ -2778,7 +2779,23 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 //			} 	
 //			}
 			as.removeAllAlignments();
-			int populationSize = as.initializePreviousAlignmentsFromFolder(1, "hubalign/cedm", "alignment");
+			int populationSize1 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce1sana", "aln");
+			as.removeAllAlignments();
+			int populationSize2 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce1sananongreedy", "aln");
+			as.removeAllAlignments();
+			int populationSize3 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce1sanaskipchainsnormal", "aln");
+			as.removeAllAlignments();
+			int populationSize4 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce2sana", "aln");
+			as.removeAllAlignments();
+			int populationSize5 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce2sananormalnormal", "aln");
+			as.removeAllAlignments();
+			int populationSize6 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce3sanafirst", "aln");
+			as.removeAllAlignments();
+			int populationSize7 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce3sananormalgreedy", "aln");
+			as.removeAllAlignments();
+			int populationSize8 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce4sanafirst", "aln");
+			as.removeAllAlignments();
+			int populationSize9 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce5sana", "aln");
 
 //			
 //			Random rand4 = new Random();

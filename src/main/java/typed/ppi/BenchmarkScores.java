@@ -21,6 +21,7 @@ public class BenchmarkScores {
 	double ICS = 0;
 	double S3 = 0;
 	double GOC = 0;
+	int GOEnrichment = 0;
 	double bitScore = 0;
 	int LCCS = 0;
 
@@ -51,6 +52,7 @@ public class BenchmarkScores {
 		S3 = bs.S3;
 		LCCS = bs.LCCS;
 		GOC = bs.GOC;
+		GOEnrichment = bs.GOEnrichment;
 		bitScore = bs.bitScore;
 		size = bs.size; 
 	}
@@ -63,6 +65,7 @@ public class BenchmarkScores {
 		S3 = 0;
 		LCCS = 0;
 		GOC = 0;
+		GOEnrichment = 0;
 		bitScore = 0;
 		size = 1;
 	}
@@ -105,6 +108,14 @@ public class BenchmarkScores {
 
 	public void setGOC(double gOC) {
 		GOC = gOC;
+	}
+	
+	public int getGOEnrichment() {
+		return GOEnrichment;
+	}
+
+	public void setGOEnrichment(int gOE) {
+		GOEnrichment = gOE;
 	}
 
 	public double getBitScore() {
@@ -218,7 +229,7 @@ public boolean isEqualTo(BenchmarkScores bs) {
 	@Override
 	public String toString() {
 		return "BenchmarkScores [alignmentNo=" + alignmentNo + ", markedQuery=" + markedQuery + ", EC=" + EC + ", ICS="
-				+ ICS + ", S3=" + S3 + ", LCCS = "+LCCS+", GOC=" + GOC + ", bitScore=" + bitScore + ", size=" + size + "]";
+				+ ICS + ", S3=" + S3 + ", LCCS = "+LCCS+", GOC=" + GOC + ", GOEnrichment=" + GOEnrichment + ", bitScore=" + bitScore + ", size=" + size + "]";
 	}
 	
 	public String differenceFromAlignmentFile(String differentiatingAlignmentFile, String resultFile) {
