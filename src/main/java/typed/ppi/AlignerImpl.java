@@ -3392,12 +3392,6 @@ public void removeBadMappingsToReduceInduction1(boolean keepEdges,int simTreshol
 			if(keepEdges){
 				rmwe.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)<-[r2:ALIGNS]-(o) "
 						+ "where r.alignmentNumber = '"+alignmentNo+"' and r2.alignmentNumber = '"+alignmentNo+"' set o.marked = o.marked + '"+this.alignmentNo+"', n.marked = n.marked + '"+this.alignmentNo+"', m.marked = m.marked + '"+this.alignmentNo+"', l.marked = l.marked + '"+this.alignmentNo+"'");
-//				result = tx.run( "optional match (n)-[ss:SIMILARITY]->(p:Organism2)-[t:ALIGNS]->(n:Organism1)-[r:INTERACTS_1]->(m:Organism1)<-[a:ALIGNS]-(o:Organism2)<-[s:SIMILARITY]-(m) "
-//				+ "where (s.similarity < "+sim+" or s.similarity = null) and (ss.similarity < "+sim+" or ss.similarity = null) "
-//				+ "and length(FILTER(x in p.annotations WHERE x in n.annotations)) < "+k+" and length(FILTER(x in o.annotations WHERE x in m.annotations)) < "+k+" "
-//				//+"and n.marked = false and p.marked = false and m.marked = false and o.marked = false "
-//				+"and p.marked = false and o.marked = false "
-//				+ "and a.alignmentNumber = '"+alignmentNo+"' and t.alignmentNumber = '"+alignmentNo+"' return t,a");
 			}
 				result = rmwe.run( "match (p:Organism2)-[t:ALIGNS]->(n:Organism1)-[r:INTERACTS_1]->(m:Organism1)<-[a:ALIGNS]-(o:Organism2) "
 				+ "where NOT ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN o.marked WHERE x = '"+this.alignmentNo+"') " //(p.marked = false or n = false ) and (o.marked = false or m = false)
@@ -3426,7 +3420,6 @@ public void removeBadMappingsToReduceInduction1(boolean keepEdges,int simTreshol
 							}
 						}
 					temp = compareSimilarityContribution(t, a,simTreshold, annotationTreshold,powerTreshold);
-//					System.out.println(temp);
 					if (temp==t) {
 						rs = rmwe.run("match ()-[a:ALIGNS]-() where id(a) ="+a+" delete a").consume();
 						count+=rs.counters().relationshipsDeleted();
@@ -3441,8 +3434,6 @@ public void removeBadMappingsToReduceInduction1(boolean keepEdges,int simTreshol
 					temp = 0;
 					}
 				
-//				if(keepEdges)
-//					rmwe.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
 	    } catch (Exception e){
 	    	System.out.println("removeBadMappingsToReduceInduction1: " + e.getMessage());
 	    	if(Math.random() < 0.5)

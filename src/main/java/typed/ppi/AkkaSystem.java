@@ -67,6 +67,8 @@ public class AkkaSystem {
 	BufferedWriter bw;
 	static Driver driver;
 	Session session;
+	int noofNodesInFirstNetwork = 0;
+	int noofNodesInSecondNetwork = 0;
 	int sizeOfFirstNetwork = 0;
 	int sizeOfSecondNetwork = 0;
 	int maxCommonAnnotations = 0;
@@ -332,6 +334,10 @@ public class AkkaSystem {
 		System.out.println("Size of First Network: "+this.sizeOfFirstNetwork);
 		this.sizeOfSecondNetwork = this.countAllEdgesOfANetwork(false);
 		System.out.println("Size of Second Network: "+this.sizeOfSecondNetwork);
+		this.noofNodesInFirstNetwork = this.countAllNodesOfNetwork(true);
+		System.out.println("No of Proteins in the first network: "+this.noofNodesInFirstNetwork);
+		this.noofNodesInSecondNetwork = this.countAllNodesOfNetwork(false);
+		System.out.println("No of Proteins in the second network: "+this.noofNodesInSecondNetwork);
 	}
 	
 	public void computeFunctionalMetaData() {
@@ -1448,6 +1454,25 @@ public void queryGraph(String queryString){
 		return count;
 	}
 	
+	
+	public int countAllNodesOfNetwork(boolean firstOrSecond){
+		Session can = driver.session();
+		int count = 0;
+		StatementResult result;
+		
+		try 
+	      {
+			if(firstOrSecond)
+				result = can.run( "match (n:Organism1) return count(n)");
+			else
+				result = can.run( "match (n:Organism2) return count(n)");
+			count = Integer.parseInt(result.single().get("count(n)").toString());
+
+	      } catch (Exception e){
+	    	  e.printStackTrace();
+	      } finally {can.close();}
+		return count;
+	}
 	
 	/**
 	 * Hizalanan Düğümlerin Sayısı. OptNetAlign'da Size hedefine denk düşüyor.
@@ -2746,10 +2771,9 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		final AkkaSystem as = new AkkaSystem(1,args[8],100,20);
 		if(args[7].equals("1"))
 		{
-		as.deleteAllNodesRelationships();
-		as.createGraph(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);	
-		as.computePowers();
-
+			as.deleteAllNodesRelationships();
+			as.createGraph(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);	
+			as.computePowers();
 		}
 		
 		if(args[7].equals("1")||args[7].equals("11")){
@@ -2777,25 +2801,27 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		if (args[7].equals("5")) {
 			int populationSize = 11;
 					
-			if(args[11]!=null) {
-				File file = new File(args[11]);
-				if (!file.isDirectory())
-				   file = file.getParentFile();
-				if (file.exists()){
-					as.removeAllAlignments();
-					populationSize = as.initializePreviousAlignmentsFromFolder(1, args[11], "aln");
-					System.out.println("Population size of previous alignments from folder  is "+populationSize);
-				} else {
-					try {
-						if(Integer.parseInt(args[11])>0)
-							populationSize = Integer.parseInt(args[11]);
-						System.out.println("Population size of alignments from argument/live database  is "+populationSize);
-					} catch (NumberFormatException e) {
-						System.err.println(e.getMessage());
-					} catch (ArrayIndexOutOfBoundsException aioobe) {
-						System.err.println(aioobe.getMessage()+" - populationSize is not entered");
+			try {
+					File file = new File(args[11]);
+					if (!file.isDirectory())
+					   file = file.getParentFile();
+					if (file.exists()){
+						as.removeAllAlignments();
+						populationSize = as.initializePreviousAlignmentsFromFolder(1, args[11], "aln");
+						System.out.println("Population size of previous alignments from folder  is "+populationSize);
+					} else {
+						try {
+							if(Integer.parseInt(args[11])>0)
+								populationSize = Integer.parseInt(args[11]);
+							System.out.println("Population size of alignments from argument/live database  is "+populationSize);
+						} catch (NumberFormatException e) {
+							System.err.println(e.getMessage());
+						} catch (ArrayIndexOutOfBoundsException aioobe) {
+							System.err.println(aioobe.getMessage()+" - populationSize is not entered");
+						}
 					}
-				}
+			} catch (ArrayIndexOutOfBoundsException aioobe) {
+				aioobe.printStackTrace();
 			}
 			
 			int tolerance = 20;
@@ -2813,14 +2839,19 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			for(int i =1;i<populationSize+1;i++) {
 				Aligner a = new AlignerImpl(as, i);
 				
-				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
+				while(a.getBenchmarkScores().getSize() <=as.noofNodesInSecondNetwork-tolerance) {
 				a.addMeaninglessMapping(100, '3');
 				a.increaseBitScoreWithTopMappings(20, '3');
 				a.increaseECByAddingPair(2, 0, '3');
 				a.increaseECByAddingPair(1, 0, '3');
 				a.increaseECByAddingPair(0, 0, '3');
-				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
-				a.removeBadMappings(1, 1, true, 100);
+				int size1 = a.getBenchmarkScores().getSize();
+				if(Math.random() < 0.3)
+					a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
+				int size2 = a.getBenchmarkScores().getSize();
+				if(Math.random() < 0.5)
+					a.removeBadMappingsRandomly(1, 1, true, 100-size2+size1);
+				a.removeLatterOfManyToManyAlignments();
 			} 	
 			}
 		}
