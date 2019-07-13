@@ -1889,7 +1889,7 @@ public int calculateLCCS2(String alignmentNumber) {
 	return count;
 }
 
-public void calculateGlobalBenchmarks(String alignmentNo){
+public void printGlobalBenchmarks(String alignmentNo){
 	System.out.println("Global Benchmark Scores for alignment "+alignmentNo);
 	System.out.println("EC: "+(double) this.countAlignedEdges(alignmentNo)/(double) this.sizeOfSecondNetwork+" aligned edges: "+this.countAlignedEdges(alignmentNo)+" all edges: "+this.countAllEdgesOfANetwork(false));
 	System.out.println("ICS: "+(double) this.countAlignedEdges(alignmentNo)/(double) this.countInducedSubGraphEdgesOfANetwork(false,alignmentNo)+" aligned edges: "+this.countAlignedEdges(alignmentNo)+" induced edges: "+this.countInducedSubGraphEdgesOfANetwork(false,alignmentNo));
@@ -1944,7 +1944,7 @@ public BenchmarkScores calculateGlobalBenchmarks(Aligner a){
 	return finished;
 }
 
-public void calculateSubGraphBenchmarks(String alignmentNo, String markedQuery){
+public void printSubGraphBenchmarks(String alignmentNo, String markedQuery){
 	System.out.println("Local Benchmark Scores for alignment "+alignmentNo+" and SubGraph: "+markedQuery);
 	System.out.println("EC: "+(double) this.countAlignedEdges(alignmentNo,markedQuery)/(double) this.countAllEdgesOfANetwork(false,markedQuery)+" aligned edges: "+this.countAlignedEdges(alignmentNo,markedQuery)+" all edges: "+this.countAllEdgesOfANetwork(false,markedQuery));
 	System.out.println("ICS: "+(double) this.countAlignedEdges(alignmentNo,markedQuery)/(double) this.countInducedSubGraphEdgesOfANetwork(false,alignmentNo,markedQuery)+" aligned edges: "+this.countAlignedEdges(alignmentNo,markedQuery)+" induced edges: "+this.countInducedSubGraphEdgesOfANetwork(false,alignmentNo,markedQuery));
@@ -2611,8 +2611,8 @@ public void descendParameterValuesOfChain(Future<Boolean> f, Aligner a, int minC
 	}
 	
 }
-// initializes all previously recorded alignments in a given folder with the given file extension
-public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
+// initializes all previously recorded alignments in a given folder with the given file extension and saves their statistics.
+public int initializePreviousAlignmentsFromFolderAndSaveStatistics(int firstAlignerNo, String path, String extension) {
 	int count = 0;
 	File file = new File(path);
 	String parentPath = file.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '_');
@@ -2639,6 +2639,24 @@ public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String pat
 		out.println("Files,Max,=MAX(C3:C"+count+"),=MAX(D3:D"+count+"),=MAX(E3:E"+count+"),=MAX(F3:F"+count+"),=MAX(G3:G"+count+"),=MAX(H3:H"+count+"),=MAX(I3:I"+count+"),=MAX(J3:J"+count+")");
 		out.println("Files,Min,=MIN(C3:C"+count+"),=MIN(D3:D"+count+"),=MIN(E3:E"+count+"),=MIN(F3:F"+count+"),=MIN(G3:G"+count+"),=MIN(H3:H"+count+"),=MIN(I3:I"+count+"),=MIN(J3:J"+count+")");
 
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
+	return count-2;
+}
+
+//initializes all previously recorded alignments in a given folder with the given file extension
+public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
+	int count = 0;	
+	try (Stream<Path> walk = Files.walk(Paths.get(path))) {
+		List<String> result = walk.map(x -> x.toString())
+				.filter(f -> f.endsWith("."+extension)).collect(Collectors.toList());
+		result.forEach(System.out::println);
+		for (String string : result) {
+			Aligner a = new AlignerImpl(this,firstAlignerNo++);
+			a.addAlignment(string);	
+			count++;
+		}
 	} catch (IOException e) {
 		e.printStackTrace();
 	}
@@ -2711,6 +2729,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * args[10] -> Setting the argument as "skipchains" deactivates the descendParameterValuesOfChain section of the alignment initializations when args[7] = 1.
 	 * args[10] -> Tolerance value for the number of unexisting mappings when args[7] = 5.
 	 * args[11] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
+	 * args[11] -> Path of the initialization folder when args[7] = 5 OR (if not) number of aligners to initialize
 	 * 
 	 * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
 	 * args[7] = 11 -> Starts from computing community detection and centrality algorithms.
@@ -2756,79 +2775,59 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.computeFunctionalMetaData();
 		
 		if (args[7].equals("5")) {
-//			int tolerance = 0;
-//			try {
-//				if(Integer.parseInt(args[10])>0)
-//				tolerance = Integer.parseInt(args[10]);
-//			} catch (NumberFormatException e) {
-//				// TODO Auto-generated catch block
-//				System.err.println(e.getMessage());
-//			} catch (ArrayIndexOutOfBoundsException aioobe) {
-//				// TODO Auto-generated catch block
-//				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
-//			}
-//			for(int i =1;i<11;i++) {
-//				Aligner a = new AlignerImpl(as, i);
-//				
-//				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
-//				a.addMeaninglessMapping(100, '3');
-//				a.increaseBitScoreWithTopMappings(20, '3');
-//				a.increaseECByAddingPair(0, 0, '3');
-//				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
-//				a.removeBadMappings(1, 1, true, 100);
-//			} 	
-//			}
-			as.removeAllAlignments();
-			int populationSize1 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce1sana", "aln");
-			as.removeAllAlignments();
-			int populationSize2 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce1sananongreedy", "aln");
-			as.removeAllAlignments();
-			int populationSize3 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce1sanaskipchainsnormal", "aln");
-			as.removeAllAlignments();
-			int populationSize4 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce2sana", "aln");
-			as.removeAllAlignments();
-			int populationSize5 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce2sananormalnormal", "aln");
-			as.removeAllAlignments();
-			int populationSize6 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce3sanafirst", "aln");
-			as.removeAllAlignments();
-			int populationSize7 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce3sananormalgreedy", "aln");
-			as.removeAllAlignments();
-			int populationSize8 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce4sanafirst", "aln");
-			as.removeAllAlignments();
-			int populationSize9 = as.initializePreviousAlignmentsFromFolder(1, "/home/giray/Dropbox/kaynakkodlar/ProteinAlignment/alignments/sana/dmce5sana", "aln");
-
-//			
-//			Random rand4 = new Random();
-//			double s = rand4.nextInt(4)*as.averageSimilarity/4;
-//			System.out.println(s);
-//			System.out.println(as.averageSimilarity/4);
-		
-//			Aligner a = new AlignerImpl(as, 91);
-//			a.removeAlignment();
-//			a.createAlignment("sana.align");
-//			as.calculateGlobalBenchmarks(a);
-//			a.addMeaninglessMapping(5, '3');
+			int populationSize = 11;
+					
+			if(args[11]!=null) {
+				File file = new File(args[11]);
+				if (!file.isDirectory())
+				   file = file.getParentFile();
+				if (file.exists()){
+					as.removeAllAlignments();
+					populationSize = as.initializePreviousAlignmentsFromFolder(1, args[11], "aln");
+					System.out.println("Population size of previous alignments from folder  is "+populationSize);
+				} else {
+					try {
+						if(Integer.parseInt(args[11])>0)
+							populationSize = Integer.parseInt(args[11]);
+						System.out.println("Population size of alignments from argument/live database  is "+populationSize);
+					} catch (NumberFormatException e) {
+						System.err.println(e.getMessage());
+					} catch (ArrayIndexOutOfBoundsException aioobe) {
+						System.err.println(aioobe.getMessage()+" - populationSize is not entered");
+					}
+				}
+			}
+			
+			int tolerance = 20;
+			try {
+				if(Integer.parseInt(args[10])>0) {
+					tolerance = Integer.parseInt(args[10]);
+					System.out.println("Tolerance number of alignments from argument  is "+tolerance);
+				} else
+					System.out.println("Tolerance number should be a positive number. Switching to the default value "+tolerance);
+			} catch (NumberFormatException e) {
+				System.err.println(e.getMessage());
+			} catch (ArrayIndexOutOfBoundsException aioobe) {
+				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
+			}
+			for(int i =1;i<populationSize+1;i++) {
+				Aligner a = new AlignerImpl(as, i);
+				
+				while(a.getBenchmarkScores().getSize() !=as.sizeOfSecondNetwork-tolerance) {
+				a.addMeaninglessMapping(100, '3');
+				a.increaseBitScoreWithTopMappings(20, '3');
+				a.increaseECByAddingPair(2, 0, '3');
+				a.increaseECByAddingPair(1, 0, '3');
+				a.increaseECByAddingPair(0, 0, '3');
+				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
+				a.removeBadMappings(1, 1, true, 100);
+			} 	
+			}
 		}
-		
-//		Aligner a = new AlignerImpl(as, 1);
-//		a.removeAlignment();
-//		a.createAlignment("sana.align");
-//		as.calculateGlobalBenchmarks(a);
-//		a.addMeaninglessMapping(5, '3');
-//		a.createAlignment("/home/giray/Dropbox/ProteinAlignment/alignments/dmsc/12022019/34/DMSC34Save2.aln");
-//		for (int i = 0; i < 20; i++) {
-//			a.addMeaninglessMapping(100, '3');
-//			a.increaseBitScoreWithTopMappings(20, '3');
-//			a.increaseECByAddingPair(0, 0, '3');
-//			a.removeBadMappingsToReduceInduction1(0, 0, true, 0, 0, 0);
-//			a.removeBadMappings(1, 1, true, 100);
-//
-//		} 
 	    
 //	    ActorRef router = as.system2.actorOf(new RoundRobinGroup(routeePaths).props(), "router");
 	 //   router.tell("1 deneme",as.typed.getActorRefFor(secondAligner));
-//	    as.typed.getActorRefFor(secondAligner).tell("1 deneme", as.typed.getActorRefFor(firstAligner));
-		
+//	    as.typed.getActorRefFor(secondAligner).tell("1 deneme", as.typed.getActorRefFor(firstAligner));	
 		
 		if (args[7].equals("2")) {
 			removeLogFiles();
@@ -3003,8 +3002,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			Future<Boolean> f3 = sixthAligner.alignAlternativeCentralNodesFromTop(n, s, 0.3, 1000, "pagerank", '3');
 			Future<Boolean> f5 = eighthAligner.alignAlternativeCentralNodesFromTop(n, s, 0.3, 1000, "betweenness", '3');
 			Future<Boolean> f7 = ninthAligner.alignAlternativeCentralNodesFromTop(n, s, 0.3, 1000, "harmonic", '3');
-			Future<Boolean> f9 = tenthAligner.alignAlternativeCentralNodesFromTop(n, s, 0.3, 1000, "closeness", '3');
-		
+			Future<Boolean> f9 = tenthAligner.alignAlternativeCentralNodesFromTop(n, s, 0.3, 1000, "closeness", '3');	
 			
 			try {
 				
