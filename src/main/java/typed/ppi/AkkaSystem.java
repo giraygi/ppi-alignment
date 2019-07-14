@@ -38,6 +38,8 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.exceptions.NoSuchRecordException;
 import org.neo4j.driver.v1.summary.ResultSummary;
+import org.neo4j.driver.v1.types.Node;
+import org.neo4j.driver.v1.types.Relationship;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.helpers.TransactionTemplate;
@@ -1299,15 +1301,16 @@ public void loadOldMarkedQueriesFromFileToDB(String fileName) {
 } 
 // Hizalayıcı numaraları elle veriliyor. Ön tanımlı: 1-10
 //Uygulamada mevcut durumda veritabanında bulunan İşaretli Sorgular daha sonra tekrar veritbanına yüklenebilecek biçimde dosyaya kaydedilir.
-public void saveOldMarkedQueriesToFile(String fileName) {
+public void saveOldMarkedQueriesToFile(String fileName,String path) {
 	StatementResult result;
 	Record record;
+	ArrayList<String> alignments = readAlignmentsFromDatabase();
 		
 		Session womqtd = AkkaSystem.driver.session();
-		try(BufferedWriter bw = new BufferedWriter(new FileWriter(fileName))){
+		try(BufferedWriter bw = new BufferedWriter(new FileWriter(path+File.separator+fileName))){
 			
-			for (int i = 1;i<11;i++) {
-				result = womqtd.run("match ()-[a:ALIGNS]-() where a.alignmentNumber = '"+i+"' return distinct a.markedQuery,a.alignmentIndex");
+			for (String string : alignments) {
+				result = womqtd.run("match ()-[a:ALIGNS]-() where a.alignmentNumber = '"+string+"' return distinct a.markedQuery,a.alignmentIndex");
 				while(result.hasNext()){
 					record = result.next();
 					bw.write("AlignmentIndex:"+record.get(1).asString()+" ");
@@ -1317,7 +1320,7 @@ public void saveOldMarkedQueriesToFile(String fileName) {
 						System.out.println((String) o);
 					}
 					bw.newLine();
-				}
+			}
 				
 			}	
 			
@@ -1867,13 +1870,13 @@ public int calculateLCCS2(String alignmentNumber) {
 		computeLCCS.run("CALL algo.unionFind('LCCS2','INTERACTS_2', {write: true, writeProperty:'lccs2'});");
 		result = computeLCCS.run("match (n:Organism2)  where n.lccs2 is not null with distinct(n.lccs2) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
 		cluster2 = Integer.parseInt(result.single().get("clusterid").toString());	
-		System.out.println("C2: "+cluster2);
+//		System.out.println("C2: "+cluster2);
 		
 		computeLCCS.run("match (p:Organism1)<-[r:ALIGNS]-(q:Organism2) where r.alignmentNumber ='"+alignmentNumber+"' set p :LCCS1 return p");
 		computeLCCS.run("CALL algo.unionFind('LCCS1','INTERACTS_1', {write: true, writeProperty:'lccs1'});");
 		result = computeLCCS.run("match (n:Organism1) where n.lccs1 is not null with distinct(n.lccs1) as clusterid, count(n) as clustersize return clusterid order by clustersize desc limit 1");
 		cluster1 = Integer.parseInt(result.single().get("clusterid").toString());	
-		System.out.println("C1: "+cluster1);
+//		System.out.println("C1: "+cluster1);
 		
 		
 		result = computeLCCS.run("match (p:Organism1)<-[r:ALIGNS]-(q:Organism2) where p.lccs1 ="+cluster1+" and q.lccs2 = "+cluster2+" and  r.alignmentNumber ='"+alignmentNumber+"' return count(distinct(q)) as lccs");
@@ -2636,7 +2639,26 @@ public void descendParameterValuesOfChain(Future<Boolean> f, Aligner a, int minC
 	}
 	
 }
-// initializes all previously recorded alignments in a given folder with the given file extension and saves their statistics.
+
+//initializes all previously recorded alignments in a given folder with the given file extension
+public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
+	int count = 0;	
+	try (Stream<Path> walk = Files.walk(Paths.get(path))) {
+		List<String> result = walk.map(x -> x.toString())
+				.filter(f -> f.endsWith("."+extension)).collect(Collectors.toList());
+		result.forEach(System.out::println);
+		for (String string : result) {
+			Aligner a = new AlignerImpl(this,firstAlignerNo++);
+			a.addAlignment(string);	
+			count++;
+		}
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
+	return count;
+}
+
+//initializes all previously recorded alignments in a given folder with the given file extension and saves their statistics.
 public int initializePreviousAlignmentsFromFolderAndSaveStatistics(int firstAlignerNo, String path, String extension) {
 	int count = 0;
 	File file = new File(path);
@@ -2670,42 +2692,6 @@ public int initializePreviousAlignmentsFromFolderAndSaveStatistics(int firstAlig
 	return count-2;
 }
 
-//initializes all previously recorded alignments in a given folder with the given file extension
-public int initializePreviousAlignmentsFromFolder(int firstAlignerNo, String path, String extension) {
-	int count = 0;	
-	try (Stream<Path> walk = Files.walk(Paths.get(path))) {
-		List<String> result = walk.map(x -> x.toString())
-				.filter(f -> f.endsWith("."+extension)).collect(Collectors.toList());
-		result.forEach(System.out::println);
-		for (String string : result) {
-			Aligner a = new AlignerImpl(this,firstAlignerNo++);
-			a.addAlignment(string);	
-			count++;
-		}
-	} catch (IOException e) {
-		e.printStackTrace();
-	}
-	return count;
-}
-
-public static void removeLogFiles() {
-	
-	for (int i =1;i<11;i++) {
-	    
-	    File file2 = new File("add"+i+".txt");
-	    if(file2.delete()){
-	        System.out.println("add"+i+".txt File deleted from project root directory");
-	    }else System.err.println("File add"+i+".txt doesn't exists in project root directory");
-	    
-	    File file6 = new File("calculateGlobalBenchmarks"+i+".txt");
-	    if(file6.delete()){
-	        System.out.println("calculateGlobalBenchmarks"+i+".txt File deleted from project root directory");
-	    }else System.err.println("calculateGlobalBenchmarks"+i+".txt doesn't exists in project root directory");
-		
-	}
-		
-	}
-
 public void printBenchmarkStatistics(String[] aligners,String label,int populationSize) {
 	if(label!=null) {
 		aligners =new String[populationSize];
@@ -2733,11 +2719,56 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			}
 }
 
-	public void writeAlignments(String label,int populationSize) {
-	for(int i = 1;i<populationSize+1;i++) {
-		Aligner a = new AlignerImpl(this,i);
-		a.writeAlignmentToDisk(label+i+".aln");
+public ArrayList<String> readAlignmentsFromDatabase() {
+	Session  rafd = AkkaSystem.driver.session();
+	StatementResult result;
+	ArrayList<String> alignments = new ArrayList<String>();
+
+try ( org.neo4j.driver.v1.Transaction tx = rafd.beginTransaction())
+{
+result = tx.run("match()-[a:ALIGNS]-() return distinct(a.alignmentNumber) as alignments");
+while(result.hasNext()){
+	Record row = result.next();
+	for ( Entry<String,Object> column : row.asMap().entrySet() ){
+		if(column.getValue()!=null)
+			switch (column.getKey()) {
+			case "alignments":
+				alignments.add(row.get( column.getKey() ).asString());
+				break;
+			default:
+				System.out.println("Unexpected column");
+				break;
+			}
 	}
+}
+tx.success(); tx.close();
+} catch (Exception e){
+System.out.println("SubGraph With K GO Terms::: " + e.getMessage());
+} finally {rafd.close();}
+	
+	return alignments;
+}
+
+public void writeAlignments(String label,String path,String extension) {
+	ArrayList<String> alignments = readAlignmentsFromDatabase(); 
+	for (String string : alignments) {
+		Aligner a = new AlignerImpl(this,Integer.parseInt(string));
+		a.writeAlignmentToDisk(path+File.separator+label+string+"."+extension);
+	}
+}
+	
+	public static void removeLogFiles() {
+	for (int i =1;i<11;i++) {    
+	    File file2 = new File("add"+i+".txt");
+	    if(file2.delete()){
+	        System.out.println("add"+i+".txt File deleted from project root directory");
+	    }else System.err.println("File add"+i+".txt doesn't exists in project root directory");
+	    
+	    File file6 = new File("calculateGlobalBenchmarks"+i+".txt");
+	    if(file6.delete()){
+	        System.out.println("calculateGlobalBenchmarks"+i+".txt File deleted from project root directory");
+	    }else System.err.println("calculateGlobalBenchmarks"+i+".txt doesn't exists in project root directory");	
+	}	
 }
 	/*
 	 * 
@@ -2751,10 +2782,13 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * args[7] -> Execution Mode
 	 * args[8] -> Database address in the home directory of the current user
 	 * args[9] -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
-	 * args[10] -> Setting the argument as "skipchains" deactivates the descendParameterValuesOfChain section of the alignment initializations when args[7] = 1.
-	 * args[10] -> Tolerance value for the number of unexisting mappings when args[7] = 5.
-	 * args[11] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
+	 * args[9] -> Tolerance value for the number of unexisting mappings when args[7] = 5.
+	 * args[10] -> Setting the argument as "skipchains" deactivates the descendParameterValuesOfChain section of the alignment initializations when args[7] = 1,11,2,3,33
+	 * args[10] -> Extension to search when args[7] = 5
+	 * args[10] -> Extension to store aligners when args[7] = 4
+	 * args[11] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations. when args[7] = 1,11,2,3,33
 	 * args[11] -> Path of the initialization folder when args[7] = 5 OR (if not) number of aligners to initialize
+	 * args[11] -> Path to store aligners when args[7] = 4
 	 * 
 	 * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
 	 * args[7] = 11 -> Starts from computing community detection and centrality algorithms.
@@ -2763,7 +2797,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 * args[7] = 33 -> The markedqueries of the previous alignment process is loaded from file to db and consecutively from db into the application and the process is continued afterwards.
 	 * args[7] = 4 -> The alignment is recorded into files.
 	 * args[7] = 5 -> Random search is executed for all mature alignments in the database.
-	 * args[7] = 6 ->
+	 * args[7] = 6 -> All previous alignments and logs are deleted without execution. 
 	 * 
 	 * */
 	public static void main(String[] args) {
@@ -2799,7 +2833,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 		as.computeFunctionalMetaData();
 		
 		if (args[7].equals("5")) {
-			int populationSize = 11;
+			int populationSize = 10;
 					
 			try {
 					File file = new File(args[11]);
@@ -2807,17 +2841,20 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 					   file = file.getParentFile();
 					if (file.exists()){
 						as.removeAllAlignments();
-						populationSize = as.initializePreviousAlignmentsFromFolder(1, args[11], "aln");
+						populationSize = as.initializePreviousAlignmentsFromFolder(1, args[11], args[10]);
 						System.out.println("Population size of previous alignments from folder  is "+populationSize);
 					} else {
 						try {
-							if(Integer.parseInt(args[11])>0)
+							if(Integer.parseInt(args[11])>0) {
 								populationSize = Integer.parseInt(args[11]);
-							System.out.println("Population size of alignments from argument/live database  is "+populationSize);
+								System.out.println("Population size of alignments from argument/live database  is "+populationSize);
+							} 
+							else
+								System.out.println("Population size should be a positive number. Switching to the default value "+populationSize);							
 						} catch (NumberFormatException e) {
-							System.err.println(e.getMessage());
+							System.err.println("Number Format Exception in Population Size. Switching to the default value "+populationSize);
 						} catch (ArrayIndexOutOfBoundsException aioobe) {
-							System.err.println(aioobe.getMessage()+" - populationSize is not entered");
+							System.err.println("Population Size is not entered. Switching to the default value "+populationSize);
 						}
 					}
 			} catch (ArrayIndexOutOfBoundsException aioobe) {
@@ -2826,15 +2863,15 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 			
 			int tolerance = 20;
 			try {
-				if(Integer.parseInt(args[10])>0) {
-					tolerance = Integer.parseInt(args[10]);
+				if(Integer.parseInt(args[9])>0) {
+					tolerance = Integer.parseInt(args[9]);
 					System.out.println("Tolerance number of alignments from argument  is "+tolerance);
 				} else
 					System.out.println("Tolerance number should be a positive number. Switching to the default value "+tolerance);
 			} catch (NumberFormatException e) {
-				System.err.println(e.getMessage());
+				System.err.println("Number Format Exception in Tolerance Number. Switching to the default value "+tolerance);
 			} catch (ArrayIndexOutOfBoundsException aioobe) {
-				System.err.println(aioobe.getMessage()+" - Tolerance number is not entered");
+				System.err.println("Tolerance number is not entered. Switching to the default value "+tolerance);
 			}
 			for(int i =1;i<populationSize+1;i++) {
 				Aligner a = new AlignerImpl(as, i);
@@ -2860,7 +2897,7 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 	 //   router.tell("1 deneme",as.typed.getActorRefFor(secondAligner));
 //	    as.typed.getActorRefFor(secondAligner).tell("1 deneme", as.typed.getActorRefFor(firstAligner));	
 		
-		if (args[7].equals("2")) {
+		if (args[7].equals("2")||args[7].equals("6")) {
 			removeLogFiles();
 			as.removeAllMarks();
 			as.removeAllQueries();
@@ -3262,10 +3299,10 @@ public void printBenchmarkStatistics(String[] aligners,String label,int populati
 					as.csLouvainBitScore.get(0).clusterIDOfOrganism2, '3');
 		}
 			
-			if (args[7].equals("4")) {
-				as.writeAlignments(args[9]+"Save", 10);
-				as.printBenchmarkStatistics(null, args[9]+"Save", 10);
-				as.saveOldMarkedQueriesToFile(args[9]+".txt");
+			if (args[7].equals("4")) {											
+				as.writeAlignments(args[9]+"Save", args[11],args[10]);
+				as.initializePreviousAlignmentsFromFolderAndSaveStatistics(1, args[11], args[10]);
+				as.saveOldMarkedQueriesToFile(args[9]+".txt", args[11]);
 			}
 		
 	}
