@@ -9,6 +9,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -34,18 +36,20 @@ public class CLIPPI {
 	int populationSize = 10;
 	
 	private static final Logger log = Logger.getLogger(CLIPPI.class.getName());
-	 private String[] args = null;
-	 private Options options = new Options();
+	private String[] args = null;
+	private Options options = new Options();
 
 	 public CLIPPI(String[] args) {
 
 	  this.args = args;
-
-	  options.addOption("h", "help", false, "show help.");
+	  OptionGroup hg = new OptionGroup();
+	  hg.addOption(new Option("h", "help", false, "show help."));
+	  hg.addOption(new Option("v", "version", false, "show version."));
+	  options.addOptionGroup(hg);
 	  
 	  options.addOption("n1", "nodes1", true, "nodes file of the first network.");
 	  options.addOption("n2", "nodes2", true, "nodes file of the second network.");
-	  options.addOption("s", "var", true, "similarity file between networks.");
+	  options.addOption("s", "similarity", true, "similarity file between networks.");
 	  options.addOption("i1", "interactions1", true, "interactions file of the first network.");
 	  options.addOption("i2", "interactions2", true, "interactions file of the second network.");
 	  options.addOption("a1", "annotations1", true, "annotations file of the first network.");
@@ -60,8 +64,8 @@ public class CLIPPI {
 	  options.addOption("t", "tolerance", true, "No of missing mappings allowed for the alignment.");
 	  options.addOption("fmf", "finalmappingfactor", true, "No of Mappings added in each Cycle of the final stage of post processing.");
 	  options.addOption("p", "path", true, "Directory of alignments");
-	  options.addOption("db", "dbaddress", true, "Database address of neo4j .");
-	  options.addOption("e", "extension", true, "File extension for the alignments to be stored/loaded .");
+	  options.addOption("db", "dbaddress", true, "Database address of neo4j.");
+	  options.addOption("e", "extension", true, "File extension for the alignments to be stored/loaded.");
 	  options.addOption("l", "label", true, "Initial tag for the alignments to be stored.");
 	  options.addOption("g", "greedy", false, "Greedy execution of alignments.");
 	  options.addOption("ch", "chains", false, "Chains are executed in the initial phase of alignment.");
@@ -82,129 +86,134 @@ public class CLIPPI {
 	  CommandLine cmd = null;
 	  try {
 	   cmd = parser.parse(options, args);
+	   
+	   if (cmd.hasOption("v"))
+		   System.out.println("PERSONA Version 1.0.0 15th July 2019");
 
 	   if (cmd.hasOption("h"))
 	    help();
-
-	   if (cmd.hasOption("n1")) {
-	    log.log(Level.INFO, "Using cli argument -n1=" + cmd.getOptionValue("n1"));
-	    File temp = new File(cmd.getOptionValue("n1"));
-	  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
-		  System.out.println(cmd.getOptionValue("n1")+" is a proper file for i/o");
-	  else
-	  {
-		  System.err.println(cmd.getOptionValue("n1")+" may not be a proper file for i/o");
-		  help();
-	  }
-	   } else {
-	    log.log(Level.SEVERE, "MIssing n1 option");
-	    help();
-	   }
-	   
-	   if (cmd.hasOption("n2")) {
-		    log.log(Level.INFO, "Using cli argument -n2=" + cmd.getOptionValue("n2"));      
-		    File temp = new File(cmd.getOptionValue("n2"));
-			  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
-				  System.out.println(cmd.getOptionValue("n2")+" is a proper file for i/o");
-			  else
-			  {
-				  System.err.println(cmd.getOptionValue("n2")+" may not be a proper file for i/o");
-				  help();
-			  }
-		    
-		   } else {
-		    log.log(Level.SEVERE, "MIssing n2 option");
-		    help();
-		   }
-	   
-	   if (cmd.hasOption("i1")) {
-		    log.log(Level.INFO, "Using cli argument -i1=" + cmd.getOptionValue("i1"));
-		    		    
-		    File temp = new File(cmd.getOptionValue("i1"));
-			  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
-				  System.out.println(cmd.getOptionValue("i1")+" is a proper file for i/o");
-			  else
-			  {
-				  System.err.println(cmd.getOptionValue("i1")+" may not be a proper file for i/o");
-				  help();
-			  }    
-		    
-		   } else {
-		    log.log(Level.SEVERE, "MIssing i1 option");
-		    help();
-		   }
-		   
-	 if (cmd.hasOption("i2")) {
-			 log.log(Level.INFO, "Using cli argument -i2=" + cmd.getOptionValue("i2"));
-			   		 
-			    File temp = new File(cmd.getOptionValue("i2"));
-				  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
-					  System.out.println(cmd.getOptionValue("i2")+" is a proper file for i/o");
-				  else
-				  {
-					  System.err.println(cmd.getOptionValue("i2")+" may not be a proper file for i/o");
-					  help();
-				  }
-			 
-			   } else {
-			    log.log(Level.SEVERE, "MIssing i2 option");
-			    help();
-			   }
-		   
-		 if (cmd.hasOption("a1")) {
-			    log.log(Level.INFO, "Using cli argument -a1=" + cmd.getOptionValue("a1"));
-			        
-			    File temp = new File(cmd.getOptionValue("a1"));
-				  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
-					  System.out.println(cmd.getOptionValue("a1")+" is a proper file for i/o");
-				  else
-				  {
-					  System.err.println(cmd.getOptionValue("a1")+" may not be a proper file for i/o");
-					  help();
-				  }
-			    
-			   } else {
-			    log.log(Level.SEVERE, "MIssing a1 option");
-			    help();
-			   }
-			   
-		if (cmd.hasOption("a2")) {
-				    log.log(Level.INFO, "Using cli argument -a2=" + cmd.getOptionValue("a2"));
-				      
-				    File temp = new File(cmd.getOptionValue("a2"));
-					  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
-						  System.out.println(cmd.getOptionValue("a2")+" is a proper file for i/o");
-					  else
-					  {
-						  System.err.println(cmd.getOptionValue("a2")+" may not be a proper file for i/o");
-						  help();
-					  }
-				    
-			} else {
-				    log.log(Level.SEVERE, "MIssing a2 option");
-				    help();
-				   }
-		
-		 if (cmd.hasOption("s")) {
-			    log.log(Level.INFO, "Using cli argument -s=" + cmd.getOptionValue("s"));
-			    	    
-			    File temp = new File(cmd.getOptionValue("s"));
-				  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
-					  System.out.println(cmd.getOptionValue("s")+" is a proper file for i/o");
-				  else
-				  {
-					  System.err.println(cmd.getOptionValue("s")+" may not be a proper file for i/o");
-					  help();
-				  }
-			    
-			   } else {
-			    log.log(Level.SEVERE, "MIssing s option");
-			    help();
-			   }
 		 
 		 if (cmd.hasOption("c")) {
 			 log.log(Level.INFO, "Using cli argument -c");
-			 System.out.println("All Network data is going to be deleted and created from scratch.");
+			 System.out.println("Evaluating arguments for database creation.");
+			   if (cmd.hasOption("n1")) {
+			    log.log(Level.INFO, "Using cli argument -n1=" + cmd.getOptionValue("n1"));
+			    File temp = new File(cmd.getOptionValue("n1"));
+			  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
+				  System.out.println(cmd.getOptionValue("n1")+" is a proper file for i/o");
+			  else
+			  {
+				  System.err.println(cmd.getOptionValue("n1")+" may not be a proper file for i/o");
+				  help();
+			  }
+			   } else {
+			    log.log(Level.SEVERE, "MIssing n1 option");
+			    help();
+			   }
+			   
+			   if (cmd.hasOption("n2")) {
+				    log.log(Level.INFO, "Using cli argument -n2=" + cmd.getOptionValue("n2"));      
+				    File temp = new File(cmd.getOptionValue("n2"));
+					  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
+						  System.out.println(cmd.getOptionValue("n2")+" is a proper file for i/o");
+					  else
+					  {
+						  System.err.println(cmd.getOptionValue("n2")+" may not be a proper file for i/o");
+						  help();
+					  }
+				    
+				   } else {
+				    log.log(Level.SEVERE, "MIssing n2 option");
+				    help();
+				   }
+			   
+			   if (cmd.hasOption("i1")) {
+				    log.log(Level.INFO, "Using cli argument -i1=" + cmd.getOptionValue("i1"));
+				    		    
+				    File temp = new File(cmd.getOptionValue("i1"));
+					  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
+						  System.out.println(cmd.getOptionValue("i1")+" is a proper file for i/o");
+					  else
+					  {
+						  System.err.println(cmd.getOptionValue("i1")+" may not be a proper file for i/o");
+						  help();
+					  }    
+				    
+				   } else {
+				    log.log(Level.SEVERE, "MIssing i1 option");
+				    help();
+				   }
+				   
+			 if (cmd.hasOption("i2")) {
+					 log.log(Level.INFO, "Using cli argument -i2=" + cmd.getOptionValue("i2"));
+					   		 
+					    File temp = new File(cmd.getOptionValue("i2"));
+						  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
+							  System.out.println(cmd.getOptionValue("i2")+" is a proper file for i/o");
+						  else
+						  {
+							  System.err.println(cmd.getOptionValue("i2")+" may not be a proper file for i/o");
+							  help();
+						  }
+					 
+					   } else {
+					    log.log(Level.SEVERE, "MIssing i2 option");
+					    help();
+					   }
+				   
+				 if (cmd.hasOption("a1")) {
+					    log.log(Level.INFO, "Using cli argument -a1=" + cmd.getOptionValue("a1"));
+					        
+					    File temp = new File(cmd.getOptionValue("a1"));
+						  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
+							  System.out.println(cmd.getOptionValue("a1")+" is a proper file for i/o");
+						  else
+						  {
+							  System.err.println(cmd.getOptionValue("a1")+" may not be a proper file for i/o");
+							  help();
+						  }
+					    
+					   } else {
+					    log.log(Level.SEVERE, "MIssing a1 option");
+					    help();
+					   }
+					   
+				if (cmd.hasOption("a2")) {
+						    log.log(Level.INFO, "Using cli argument -a2=" + cmd.getOptionValue("a2"));
+						      
+						    File temp = new File(cmd.getOptionValue("a2"));
+							  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
+								  System.out.println(cmd.getOptionValue("a2")+" is a proper file for i/o");
+							  else
+							  {
+								  System.err.println(cmd.getOptionValue("a2")+" may not be a proper file for i/o");
+								  help();
+							  }
+						    
+					} else {
+						    log.log(Level.SEVERE, "MIssing a2 option");
+						    help();
+						   }
+				
+				 if (cmd.hasOption("s")) {
+					    log.log(Level.INFO, "Using cli argument -s=" + cmd.getOptionValue("s"));
+					    	    
+					    File temp = new File(cmd.getOptionValue("s"));
+						  if( temp.isFile()&&temp.canRead()&&temp.canWrite())
+							  System.out.println(cmd.getOptionValue("s")+" is a proper file for i/o");
+						  else
+						  {
+							  System.err.println(cmd.getOptionValue("s")+" may not be a proper file for i/o");
+							  help();
+						  }
+					    
+					   } else {
+					    log.log(Level.SEVERE, "MIssing s option");
+					    help();
+					   }
+			 
+			 if(cmd.hasOption("n1")&&cmd.hasOption("n2")&&cmd.hasOption("s")&&cmd.hasOption("i1")&&cmd.hasOption("i2")&&cmd.hasOption("a1")&&cmd.hasOption("a2"))
+				 System.out.println("All Network data is going to be deleted and created from scratch.");
 		 }
 			 
 		 if (cmd.hasOption("po")) {
@@ -366,18 +375,17 @@ public class CLIPPI {
 							System.err.println("Population Size is not entered. Switching to the default value "+populationSize);
 						}		    	    
 					    
-					   } 
-		 
+					   }  
 		
 	  } catch (ParseException e) {
 	   log.log(Level.SEVERE, "Failed to parse comand line properties", e);
 	   help();
 	  }
 	  
-	  
-	  	databaseAddress = cmd.getOptionValue("db");	
-		final AkkaSystem as = new AkkaSystem(1,cmd.getOptionValue("db"),100,20);
-		if(cmd.hasOption("c"))
+	  	if(cmd.hasOption("db"))
+	  		databaseAddress = cmd.getOptionValue("db");	
+		final AkkaSystem as = new AkkaSystem(1,databaseAddress,100,20);
+		if(cmd.hasOption("c")&&cmd.hasOption("n1")&&cmd.hasOption("n2")&&cmd.hasOption("s")&&cmd.hasOption("i1")&&cmd.hasOption("i2")&&cmd.hasOption("a1")&&cmd.hasOption("a2"))
 		{
 			as.deleteAllNodesRelationships();
 			as.createGraph(cmd.getOptionValue("n1"), cmd.getOptionValue("n2"), cmd.getOptionValue("s"), cmd.getOptionValue("i1"), cmd.getOptionValue("i2"), cmd.getOptionValue("a1"), cmd.getOptionValue("a2"));	

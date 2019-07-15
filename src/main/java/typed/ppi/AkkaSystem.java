@@ -2725,27 +2725,30 @@ public int initializePreviousAlignmentsFromFolderAndSaveStatistics(int firstAlig
 	return count-2;
 }
 
-public void printBenchmarkStatistics(String[] aligners,String label,int populationSize) {
+public int printBenchmarkStatistics(int firstAlignerNo,String path,String ext) {
 	ArrayList<String> as = readAlignmentsFromDatabase();
-	
-		try(FileWriter fw = new FileWriter("statistics.csv", true);
+	int count = 0;
+		try(FileWriter fw = new FileWriter(path+File.separator+"statistics.csv", true);
 			    BufferedWriter bw = new BufferedWriter(fw);
 			    PrintWriter out = new PrintWriter(bw))
 			{
 			Aligner a;
-			out.println("AlgNo,EC,ICS,S3,GOC,BS,Size");
-			for (int i = 0;i<populationSize;i++) {
-				a = new AlignerImpl(this,101+i);
-				a.addAlignment(aligners[i]);
-				out.println(a.getAlignmentNo()+","+a.getBenchmarkScores().getEC()+","+a.getBenchmarkScores().getICS()+","+a.getBenchmarkScores().getS3()+","+a.getBenchmarkScores().getGOC()+","+a.getBenchmarkScores().getBitScore()+","+a.getBenchmarkScores().getSize());
-				a.removeAlignment();
+			out.println(path);
+			out.println("FileName,AlgNo,EC,ICS,S3,LCCS,GOC,GOEnrichment,BS,Size");
+			for (String string : as) {
+				a = new AlignerImpl(this,Integer.parseInt(string));
+				out.println(Integer.parseInt(string)+","+a.getAlignmentNo()+","+a.getBenchmarkScores().getEC()+","+a.getBenchmarkScores().getICS()+","+a.getBenchmarkScores().getS3()+","+a.getBenchmarkScores().getLCCS()+","+a.getBenchmarkScores().getGOC()+","+a.getBenchmarkScores().getGOEnrichment()+","+a.getBenchmarkScores().getBitScore()+","+a.getBenchmarkScores().getSize());
+				count++;
 			}
-			out.println("Average,=AVERAGE(B2:B11),=AVERAGE(C2:C11),=AVERAGE(D2:D11),=AVERAGE(E2:E11),=AVERAGE(F2:F11),=AVERAGE(G2:G11)");
-			out.println("Max,=MAX(B2:B11),=MAX(C2:C11),=MAX(D2:D11),=MAX(E2:E11),=MAX(F2:F11),=MAX(G2:G11)");
-			out.println("Min,=MIN(B2:B11),=MIN(C2:C11),=MIN(D2:D11),=MIN(E2:E11),=MIN(F2:F11),=MIN(G2:G11)");
+			count++;
+			count++;
+			out.println("Files,Average,=AVERAGE(C3:C"+count+"),=AVERAGE(D3:D"+count+"),=AVERAGE(E3:E"+count+"),=AVERAGE(F3:F"+count+"),=AVERAGE(G3:G"+count+"),=AVERAGE(H3:H"+count+"),=AVERAGE(I3:I"+count+"),=AVERAGE(J3:J"+count+")");
+			out.println("Files,Max,=MAX(C3:C"+count+"),=MAX(D3:D"+count+"),=MAX(E3:E"+count+"),=MAX(F3:F"+count+"),=MAX(G3:G"+count+"),=MAX(H3:H"+count+"),=MAX(I3:I"+count+"),=MAX(J3:J"+count+")");
+			out.println("Files,Min,=MIN(C3:C"+count+"),=MIN(D3:D"+count+"),=MIN(E3:E"+count+"),=MIN(F3:F"+count+"),=MIN(G3:G"+count+"),=MIN(H3:H"+count+"),=MIN(I3:I"+count+"),=MIN(J3:J"+count+")");
 			} catch (IOException e) {
-			    //exception handling left as an exercise for the reader
+				e.printStackTrace();
 			}
+		return count -2;
 }
 
 public ArrayList<String> readAlignmentsFromDatabase() {
