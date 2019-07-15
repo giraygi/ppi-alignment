@@ -1,15 +1,8 @@
 package typed.ppi;
 
-
-//import java.util.ArrayList;
-//import java.util.Set;
-//import org.neo4j.driver.v1.types.Node;
-
 import typed.ppi.SubGraph;
-
 import java.util.List;
 import java.util.Set;
-
 import akka.actor.ActorRef;
 import akka.actor.TypedActor.Receiver;
 import scala.concurrent.ExecutionContextExecutor;

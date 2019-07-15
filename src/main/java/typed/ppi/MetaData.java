@@ -1,7 +1,5 @@
 package typed.ppi;
 
-import java.util.Arrays;
-
 public class MetaData {
 	
 	double noofPercentileSteps = 10.0;
