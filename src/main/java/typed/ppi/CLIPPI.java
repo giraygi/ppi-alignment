@@ -26,36 +26,32 @@ import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
 
-
-
 /*
  * 
- * args[0] -> Nodes of the organism with bigger number of nodes
- * args[1] -> Nodes of the organism with smaller number of nodes
- * args[2] -> Bitscore sequence similarity scores of the nodes of the bigger organism and the smaller organism
- * args[3] -> Interactions of the organism with bigger number of nodes
- * args[4] -> Interactions of the organism with smaller number of nodes
- * args[5] -> Gene Ontology annotations  of the organism with bigger number of nodes
- * args[6] -> Gene Ontology annotations  of the organism with smaller number of nodes
- * args[7] -> Execution Mode
- * args[8] -> Database address in the home directory of the current user
- * args[9] -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
- * args[9] -> Tolerance value for the number of unexisting mappings when args[7] = 5.
- * args[10] -> Setting the argument as "skipchains" deactivates the descendParameterValuesOfChain section of the alignment initializations when args[7] = 1,11,2,3,33
- * args[10] -> Extension to search when args[7] = 5
- * args[10] -> Extension to store aligners when args[7] = 4
- * args[11] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations. when args[7] = 1,11,2,3,33
- * args[11] -> Path of the initialization folder when args[7] = 5 OR (if not) number of aligners to initialize
- * args[11] -> Path to store aligners when args[7] = 4
+ * n1 -> Nodes of the organism with bigger number of nodes
+ * n2 -> Nodes of the organism with smaller number of nodes
+ * s -> Bitscore sequence similarity scores of the nodes of the bigger organism and the smaller organism
+ * i1 -> Interactions of the organism with bigger number of nodes
+ * i2-> Interactions of the organism with smaller number of nodes
+ * a1 -> Gene Ontology annotations  of the organism with bigger number of nodes
+ * a2-> Gene Ontology annotations  of the organism with smaller number of nodes
+ * db-> Database address in the home directory of the current user
+ * l -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
+ * t -> Tolerance value for the number of unexisting mappings in post processing phase.
+ * ch -> Setting the argument as "ch" activates the descendParameterValuesOfChain section of the alignment initializations.
+ * e-> Extension to search  in post processing phase.
+ * e-> Extension to store aligners while recording the alignments.
+ * g -> Setting the argument as "greedy" activates the greedy section of the alignment initializations.
+ * p -> Path of the initialization folder in post processing phase.
+ * p -> Path to store aligners while recording the alignments.
  * 
- * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
- * args[7] = 11 -> Starts from computing community detection and centrality algorithms.
- * args[7] = 2 -> All previous alignments are deleted. The alignment process is executed afterwards.
- * args[7] = 3 -> The markedqueries of the previous alignment process is loaded from db into the application and the process is continued afterwards.
- * args[7] = 33 -> The markedqueries of the previous alignment process is loaded from file to db and consecutively from db into the application and the process is continued afterwards.
- * args[7] = 4 -> The alignment is recorded into files.
- * args[7] = 5 -> Random search is executed for all mature alignments in the database.
- * args[7] = 6 -> All previous alignments and logs are deleted without execution. 
+ * c -> All nodes and relationships are recreated. The alignment process can be executed afterwards.
+ * cc -> Starts from computing community detection and centrality algorithms.
+ * r -> All previous alignments are deleted. The alignment process is executed afterwards.
+ * lo -> The markedqueries of the previous alignment process is loaded from file to db and consecutively from db into the application and the process can be continued afterwards.
+ * sv -> The alignment is recorded into files.
+ * epp -> Random search is executed for all mature alignments in the database.
+ * r -> All previous alignments and logs are deleted without execution. 
  * 
  * */
 
@@ -67,6 +63,8 @@ public class CLIPPI {
 	int finalMappingFactor = 100;
 	double noofPercentileSteps = 10.0;
 	int populationSize = 10;
+	int noofDeletedMappingInUnprogressiveCycle = 100;
+	int unprogressiveCycleLength = 25;
 	
 	private static final Logger log = Logger.getLogger(CLIPPI.class.getName());
 	private String[] args = null;
@@ -87,6 +85,8 @@ public class CLIPPI {
 	  options.addOption("i2", "interactions2", true, "interactions file of the second network.");
 	  options.addOption("a1", "annotations1", true, "annotations file of the first network.");
 	  options.addOption("a2", "annotations2", true, "annotations file of the second network.");
+	  options.addOption("ucl", "unprogressivecyclelength", true, "No of trials before a partial deletion is carried out in an unprogressive alignment.");
+	  options.addOption("ndum", "noofdelumap", true, "No of deleted unprogressive mappings in each deletion cycle of an unprogressive alignment.");
 	  
 	  options.addOption("c", "create", false, "create networks, similarity and annotations from scratch");
 	  options.addOption("po", "powers", false, "compute powers");
@@ -280,8 +280,8 @@ public class CLIPPI {
 						System.out.println("Tolerance number should be a positive number. Switching to the default value "+tolerance);
 				} catch (NumberFormatException e) {
 					System.err.println("Number Format Exception in Tolerance Number. Switching to the default value "+tolerance);
-				} catch (ArrayIndexOutOfBoundsException aioobe) {
-					System.err.println("Tolerance number is not entered. Switching to the default value "+tolerance);
+				} catch (Exception e) {
+					System.err.println("User defined Tolerance number could not be accessed. Switching to the default value "+tolerance);
 				}		    	    
 			    
 			   } 	 
@@ -296,11 +296,43 @@ public class CLIPPI {
 						System.out.println("Final Mapping Factor number should be a positive number. Switching to the default value "+finalMappingFactor);
 				} catch (NumberFormatException e) {
 					System.err.println("Number Format Exception in Final Mapping Factor Number. Switching to the default value "+finalMappingFactor);
-				} catch (ArrayIndexOutOfBoundsException aioobe) {
-					System.err.println("Final Mapping Factor number is not entered. Switching to the default value "+finalMappingFactor);
+				} catch (Exception e) {
+					System.err.println("User defined Final Mapping Factor number could not be accessed. Switching to the default value "+finalMappingFactor);
 				}		    	    
 			    
-			   } 
+			   } 		 
+		 
+		 if (cmd.hasOption("ucl")) {
+			    log.log(Level.INFO, "Using cli argument -ucl=" + cmd.getOptionValue("ucl"));		        
+				try {
+					if(Integer.parseInt(cmd.getOptionValue("ucl"))>0) {
+						unprogressiveCycleLength = Integer.parseInt(cmd.getOptionValue("ucl"));
+						System.out.println("Unprogressive Cycle Length of alignments from argument  is "+unprogressiveCycleLength );
+					} else
+						System.out.println("Unprogressive Cycle Length should be a positive number. Switching to the default value "+unprogressiveCycleLength );
+				} catch (NumberFormatException e) {
+					System.err.println("Number Format Exception in Unprogressive Cycle Length. Switching to the default value "+unprogressiveCycleLength );
+				} catch (Exception e) {
+					System.err.println("User defined Unprogressive Cycle Length could not be accessed. Switching to the default value "+unprogressiveCycleLength );
+				}		    	    
+			    
+			   }  
+		 
+		 if (cmd.hasOption("ndum")) {
+			    log.log(Level.INFO, "Using cli argument -ndum=" + cmd.getOptionValue("ndum"));		        
+				try {
+					if(Integer.parseInt(cmd.getOptionValue("ndum"))>0) {
+						unprogressiveCycleLength = Integer.parseInt(cmd.getOptionValue("ndum"));
+						System.out.println("Number of Deleted Unprogressive Mappings for alignments from argument  is "+noofDeletedMappingInUnprogressiveCycle );
+					} else
+						System.out.println("Number of Deleted Unprogressive Mappings should be a positive number. Switching to the default value "+noofDeletedMappingInUnprogressiveCycle );
+				} catch (NumberFormatException e) {
+					System.err.println("Number Format Exception in Number of Deleted Unprogressive Mappings. Switching to the default value "+noofDeletedMappingInUnprogressiveCycle );
+				} catch (Exception e) {
+					System.err.println("User defined Number of Deleted Unprogressive Mappings could not be accessed. Switching to the default value "+noofDeletedMappingInUnprogressiveCycle );
+				}		    	    
+			    
+			   }
 		  
 		   if (cmd.hasOption("p")) {
 			    log.log(Level.INFO, "Using cli argument -p=" + cmd.getOptionValue("p"));
@@ -417,7 +449,7 @@ public class CLIPPI {
 	  
 	  	if(cmd.hasOption("db"))
 	  		databaseAddress = cmd.getOptionValue("db");	
-		final AkkaSystem as = new AkkaSystem(1,databaseAddress,100,20);
+		final AkkaSystem as = new AkkaSystem(1,databaseAddress,noofDeletedMappingInUnprogressiveCycle,unprogressiveCycleLength);
 		if(cmd.hasOption("c")&&cmd.hasOption("n1")&&cmd.hasOption("n2")&&cmd.hasOption("s")&&cmd.hasOption("i1")&&cmd.hasOption("i2")&&cmd.hasOption("a1")&&cmd.hasOption("a2"))
 		{
 			as.deleteAllNodesRelationships();
@@ -491,7 +523,7 @@ public class CLIPPI {
 		if(cmd.hasOption("lo"))
 			as.loadOldMarkedQueriesFromDBToApplication();	
 		
-		if (cmd.hasOption("i")) {
+		if (cmd.hasOption("i")||cmd.hasOption("g")||cmd.hasOption("ch")) {
 			
 			Aligner firstAligner = TypedActor.get(AkkaSystem.system2)
 					.typedActorOf(new TypedProps<AlignerImpl>(Aligner.class, new Creator<AlignerImpl>() {
@@ -824,29 +856,33 @@ public class CLIPPI {
 				// TODO Auto-generated catch block
 				System.out.println("Greedy Mode or SkipChains Mode is not Activated.");
 			}
-			
-			try {
-				as.sendBestBenchmarkScoresInTime(300, 200);
-				as.markBestSubGraphsInTime(300, 300);
-				as.addRandomMapping(200, 200);
-				as.retryPreviouslyMarkedQueries(500, 500);
-			} catch (Exception e2) {
-				e2.printStackTrace();
-				as.sendBestBenchmarkScoresInTime(300, 200);
-				as.markBestSubGraphsInTime(300, 300);
-				as.addRandomMapping(200, 200);
-				as.retryPreviouslyMarkedQueries(500, 500);
+			if (cmd.hasOption("i")) {
+				try {
+					as.sendBestBenchmarkScoresInTime(300, 200);
+					as.markBestSubGraphsInTime(300, 300);
+					as.addRandomMapping(200, 200);
+					as.retryPreviouslyMarkedQueries(500, 500);
+				} catch (Exception e2) {
+					e2.printStackTrace();
+					as.sendBestBenchmarkScoresInTime(300, 200);
+					as.markBestSubGraphsInTime(300, 300);
+					as.addRandomMapping(200, 200);
+					as.retryPreviouslyMarkedQueries(500, 500);
+				}
+					
+				fourthAligner.alignClusterEdges(1, "labelpropagation",
+						as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism1,
+						as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism2, false, '3');
+				fourthAligner.alignClusters(1, 0, "labelpropagation",
+						as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism1,
+						as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism2, '3');
+				fifthAligner.alignClusterEdges(1, "louvain", as.csLouvainBitScore.get(0).clusterIDOfOrganism1,
+						as.csLouvainBitScore.get(0).clusterIDOfOrganism2, false, '3');
+				fifthAligner.alignClusters(1, 0, "louvain", as.csLouvainBitScore.get(0).clusterIDOfOrganism1,
+						as.csLouvainBitScore.get(0).clusterIDOfOrganism2, '3');
+				
 			}
-			fourthAligner.alignClusterEdges(1, "labelpropagation",
-					as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism1,
-					as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism2, false, '3');
-			fourthAligner.alignClusters(1, 0, "labelpropagation",
-					as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism1,
-					as.csLabelPropagationBitScore.get(0).clusterIDOfOrganism2, '3');
-			fifthAligner.alignClusterEdges(1, "louvain", as.csLouvainBitScore.get(0).clusterIDOfOrganism1,
-					as.csLouvainBitScore.get(0).clusterIDOfOrganism2, false, '3');
-			fifthAligner.alignClusters(1, 0, "louvain", as.csLouvainBitScore.get(0).clusterIDOfOrganism1,
-					as.csLouvainBitScore.get(0).clusterIDOfOrganism2, '3');
+
 		}
 		
 		if (cmd.hasOption("epp")) {

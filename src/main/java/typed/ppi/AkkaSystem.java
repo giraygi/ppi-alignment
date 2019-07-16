@@ -78,8 +78,8 @@ public class AkkaSystem {
 	int numberOfSimilarityLinks = 0;
 	int numberOfNodePairsWithBothSimilarityAndCommonAnnotations = 0;
 	int noofAligners;
-	int toleranceLimitForImprovement = 100;
-	int toleranceCycleForImprovement = 25;
+	int noofDeletedMappingInUnprogressiveCycle = 100;
+	int unprogressiveCycleLength = 25;
 	static akka.actor.ActorSystem system2 = akka.actor.ActorSystem.create();
 	TypedActorExtension typed = TypedActor.get(system2);
 //	ExecutionContext ec = system2.dispatchers().lookup(Dispatchers.DefaultDispatcherId());
@@ -114,8 +114,8 @@ public class AkkaSystem {
 	public AkkaSystem(int noofAligners, String args, int toleranceLimitForUnimprovedAligners,int toleranceCycleForUnimprovedAligners){
 		this.noofAligners = noofAligners;
 		this.init(args);
-		this.toleranceLimitForImprovement = toleranceLimitForUnimprovedAligners;
-		this.toleranceCycleForImprovement = toleranceCycleForUnimprovedAligners;
+		this.noofDeletedMappingInUnprogressiveCycle = toleranceLimitForUnimprovedAligners;
+		this.unprogressiveCycleLength = toleranceCycleForUnimprovedAligners;
 		md  = new MetaData(2);
 	}
 	

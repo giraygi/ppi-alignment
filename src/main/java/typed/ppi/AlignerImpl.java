@@ -196,7 +196,7 @@ public class AlignerImpl implements Aligner, Receiver {
 		
 		if(added<=0) {
 			noofCyclesAlignmentUnchanged++;
-			this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
+			this.removeBadMappingsWhenUnimproved(as.noofDeletedMappingInUnprogressiveCycle, as.unprogressiveCycleLength);
 		}
 		else
 			noofCyclesAlignmentUnchanged = 0;
@@ -264,7 +264,7 @@ public void addAlignment(SubGraph alignment){
 	System.out.println(added+" mappings are added from SubGraph "+alignment.type+" of aligner "+alignment.senderNo+" to aligner "+this.alignmentNo);
 	if(added<=0) {
 		noofCyclesAlignmentUnchanged++;
-		this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
+		this.removeBadMappingsWhenUnimproved(as.noofDeletedMappingInUnprogressiveCycle, as.unprogressiveCycleLength);
 	}
 	else
 		noofCyclesAlignmentUnchanged = 0;
@@ -309,7 +309,7 @@ public void addAlignment(int alignmentNo) {
 	if(added<=0)
 	{
 		noofCyclesAlignmentUnchanged++;
-		this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
+		this.removeBadMappingsWhenUnimproved(as.noofDeletedMappingInUnprogressiveCycle, as.unprogressiveCycleLength);
 	}
 	else
 		noofCyclesAlignmentUnchanged = 0;
@@ -356,7 +356,7 @@ public void addAlignment(long markedQuery, int minFrequency){
 	if(added<=0)
 	{
 		noofCyclesAlignmentUnchanged++;
-		this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
+		this.removeBadMappingsWhenUnimproved(as.noofDeletedMappingInUnprogressiveCycle, as.unprogressiveCycleLength);
 	}
 	else
 		noofCyclesAlignmentUnchanged = 0;
@@ -4593,7 +4593,7 @@ private int addResultsToAlignment(ArrayList<ArrayList<Node>> records,Set<Node> a
 	
 	if(added<=0) {
 		noofCyclesAlignmentUnchanged++;
-		this.removeBadMappingsWhenUnimproved(as.toleranceLimitForImprovement, as.toleranceCycleForImprovement);
+		this.removeBadMappingsWhenUnimproved(as.noofDeletedMappingInUnprogressiveCycle, as.unprogressiveCycleLength);
 		if(noofCyclesAlignmentUnchanged>15)
 			System.err.println("Alignment "+this.alignmentNo+" did not improve itself for "+noofCyclesAlignmentUnchanged+" cycles.");
 		} else {
