@@ -917,7 +917,7 @@ public class CLIPPI {
 			if (cmd.hasOption("sv")&&cmd.hasOption("p")&&cmd.hasOption("e")&&cmd.hasOption("l")) {
 					as.writeAlignments(cmd.getOptionValue("l")+"Save", cmd.getOptionValue("p"),cmd.getOptionValue("e"));
 					as.saveOldMarkedQueriesToFile(cmd.getOptionValue("l")+".txt", cmd.getOptionValue("p"));
-					as.printBenchmarkStatistics(1, cmd.getOptionValue("p"), cmd.getOptionValue("e"));
+					as.printBenchmarkStatistics(1, cmd.getOptionValue("l"), cmd.getOptionValue("p"));
 			} 
 			
 			if(cmd.hasOption("svs")&&cmd.hasOption("p")&&cmd.hasOption("e"))

@@ -2724,10 +2724,10 @@ public int initializePreviousAlignmentsFromFolderAndSaveStatistics(int firstAlig
 	return count-2;
 }
 
-public int printBenchmarkStatistics(int firstAlignerNo,String path,String ext) {
+public int printBenchmarkStatistics(int firstAlignerNo,String label,String path) {
 	ArrayList<String> as = readAlignmentsFromDatabase();
 	int count = 0;
-		try(FileWriter fw = new FileWriter(path+File.separator+"statistics.csv", true);
+		try(FileWriter fw = new FileWriter(path+File.separator+label+"_statistics.csv", true);
 			    BufferedWriter bw = new BufferedWriter(fw);
 			    PrintWriter out = new PrintWriter(bw))
 			{
