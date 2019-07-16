@@ -2738,6 +2738,7 @@ public int printBenchmarkStatistics(int firstAlignerNo,String path,String ext) {
 			count++;
 			for (String string : as) {
 				a = new AlignerImpl(this,Integer.parseInt(string));
+				calculateGlobalBenchmarks(a);
 				out.println(Integer.parseInt(string)+","+a.getAlignmentNo()+","+a.getBenchmarkScores().getEC()+","+a.getBenchmarkScores().getICS()+","+a.getBenchmarkScores().getS3()+","+a.getBenchmarkScores().getLCCS()+","+a.getBenchmarkScores().getGOC()+","+a.getBenchmarkScores().getGOEnrichment()+","+a.getBenchmarkScores().getBitScore()+","+a.getBenchmarkScores().getSize());
 				count++;
 			}	
