@@ -61,7 +61,7 @@ public class CLIPPI {
 	static Timeout timeout = new Timeout(Duration.create(360, "seconds"));
 	int tolerance = 100;
 	int finalMappingFactor = 100;
-	double noofPercentileSteps = 10.0;
+	int noofPercentileSteps = 10;
 	int populationSize = 10;
 	int noofDeletedMappingInUnprogressiveCycle = 100;
 	int unprogressiveCycleLength = 25;
@@ -290,7 +290,7 @@ public class CLIPPI {
 			    log.log(Level.INFO, "Using cli argument -fmf=" + cmd.getOptionValue("fmf"));       
 				try {
 					if(Integer.parseInt(cmd.getOptionValue("fmf"))>0) {
-						tolerance = Integer.parseInt(cmd.getOptionValue("fmf"));
+						finalMappingFactor = Integer.parseInt(cmd.getOptionValue("fmf"));
 						System.out.println("Final Mapping Factor number of alignments from argument  is "+finalMappingFactor);
 					} else
 						System.out.println("Final Mapping Factor number should be a positive number. Switching to the default value "+finalMappingFactor);
@@ -322,7 +322,7 @@ public class CLIPPI {
 			    log.log(Level.INFO, "Using cli argument -ndum=" + cmd.getOptionValue("ndum"));		        
 				try {
 					if(Integer.parseInt(cmd.getOptionValue("ndum"))>0) {
-						unprogressiveCycleLength = Integer.parseInt(cmd.getOptionValue("ndum"));
+						noofDeletedMappingInUnprogressiveCycle  = Integer.parseInt(cmd.getOptionValue("ndum"));
 						System.out.println("Number of Deleted Unprogressive Mappings for alignments from argument  is "+noofDeletedMappingInUnprogressiveCycle );
 					} else
 						System.out.println("Number of Deleted Unprogressive Mappings should be a positive number. Switching to the default value "+noofDeletedMappingInUnprogressiveCycle );
@@ -414,14 +414,14 @@ public class CLIPPI {
 					    log.log(Level.INFO, "Using cli argument -nps=" + cmd.getOptionValue("nps"));       
 						try {
 							if(Integer.parseInt(cmd.getOptionValue("nps"))>0) {
-								tolerance = Integer.parseInt(cmd.getOptionValue("nps"));
+								noofPercentileSteps = Integer.parseInt(cmd.getOptionValue("nps"));
 								System.out.println("Number of Percentile Steps of alignments from argument  is "+noofPercentileSteps);
 							} else
 								System.out.println("Number of Percentile Steps should be a positive number. Switching to the default value "+noofPercentileSteps);
 						} catch (NumberFormatException e) {
 							System.err.println("Number Format Exception in Number of Percentile Steps. Switching to the default value "+noofPercentileSteps);
 						} catch (ArrayIndexOutOfBoundsException aioobe) {
-							System.err.println("Number of Percentile Steps is not entered. Switching to the default value "+noofPercentileSteps);
+							System.err.println("User defined Number of Percentile Steps could not be accessed. Switching to the default value "+noofPercentileSteps);
 						}		    	    
 					    
 					   } 
@@ -430,14 +430,14 @@ public class CLIPPI {
 					    log.log(Level.INFO, "Using cli argument -ps=" + cmd.getOptionValue("ps"));       
 						try {
 							if(Integer.parseInt(cmd.getOptionValue("ps"))>0) {
-								tolerance = Integer.parseInt(cmd.getOptionValue("ps"));
+								populationSize = Integer.parseInt(cmd.getOptionValue("ps"));
 								System.out.println("Population Size of alignments from argument  is "+populationSize);
 							} else
 								System.out.println("Population Size should be a positive number. Switching to the default value "+populationSize);
 						} catch (NumberFormatException e) {
 							System.err.println("Number Format Exception in Population Size. Switching to the default value "+populationSize);
-						} catch (ArrayIndexOutOfBoundsException aioobe) {
-							System.err.println("Population Size is not entered. Switching to the default value "+populationSize);
+						} catch (Exception e) {
+							System.err.println("User defined Population Size could not be accessed. Switching to the default value "+populationSize);
 						}		    	    
 					    
 					   }  
@@ -449,7 +449,7 @@ public class CLIPPI {
 	  
 	  	if(cmd.hasOption("db"))
 	  		databaseAddress = cmd.getOptionValue("db");	
-		final AkkaSystem as = new AkkaSystem(1,databaseAddress,noofDeletedMappingInUnprogressiveCycle,unprogressiveCycleLength);
+		final AkkaSystem as = new AkkaSystem(1,databaseAddress,noofDeletedMappingInUnprogressiveCycle,unprogressiveCycleLength,noofPercentileSteps);
 		if(cmd.hasOption("c")&&cmd.hasOption("n1")&&cmd.hasOption("n2")&&cmd.hasOption("s")&&cmd.hasOption("i1")&&cmd.hasOption("i2")&&cmd.hasOption("a1")&&cmd.hasOption("a2"))
 		{
 			as.deleteAllNodesRelationships();
@@ -892,8 +892,16 @@ public class CLIPPI {
 				while(a.getBenchmarkScores().getSize() <=as.noofNodesInSecondNetwork-tolerance) {
 				a.addMeaninglessMapping(finalMappingFactor, '3');
 				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor/4), '3');
-				a.increaseECByAddingPair(2, 0, '3');
-				a.increaseECByAddingPair(1, 0, '3');
+				
+				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
+					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
+						if(j+1<as.md.annotatedSimilarity.length)
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, '3');
+							
+						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, '3');
+						break;
+					}		
+				}
 				a.increaseECByAddingPair(0, 0, '3');
 				int size1 = a.getBenchmarkScores().getSize();
 				if(Math.random() < 0.3)

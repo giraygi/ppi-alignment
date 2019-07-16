@@ -80,9 +80,9 @@ public class AkkaSystem {
 	int noofAligners;
 	int noofDeletedMappingInUnprogressiveCycle = 100;
 	int unprogressiveCycleLength = 25;
+	int noofPercentileSteps = 10;
 	static akka.actor.ActorSystem system2 = akka.actor.ActorSystem.create();
 	TypedActorExtension typed = TypedActor.get(system2);
-//	ExecutionContext ec = system2.dispatchers().lookup(Dispatchers.DefaultDispatcherId());
 	static ExecutionContext ec = system2.dispatcher();
 	static ActorRef router ;
 	static double bestEC;
@@ -111,12 +111,13 @@ public class AkkaSystem {
 	
 	
 	
-	public AkkaSystem(int noofAligners, String args, int toleranceLimitForUnimprovedAligners,int toleranceCycleForUnimprovedAligners){
+	public AkkaSystem(int noofAligners, String args, int toleranceLimitForUnimprovedAligners,int toleranceCycleForUnimprovedAligners, int noofPercentileSteps ){
 		this.noofAligners = noofAligners;
 		this.init(args);
 		this.noofDeletedMappingInUnprogressiveCycle = toleranceLimitForUnimprovedAligners;
 		this.unprogressiveCycleLength = toleranceCycleForUnimprovedAligners;
-		md  = new MetaData(2);
+		this.noofPercentileSteps = noofPercentileSteps;
+		md  = new MetaData(this.noofPercentileSteps);
 	}
 	
 	public void init(String args){
