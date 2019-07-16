@@ -26,6 +26,39 @@ import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
 
+
+
+/*
+ * 
+ * args[0] -> Nodes of the organism with bigger number of nodes
+ * args[1] -> Nodes of the organism with smaller number of nodes
+ * args[2] -> Bitscore sequence similarity scores of the nodes of the bigger organism and the smaller organism
+ * args[3] -> Interactions of the organism with bigger number of nodes
+ * args[4] -> Interactions of the organism with smaller number of nodes
+ * args[5] -> Gene Ontology annotations  of the organism with bigger number of nodes
+ * args[6] -> Gene Ontology annotations  of the organism with smaller number of nodes
+ * args[7] -> Execution Mode
+ * args[8] -> Database address in the home directory of the current user
+ * args[9] -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
+ * args[9] -> Tolerance value for the number of unexisting mappings when args[7] = 5.
+ * args[10] -> Setting the argument as "skipchains" deactivates the descendParameterValuesOfChain section of the alignment initializations when args[7] = 1,11,2,3,33
+ * args[10] -> Extension to search when args[7] = 5
+ * args[10] -> Extension to store aligners when args[7] = 4
+ * args[11] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations. when args[7] = 1,11,2,3,33
+ * args[11] -> Path of the initialization folder when args[7] = 5 OR (if not) number of aligners to initialize
+ * args[11] -> Path to store aligners when args[7] = 4
+ * 
+ * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
+ * args[7] = 11 -> Starts from computing community detection and centrality algorithms.
+ * args[7] = 2 -> All previous alignments are deleted. The alignment process is executed afterwards.
+ * args[7] = 3 -> The markedqueries of the previous alignment process is loaded from db into the application and the process is continued afterwards.
+ * args[7] = 33 -> The markedqueries of the previous alignment process is loaded from file to db and consecutively from db into the application and the process is continued afterwards.
+ * args[7] = 4 -> The alignment is recorded into files.
+ * args[7] = 5 -> Random search is executed for all mature alignments in the database.
+ * args[7] = 6 -> All previous alignments and logs are deleted without execution. 
+ * 
+ * */
+
 public class CLIPPI {
 	
 	static String databaseAddress ="neo4j-community-3.5.6" ;
@@ -839,7 +872,8 @@ public class CLIPPI {
 			
 			if (cmd.hasOption("sv")&&cmd.hasOption("p")&&cmd.hasOption("e")&&cmd.hasOption("l")) {
 					as.writeAlignments(cmd.getOptionValue("l")+"Save", cmd.getOptionValue("p"),cmd.getOptionValue("e"));
-					as.saveOldMarkedQueriesToFile(cmd.getOptionValue("l")+".txt", cmd.getOptionValue("p"));	
+					as.saveOldMarkedQueriesToFile(cmd.getOptionValue("l")+".txt", cmd.getOptionValue("p"));
+					as.printBenchmarkStatistics(1, cmd.getOptionValue("p"), cmd.getOptionValue("e"));
 			} 
 			
 			if(cmd.hasOption("svs")&&cmd.hasOption("p")&&cmd.hasOption("e"))

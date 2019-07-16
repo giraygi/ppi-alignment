@@ -43,7 +43,6 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.helpers.TransactionTemplate;
 
 import akka.actor.*;
-import akka.japi.*;
 import akka.util.Timeout;
 import scala.concurrent.Await;
 import scala.concurrent.ExecutionContext;
@@ -51,7 +50,6 @@ import scala.concurrent.ExecutionContextExecutor;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
-import akka.routing.*;
 
 public class AkkaSystem {
 	
@@ -2705,7 +2703,9 @@ public int initializePreviousAlignmentsFromFolderAndSaveStatistics(int firstAlig
 				.filter(f -> f.endsWith("."+extension)).collect(Collectors.toList());
 		result.forEach(System.out::println);
 		out.println(path);
+		count++;
 		out.println("FileName,AlgNo,EC,ICS,S3,LCCS,GOC,GOEnrichment,BS,Size");
+		count++;
 		for (String string : result) {
 			Aligner a = new AlignerImpl(this,firstAlignerNo++);
 			a.addAlignment(string);
@@ -2713,8 +2713,6 @@ public int initializePreviousAlignmentsFromFolderAndSaveStatistics(int firstAlig
 			out.println(string.substring(path.length()+1)+","+a.getAlignmentNo()+","+a.getBenchmarkScores().getEC()+","+a.getBenchmarkScores().getICS()+","+a.getBenchmarkScores().getS3()+","+a.getBenchmarkScores().getLCCS()+","+a.getBenchmarkScores().getGOC()+","+a.getBenchmarkScores().getGOEnrichment()+","+a.getBenchmarkScores().getBitScore()+","+a.getBenchmarkScores().getSize());
 			count++;
 		}
-		count++;
-		count++;
 		out.println("Files,Average,=AVERAGE(C3:C"+count+"),=AVERAGE(D3:D"+count+"),=AVERAGE(E3:E"+count+"),=AVERAGE(F3:F"+count+"),=AVERAGE(G3:G"+count+"),=AVERAGE(H3:H"+count+"),=AVERAGE(I3:I"+count+"),=AVERAGE(J3:J"+count+")");
 		out.println("Files,Max,=MAX(C3:C"+count+"),=MAX(D3:D"+count+"),=MAX(E3:E"+count+"),=MAX(F3:F"+count+"),=MAX(G3:G"+count+"),=MAX(H3:H"+count+"),=MAX(I3:I"+count+"),=MAX(J3:J"+count+")");
 		out.println("Files,Min,=MIN(C3:C"+count+"),=MIN(D3:D"+count+"),=MIN(E3:E"+count+"),=MIN(F3:F"+count+"),=MIN(G3:G"+count+"),=MIN(H3:H"+count+"),=MIN(I3:I"+count+"),=MIN(J3:J"+count+")");
@@ -2734,14 +2732,14 @@ public int printBenchmarkStatistics(int firstAlignerNo,String path,String ext) {
 			{
 			Aligner a;
 			out.println(path);
+			count++;
 			out.println("FileName,AlgNo,EC,ICS,S3,LCCS,GOC,GOEnrichment,BS,Size");
+			count++;
 			for (String string : as) {
 				a = new AlignerImpl(this,Integer.parseInt(string));
 				out.println(Integer.parseInt(string)+","+a.getAlignmentNo()+","+a.getBenchmarkScores().getEC()+","+a.getBenchmarkScores().getICS()+","+a.getBenchmarkScores().getS3()+","+a.getBenchmarkScores().getLCCS()+","+a.getBenchmarkScores().getGOC()+","+a.getBenchmarkScores().getGOEnrichment()+","+a.getBenchmarkScores().getBitScore()+","+a.getBenchmarkScores().getSize());
 				count++;
-			}
-			count++;
-			count++;
+			}	
 			out.println("Files,Average,=AVERAGE(C3:C"+count+"),=AVERAGE(D3:D"+count+"),=AVERAGE(E3:E"+count+"),=AVERAGE(F3:F"+count+"),=AVERAGE(G3:G"+count+"),=AVERAGE(H3:H"+count+"),=AVERAGE(I3:I"+count+"),=AVERAGE(J3:J"+count+")");
 			out.println("Files,Max,=MAX(C3:C"+count+"),=MAX(D3:D"+count+"),=MAX(E3:E"+count+"),=MAX(F3:F"+count+"),=MAX(G3:G"+count+"),=MAX(H3:H"+count+"),=MAX(I3:I"+count+"),=MAX(J3:J"+count+")");
 			out.println("Files,Min,=MIN(C3:C"+count+"),=MIN(D3:D"+count+"),=MIN(E3:E"+count+"),=MIN(F3:F"+count+"),=MIN(G3:G"+count+"),=MIN(H3:H"+count+"),=MIN(I3:I"+count+"),=MIN(J3:J"+count+")");
@@ -2802,36 +2800,6 @@ public void writeAlignments(String label,String path,String extension) {
 	    }else System.err.println("calculateGlobalBenchmarks"+i+".txt doesn't exists in project root directory");	
 	}	
 }
-	/*
-	 * 
-	 * args[0] -> Nodes of the organism with bigger number of nodes
-	 * args[1] -> Nodes of the organism with smaller number of nodes
-	 * args[2] -> Bitscore sequence similarity scores of the nodes of the bigger organism and the smaller organism
-	 * args[3] -> Interactions of the organism with bigger number of nodes
-	 * args[4] -> Interactions of the organism with smaller number of nodes
-	 * args[5] -> Gene Ontology annotations  of the organism with bigger number of nodes
-	 * args[6] -> Gene Ontology annotations  of the organism with smaller number of nodes
-	 * args[7] -> Execution Mode
-	 * args[8] -> Database address in the home directory of the current user
-	 * args[9] -> String Label for the alignments to be saved/markedqueries to be loaded back from file.
-	 * args[9] -> Tolerance value for the number of unexisting mappings when args[7] = 5.
-	 * args[10] -> Setting the argument as "skipchains" deactivates the descendParameterValuesOfChain section of the alignment initializations when args[7] = 1,11,2,3,33
-	 * args[10] -> Extension to search when args[7] = 5
-	 * args[10] -> Extension to store aligners when args[7] = 4
-	 * args[11] -> Setting the argument as "greedy" activates the greedy section of the alignment initializations. when args[7] = 1,11,2,3,33
-	 * args[11] -> Path of the initialization folder when args[7] = 5 OR (if not) number of aligners to initialize
-	 * args[11] -> Path to store aligners when args[7] = 4
-	 * 
-	 * args[7] = 1 -> All nodes and relationships are recreated. The alignment process is executed afterwards.
-	 * args[7] = 11 -> Starts from computing community detection and centrality algorithms.
-	 * args[7] = 2 -> All previous alignments are deleted. The alignment process is executed afterwards.
-	 * args[7] = 3 -> The markedqueries of the previous alignment process is loaded from db into the application and the process is continued afterwards.
-	 * args[7] = 33 -> The markedqueries of the previous alignment process is loaded from file to db and consecutively from db into the application and the process is continued afterwards.
-	 * args[7] = 4 -> The alignment is recorded into files.
-	 * args[7] = 5 -> Random search is executed for all mature alignments in the database.
-	 * args[7] = 6 -> All previous alignments and logs are deleted without execution. 
-	 * 
-	 * */
 	
 	@SuppressWarnings("unused")
 	private static Future<Boolean> future(Callable<Boolean> callable, ExecutionContextExecutor dispatcher) {
