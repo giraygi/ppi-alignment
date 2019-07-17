@@ -66,6 +66,7 @@ public class CLIPPI {
 	int populationSize = 10;
 	int noofDeletedMappingInUnprogressiveCycle = 100;
 	int unprogressiveCycleLength = 25;
+	int postProcessingCycles = 40;
 	private static final Logger log = Logger.getLogger(CLIPPI.class.getName());
 	private String[] args = null;
 	private Options options = new Options();
@@ -904,13 +905,33 @@ public class CLIPPI {
 
 		}
 		
+		AkkaSystem.system2.registerOnTermination(new Runnable() {
+
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				
+				// The post processing section will be rearranged to work on actorsystem termination!!!
+				
+			}});
+		
 		if (cmd.hasOption("epp")) {
 			for(int i =1;i<populationSize+1;i++) {
 				Aligner a = new AlignerImpl(as, i);
+				as.calculateGlobalBenchmarks(a);
+				int cycles = 0;
+				while(a.getBenchmarkScores().getSize() <=as.noofNodesInSecondNetwork-tolerance&&cycles<postProcessingCycles) {
+				System.out.println("Cycle "+(cycles+1)+":");
+				int size1 = 0;
+				int size2 = 0;		
+
+				size1 = a.getBenchmarkScores().getSize();
+				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor), '3');
+				size2 = a.getBenchmarkScores().getSize();
+				a.increaseECByAddingPair(0, as.minSimilarity, '3');
 				
-				while(a.getBenchmarkScores().getSize() <=as.noofNodesInSecondNetwork-tolerance) {
-				a.addMeaninglessMapping(finalMappingFactor, '3');
-				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor/4), '3');
+				if(size2-size1<=finalMappingFactor)
+					a.addMeaninglessMapping(finalMappingFactor-size2+size1, '3');
 				
 				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
 					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
@@ -922,14 +943,33 @@ public class CLIPPI {
 					}		
 				}
 				a.increaseECByAddingPair(0, 0, '3');
-				int size1 = a.getBenchmarkScores().getSize();
-				if(Math.random() < 0.3)
+				size1 = 0;
+				size2 = 0;	
+				if(Math.random() < 0.3) {
+					size1 = a.getBenchmarkScores().getSize();
 					a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
-				int size2 = a.getBenchmarkScores().getSize();
-				if(Math.random() < 0.5)
-					a.removeBadMappingsRandomly(1, 1, true, 100-size2+size1);
+					size2 = a.getBenchmarkScores().getSize();
+				}
+
+				 if(size2-size1<finalMappingFactor)
+					 a.removeBadMappingsRandomly(1, 1, true, finalMappingFactor-size2+size1);
 				a.removeLatterOfManyToManyAlignments();
+				cycles++;
 			} 	
+				System.out.println("Final Improvement Step of Aligner : "+a.getAlignmentNo());			
+				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor), '3');
+				a.increaseECByAddingPair(0, as.minSimilarity, '3');
+				a.increaseGOCWithTopMappings((int)(finalMappingFactor), '3');
+				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
+					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
+						if(j+1<as.md.annotatedSimilarity.length)
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, '3');
+							
+						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, '3');
+						break;
+					}		
+				}		
+				
 			}
 		}
 			

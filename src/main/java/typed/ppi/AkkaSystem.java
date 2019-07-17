@@ -2067,8 +2067,10 @@ Timeout sg =  new Timeout(Duration.create(180, "seconds"));
 		@Override
 		public void run() {
 			
-			if(marked>interactiveCycles)
-				System.exit(0);
+			if(marked>interactiveCycles) {
+				AkkaSystem.system2.terminate();  // registerOnTermination​(java.lang.Runnable code)
+//				System.exit(0);
+			}
 			
 			Aligner bs = getAligner(alignerWithBestBitscore);
 			if(bs != null)
