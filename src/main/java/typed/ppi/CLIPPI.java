@@ -276,13 +276,13 @@ public class CLIPPI {
 				try {
 					if(Integer.parseInt(cmd.getOptionValue("ic"))>0) {
 						interactiveCycles = Integer.parseInt(cmd.getOptionValue("ic"));
-						System.out.println("Tolerance number of alignments from argument  is "+interactiveCycles);
+						System.out.println("No of interactive cycles for alignments from argument  is "+interactiveCycles);
 					} else
-						System.out.println("Tolerance number should be a positive number. Switching to the default value "+interactiveCycles);
+						System.out.println("No of interactive cycles should be a positive number. Switching to the default value "+interactiveCycles);
 				} catch (NumberFormatException e) {
-					System.err.println("Number Format Exception in Tolerance Number. Switching to the default value "+interactiveCycles);
+					System.err.println("Number Format Exception in No of interactive cycles. Switching to the default value "+interactiveCycles);
 				} catch (Exception e) {
-					System.err.println("User defined Tolerance number could not be accessed. Switching to the default value "+interactiveCycles);
+					System.err.println("User defined No of interactive cycles could not be accessed. Switching to the default value "+interactiveCycles);
 				}		    	    
 			    
 			   }

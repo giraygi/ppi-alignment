@@ -4200,17 +4200,6 @@ private void markUnalignedNodes(){
 	} );
 	if(!success)
 		System.err.println("HERKESİN TUTTUĞU KENDİNE");
-//	Session unAlignedSession = AkkaSystem.driver.session();
-//	try(org.neo4j.driver.v1.Transaction t = unAlignedSession.beginTransaction()){
-//
-//		//t.wait();
-//		t.run("match (n:Organism2)-[rr:ALIGNS]->(m:Organism1)  where rr.alignmentNumber = '"+ alignmentNo +"' with collect(n) as deneme, collect(m) as dene match (x:Organism2) where not (x in deneme) set x.marked = x.marked + '"+this.alignmentNo+"'");
-//		t.run("match (n:Organism2)-[rr:ALIGNS]->(m:Organism1)  where rr.alignmentNumber = '"+ alignmentNo +"' with collect(n) as deneme, collect(m) as dene match (x:Organism1) where not (x in dene) set x.marked = x.marked + '"+this.alignmentNo+"'");
-//		//t.notifyAll();
-//		t.success(); t.close();
-//	} catch(Exception e){
-//		e.printStackTrace();
-//	} finally {unAlignedSession.close();}
 }
 
 private void unmarkAllNodes(){
@@ -4233,16 +4222,6 @@ private void unmarkAllNodes(){
 	} );
 if(!success)
 	System.err.println("HERKESİN TUTTUĞU KENDİNE");
-//	Session unMarkSession = AkkaSystem.driver.session();
-//	try{
-//		//unMarkSession.wait();
-//		//t.run("match p=(n) FOREACH (x IN nodes(p) | SET x.marked["+this.alignmentNo+"] = false )");
-//		unMarkSession.run("MATCH (n) SET n.marked = FILTER(x IN n.marked WHERE x <> '"+this.alignmentNo+"')");
-//		//t.success(); t.close();
-//		//unMarkSession.notifyAll();
-//	} catch(Exception e){
-//		e.printStackTrace();
-//	} finally {unMarkSession.close();}
 }
 
 @SuppressWarnings("unused")
@@ -4755,7 +4734,6 @@ public void onReceive(Object message, ActorRef sender) {
 			},AkkaSystem.system2.dispatcher());
 		}
 		if(choice.equals("ICS")) {
-		//betweenness, harmonic, pagerank and closeness
 			String centralityType = null;
 			int  n = new Random().nextInt(4);
 			if(n ==0)
@@ -4816,8 +4794,6 @@ public void onReceive(Object message, ActorRef sender) {
 		},AkkaSystem.system2.dispatcher());
 	}
 	}
-	
-	
 	}
 	}
 	if(message instanceof SubGraph&&this.alignmentNo!=((SubGraph) message).senderNo)
@@ -4833,7 +4809,7 @@ public void onReceive(Object message, ActorRef sender) {
 //	if(message instanceof BenchmarkScores)
 //		sender.tell(this.requestCharacteristicSubAlignments(0, 4.0, true, this.as.system2.dispatcher()),this.as.typed.getActorRefFor(TypedActor.<Aligner>self()));
 //		//akka.pattern.Patterns.pipe(this.requestCharacteristicSubAlignments(0, 0.0, true, this.as.system2.dispatcher()), this.as.system2.dispatcher()).to(sender);
-	try {
+//	try {
 //		if(message instanceof String)
 //			System.out.println(this.alignmentNo+" numaralı aktörün String mesajı  geldi. Mesaj İçeriği: -> "+(String) message);
 //		if(message instanceof Long)
@@ -4861,10 +4837,10 @@ public void onReceive(Object message, ActorRef sender) {
 //				}
 //		}
 //		}
-			} catch (Exception e) {
-		// TODO Auto-generated catch block
-		System.out.println("onReceive::: "+e.getMessage());
-	}
+//			} catch (Exception e) {
+//		// TODO Auto-generated catch block
+//		System.out.println("onReceive::: "+e.getMessage());
+//	}
 	
 }
 	
