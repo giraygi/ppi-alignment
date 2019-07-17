@@ -59,13 +59,13 @@ public class CLIPPI {
 	
 	static String databaseAddress ="neo4j-community-3.5.6" ;
 	static Timeout timeout = new Timeout(Duration.create(360, "seconds"));
+	int interactiveCycles = 300;
 	int tolerance = 100;
 	int finalMappingFactor = 100;
 	int noofPercentileSteps = 10;
 	int populationSize = 10;
 	int noofDeletedMappingInUnprogressiveCycle = 100;
 	int unprogressiveCycleLength = 25;
-	
 	private static final Logger log = Logger.getLogger(CLIPPI.class.getName());
 	private String[] args = null;
 	private Options options = new Options();
@@ -94,6 +94,7 @@ public class CLIPPI {
 	  options.addOption("i", "interactivealignment", false, "Execute the interactive alignment phase");
 	  options.addOption("epp", "executepostprocessing", false, "Execute post processing phases of alignments with random search.");
 	   
+	  options.addOption("ic", "interactivecycles", true, "Number of interactive cycles to be spent before termination."); // AkkaSystem static marked ile karşılaştırılarak sonlandırma gerçekleştirilecek.
 	  options.addOption("t", "tolerance", true, "No of missing mappings allowed for the alignment.");
 	  options.addOption("fmf", "finalmappingfactor", true, "No of Mappings added in each Cycle of the final stage of post processing.");
 	  options.addOption("p", "path", true, "Directory of alignments");
@@ -268,6 +269,24 @@ public class CLIPPI {
 			 log.log(Level.INFO, "Using cli argument -epp");
 			 System.out.println("Post Processing Phase will be executed with Random Search.");
 		 }
+		  
+		 if (cmd.hasOption("ic")) {
+			    log.log(Level.INFO, "Using cli argument -ic=" + cmd.getOptionValue("ic"));
+			        
+				try {
+					if(Integer.parseInt(cmd.getOptionValue("ic"))>0) {
+						interactiveCycles = Integer.parseInt(cmd.getOptionValue("ic"));
+						System.out.println("Tolerance number of alignments from argument  is "+interactiveCycles);
+					} else
+						System.out.println("Tolerance number should be a positive number. Switching to the default value "+interactiveCycles);
+				} catch (NumberFormatException e) {
+					System.err.println("Number Format Exception in Tolerance Number. Switching to the default value "+interactiveCycles);
+				} catch (Exception e) {
+					System.err.println("User defined Tolerance number could not be accessed. Switching to the default value "+interactiveCycles);
+				}		    	    
+			    
+			   }
+		 
 		 
 		 if (cmd.hasOption("t")) {
 			    log.log(Level.INFO, "Using cli argument -t=" + cmd.getOptionValue("t"));
@@ -449,7 +468,7 @@ public class CLIPPI {
 	  
 	  	if(cmd.hasOption("db"))
 	  		databaseAddress = cmd.getOptionValue("db");	
-		final AkkaSystem as = new AkkaSystem(1,databaseAddress,noofDeletedMappingInUnprogressiveCycle,unprogressiveCycleLength,noofPercentileSteps);
+		final AkkaSystem as = new AkkaSystem(1,databaseAddress,noofDeletedMappingInUnprogressiveCycle,unprogressiveCycleLength,noofPercentileSteps,interactiveCycles);
 		if(cmd.hasOption("c")&&cmd.hasOption("n1")&&cmd.hasOption("n2")&&cmd.hasOption("s")&&cmd.hasOption("i1")&&cmd.hasOption("i2")&&cmd.hasOption("a1")&&cmd.hasOption("a2"))
 		{
 			as.deleteAllNodesRelationships();

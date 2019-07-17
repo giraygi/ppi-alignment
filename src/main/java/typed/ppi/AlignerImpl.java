@@ -1761,8 +1761,6 @@ boolean success2 = template2.with(AkkaSystem.graphDb).execute( transaction -> {
 		
 		markUnalignedNodes();
 		result = tx.run("match (p:Organism2)<-[t:SIMILARITY]-(n:Organism1) where (ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in p.annotations WHERE x in n.annotations)) >="+minCommonAnnotations+" return p,n order by length(FILTER(x in p.annotations WHERE x in n.annotations)) desc");
-		
-//System.out.println("Number of records in query: "+result.list().size());
 records.clear();
 aligned.clear();
 countRows = 0;
@@ -1803,7 +1801,6 @@ boolean success3 = template3.with(AkkaSystem.graphDb).execute( transaction -> {
 		
 		markUnalignedNodes();
 		result = tx.run("match (o:Organism2)-[u:INTERACTS_2]-(p:Organism2)-[t:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(n:Organism1)-[r:INTERACTS_1]-(m:Organism1) where (ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN o.marked WHERE x = '"+this.alignmentNo+"')) and length(FILTER(x in o.annotations WHERE x in m.annotations)) >="+minCommonAnnotations+" return o,m order by length(FILTER(x in o.annotations WHERE x in m.annotations)) desc");
-	//System.out.println("Number of records in query: "+result.list().size());
 	records.clear();
 	aligned.clear();
 	countRows = 0;
@@ -2377,11 +2374,6 @@ public void increaseConnectedEdges(int limit, int minCommonAnnotations, boolean 
 	return true;
 } );
 	
-//	TransactionTemplate template1 = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
-//	boolean success1 = template1.with(AkkaSystem.graphDb).execute( transaction -> {	
-//	return true;
-//} );
-	
 	if(!success)
 		System.err.println("Method increaseConnectedEdges was interrupted");
 	
@@ -2421,8 +2413,6 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 			ArrayList<Node> record = new ArrayList<Node>();
 			result = tx.run("match (o:Organism2)-[i2:INTERACTS_2]-(n:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m:Organism1)-[i1:INTERACTS_1]-(l:Organism1)-[s:SIMILARITY]->(o) where NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN o.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN l.marked WHERE x = '"+this.alignmentNo+"') "
 			+ "and length(FILTER(x in o.annotations WHERE x in l.annotations)) >= "+minCommonAnnotations+" and s.similarity >="+sim+" and not (o)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(l) return o,l"+suffix);
-			//+ "create (o)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"', alignmentIndex: toString(o.proteinName)+'*'+'"+alignmentNo+"'+'*'+toString(l.proteinName), markedQuery: []}]->(l) set o.marked = true, l.marked = true");
-			//on create set o.marked = true, l.marked = true
 			
 			while(result.hasNext()){
 				Record row = result.next();
@@ -3700,7 +3690,6 @@ private long compareContribution(long relationshipID1, long relationshipID2){
 	try ( org.neo4j.driver.v1.Transaction tx = innerSession.beginTransaction())
     {
 		System.out.println(relationshipID1+" - "+relationshipID2);
-		//result = tx.run("match (n1:Organism2)-[r1:ALIGNS]->(p1:Organism1)-[t1:SIMILARITY]->(n1), (n2:Organism2)-[r2:ALIGNS]->(p2:Organism1)-[t2:SIMILARITY]->(n2) where length(FILTER(x in p2.annotations WHERE x in n2.annotations)) >= length(FILTER(x in p1.annotations WHERE x in n1.annotations)) and t2.similarity >= t1.similarity"
 		result = tx.run("match (n1:Organism2)-[r1:ALIGNS]->(p1:Organism1), (n2:Organism2)-[r2:ALIGNS]->(p2:Organism1) "
 				+ "where r2.alignmentNumber = '"+alignmentNo+"' and r1.alignmentNumber = '"+alignmentNo+"' and id(r2) = "+relationshipID2+" and id(r1) = "+relationshipID1+" "
 				+ "return length(FILTER(x in p2.annotations WHERE x in n2.annotations)) as commonAnnotations2, length(FILTER(x in p1.annotations WHERE x in n1.annotations)) as commonAnnotations1,id(p1),id(n1),id(p2),id(n2) ");
@@ -3779,11 +3768,6 @@ private long compareSimilarityContribution(long relationshipID1, long relationsh
 		
 		try ( org.neo4j.driver.v1.Transaction tx = csc.beginTransaction())
 	    {
-//			System.out.println(relationshipID1+" - "+relationshipID2);
-//			result = tx.run("match (n1:Organism2)-[r1:ALIGNS]->(p1:Organism1)-[t1:SIMILARITY]->(n1), (n2:Organism2)-[r2:ALIGNS]->(p2:Organism1)-[t2:SIMILARITY]->(n2) where length(FILTER(x in p2.annotations WHERE x in n2.annotations)) >= length(FILTER(x in p1.annotations WHERE x in n1.annotations)) and t2.similarity >= t1.similarity"
-//			result = tx.run("optional match (n1:Organism2)-[r1:ALIGNS]->(p1:Organism1)-[t1:SIMILARITY]->(n1), (n2:Organism2)-[r2:ALIGNS]->(p2:Organism1)-[t2:SIMILARITY]->(n2)"
-//					+ "where r2.alignmentNumber = '"+alignmentNo+"' and r1.alignmentNumber = '"+alignmentNo+"' and id(r2) = "+relationshipID2+" and id(r1) = "+relationshipID1+" "
-//					+ "return length(FILTER(x in p2.annotations WHERE x in n2.annotations)) as commonAnnotations2, length(FILTER(x in p1.annotations WHERE x in n1.annotations)) as commonAnnotations1,t2.similarity,t1.similarity,id(p1),id(n1),id(p2),id(n2) ");
 			
 			result = tx.run("match (n1:Organism2)-[r1:ALIGNS]->(p1:Organism1), (n2:Organism2)-[r2:ALIGNS]->(p2:Organism1) "
 					+ "where r2.alignmentNumber = '"+alignmentNo+"' and r1.alignmentNumber = '"+alignmentNo+"' and id(r2) = "+relationshipID2+" and id(r1) = "+relationshipID1+" "
@@ -4891,7 +4875,7 @@ private static Future<SubGraph> future(Callable<SubGraph> callable, ExecutionCon
 	} catch (Exception e) {
 		// TODO Auto-generated catch block
 		System.err.println("fevzi");
-		SubGraph hezimet = new SubGraph(new AkkaSystem(10,AkkaSystem.databaseAddress,100,25,10),TypedActor.<AlignerImpl>self(),(long) 5);
+		SubGraph hezimet = new SubGraph(new AkkaSystem(10,AkkaSystem.databaseAddress,100,25,10,300),TypedActor.<AlignerImpl>self(),(long) 5);
 		hezimet.type = "hep kazanamayız!!!";
 		return Futures.successful(hezimet);
 	}

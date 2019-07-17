@@ -81,6 +81,7 @@ public class AkkaSystem {
 	int noofDeletedMappingInUnprogressiveCycle = 100;
 	int unprogressiveCycleLength = 25;
 	int noofPercentileSteps = 10;
+	int interactiveCycles = 300;
 	static akka.actor.ActorSystem system2 = akka.actor.ActorSystem.create();
 	TypedActorExtension typed = TypedActor.get(system2);
 	static ExecutionContext ec = system2.dispatcher();
@@ -109,14 +110,13 @@ public class AkkaSystem {
 	static int marked = 0; 
 	MetaData md;
 	
-	
-	
-	public AkkaSystem(int noofAligners, String args, int toleranceLimitForUnimprovedAligners,int toleranceCycleForUnimprovedAligners, int noofPercentileSteps ){
+	public AkkaSystem(int noofAligners, String args, int noofDeletedMappingInUnprogressiveCycles,int unprogressiveCycleLength, int noofPercentileSteps, int interactiveCycles ){
 		this.noofAligners = noofAligners;
 		this.init(args);
-		this.noofDeletedMappingInUnprogressiveCycle = toleranceLimitForUnimprovedAligners;
-		this.unprogressiveCycleLength = toleranceCycleForUnimprovedAligners;
+		this.noofDeletedMappingInUnprogressiveCycle = noofDeletedMappingInUnprogressiveCycles;
+		this.unprogressiveCycleLength = unprogressiveCycleLength;
 		this.noofPercentileSteps = noofPercentileSteps;
+		this.interactiveCycles = interactiveCycles;
 		md  = new MetaData(this.noofPercentileSteps);
 	}
 	
@@ -2066,6 +2066,9 @@ Timeout sg =  new Timeout(Duration.create(180, "seconds"));
 	Cancellable c = AkkaSystem.system2.scheduler().schedule((FiniteDuration) Duration.create(initialDelay+" seconds"),(FiniteDuration) Duration.create(interval+" seconds"),new Runnable() {
 		@Override
 		public void run() {
+			
+			if(marked>interactiveCycles)
+				System.exit(0);
 			
 			Aligner bs = getAligner(alignerWithBestBitscore);
 			if(bs != null)
