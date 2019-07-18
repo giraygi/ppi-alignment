@@ -969,7 +969,7 @@ public class CLIPPI {
 						break;
 					}		
 				}		
-				
+				a.increaseECByAddingPair(0, 0, '3');
 			}
 		}
 			
