@@ -98,6 +98,7 @@ public class CLIPPI {
 	  options.addOption("ic", "interactivecycles", true, "Number of interactive cycles to be spent before termination."); // AkkaSystem static marked ile karşılaştırılarak sonlandırma gerçekleştirilecek.
 	  options.addOption("t", "tolerance", true, "No of missing mappings allowed for the alignment.");
 	  options.addOption("fmf", "finalmappingfactor", true, "No of Mappings added in each Cycle of the final stage of post processing.");
+	  options.addOption("ppc", "postprocessingcycles", true, "No of Post Processing cycles to be spent for each aligner in the final hill climbing phase.");
 	  options.addOption("p", "path", true, "Directory of alignments");
 	  options.addOption("db", "dbaddress", true, "Database address of neo4j.");
 	  options.addOption("e", "extension", true, "File extension for the alignments to be stored/loaded.");
@@ -350,6 +351,22 @@ public class CLIPPI {
 					System.err.println("Number Format Exception in Number of Deleted Unprogressive Mappings. Switching to the default value "+noofDeletedMappingInUnprogressiveCycle );
 				} catch (Exception e) {
 					System.err.println("User defined Number of Deleted Unprogressive Mappings could not be accessed. Switching to the default value "+noofDeletedMappingInUnprogressiveCycle );
+				}		    	    
+			    
+			   }
+		 
+		 if (cmd.hasOption("ppc")) {
+			    log.log(Level.INFO, "Using cli argument -ppc=" + cmd.getOptionValue("ppc"));		        
+				try {
+					if(Integer.parseInt(cmd.getOptionValue("ppc"))>0) {
+						postProcessingCycles  = Integer.parseInt(cmd.getOptionValue("ppc"));
+						System.out.println("Number of Post Processing Cycles for alignments from argument  is "+postProcessingCycles );
+					} else
+						System.out.println("Number of Post Processing Cycles should be a positive number. Switching to the default value "+postProcessingCycles );
+				} catch (NumberFormatException e) {
+					System.err.println("Number Format Exception in Number of Post Processing Cycles. Switching to the default value "+postProcessingCycles );
+				} catch (Exception e) {
+					System.err.println("User defined Number of Post Processing Cycles could not be accessed. Switching to the default value "+postProcessingCycles );
 				}		    	    
 			    
 			   }
