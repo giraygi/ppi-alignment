@@ -944,8 +944,9 @@ public class CLIPPI {
 
 				size1 = a.getBenchmarkScores().getSize();
 				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor), '3');
-				size2 = a.getBenchmarkScores().getSize();
 				a.increaseECByAddingPair(0, as.minSimilarity, '3');
+				a.increaseGOCWithTopMappings((int)(finalMappingFactor), '3');
+				size2 = a.getBenchmarkScores().getSize();
 				
 				if(size2-size1<=finalMappingFactor)
 					a.addMeaninglessMapping(finalMappingFactor-size2+size1, '3');
