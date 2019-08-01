@@ -109,6 +109,7 @@ public class CLIPPI {
 	  options.addOption("lo", "loadalignments", false, "Previous alignments are loaded from specified directory.");
 	  options.addOption("sv", "savealignments", false, "Resulting alignments and markedqueries are saved into specified directory.");
 	  options.addOption("svs", "savestatistics", false, "Alignments in the specified directory are aggregated for statistics.");
+	  options.addOption("gopp", "gocinpostprocessing", false, "Gene Ontology Consistency From Top is executed in post processing.");
 	  
 	  options.addOption("cc", "centralitiescommunities", false, "Compute Several Centrality and Community approaches for the networks.");
 	  options.addOption("nps", "noofpercentilesteps", true, "Number of Percentile Steps to be calculated for the Meta Data.");
@@ -439,7 +440,12 @@ public class CLIPPI {
 			   if (cmd.hasOption("svs")) {
 				   log.log(Level.INFO, "Using cli argument -svs");
 				   System.out.println("Alignments in the specified directory are going to be aggregated for statistics.");
-			   }			 
+			   }		
+			   
+			   if (cmd.hasOption("gopp")) {
+				   log.log(Level.INFO, "Using cli argument -gopp");
+				   System.out.println("Using Gene Ontology From Top in Post Processing");
+			   }	
 			   
 			   if (cmd.hasOption("cc")) {
 				   log.log(Level.INFO, "Using cli argument -cc");
@@ -945,7 +951,8 @@ public class CLIPPI {
 				size1 = a.getBenchmarkScores().getSize();
 				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor), '3');
 				a.increaseECByAddingPair(0, as.minSimilarity, '3');
-				a.increaseGOCWithTopMappings((int)(finalMappingFactor), '3');
+				if (cmd.hasOption("gopp")) 
+					a.increaseGOCWithTopMappings((int)(finalMappingFactor), '3');
 				size2 = a.getBenchmarkScores().getSize();
 				
 				if(size2-size1<=finalMappingFactor)
