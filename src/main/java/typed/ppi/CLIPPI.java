@@ -942,6 +942,23 @@ public class CLIPPI {
 			for(int i =1;i<populationSize+1;i++) {
 				Aligner a = new AlignerImpl(as, i);
 				as.calculateGlobalBenchmarks(a);
+				
+				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
+					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
+						if(j+1<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+1])>Math.ceil(as.md.annotatedSimilarity[j]))
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, '3');
+						else if (j+2<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+2])>Math.ceil(as.md.annotatedSimilarity[j+1]))
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+2]), 0, '3');
+						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, '3');
+						break;
+					}		
+				}
+				
+				a.increaseECByAddingPair(0, 0, '3');
+				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
+				a.removeBadMappingsRandomly(1, 1, true, finalMappingFactor);
+				a.removeLatterOfManyToManyAlignments();
+				
 				int cycles = 0;
 				while(a.getBenchmarkScores().getSize() <=as.noofNodesInSecondNetwork-tolerance&&cycles<postProcessingCycles) {
 				System.out.println("Cycle "+(cycles+1)+":");
@@ -960,9 +977,10 @@ public class CLIPPI {
 				
 				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
 					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
-						if(j+1<as.md.annotatedSimilarity.length)
+						if(j+1<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+1])>Math.ceil(as.md.annotatedSimilarity[j]))
 							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, '3');
-							
+						else if (j+2<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+2])>Math.ceil(as.md.annotatedSimilarity[j+1]))
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+2]), 0, '3');
 						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, '3');
 						break;
 					}		
@@ -987,13 +1005,14 @@ public class CLIPPI {
 				a.increaseGOCWithTopMappings((int)(finalMappingFactor), '3');
 				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
 					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
-						if(j+1<as.md.annotatedSimilarity.length)
+						if(j+1<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+1])>Math.ceil(as.md.annotatedSimilarity[j]))
 							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, '3');
-							
+						else if (j+2<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+2])>Math.ceil(as.md.annotatedSimilarity[j+1]))
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+2]), 0, '3');
 						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, '3');
 						break;
 					}		
-				}		
+				}	
 				a.increaseECByAddingPair(0, 0, '3');
 			}
 		}

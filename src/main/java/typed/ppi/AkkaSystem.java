@@ -549,11 +549,11 @@ public class AkkaSystem {
 		try ( org.neo4j.driver.v1.Transaction tx = session.beginTransaction() )
 		{
 			tx.run("CALL algo.pageRank('Organism2', 'INTERACTS_2',\n" + 
-					"  {iterations:"+iterations+", dampingFactor:"+dampingFactor+", write: true,writeProperty:'pagerank'})\n" + 
+					"  {direction:'BOTH', iterations:"+iterations+", dampingFactor:"+dampingFactor+", write: true,writeProperty:'pagerank'})\n" + 
 					"YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty");
 			
 			tx.run("CALL algo.pageRank('Organism1', 'INTERACTS_1',\n" + 
-					"  {iterations:"+iterations+", dampingFactor:"+dampingFactor+", write: true,writeProperty:'pagerank'})\n" + 
+					"  {direction:'BOTH', iterations:"+iterations+", dampingFactor:"+dampingFactor+", write: true,writeProperty:'pagerank'})\n" + 
 					"YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty");
 		     System.out.println("Page Rank Values are computed for all Nodes"); 
 			tx.success(); tx.close();
