@@ -2179,6 +2179,79 @@ public void increaseFunctionalParametersWithPower(int minCommonAnnotations, doub
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);
 }
 
+public void alignEdges(char mode) {
+	
+	System.out.println("alignEdges for Aligner "+this.alignmentNo);
+	TransactionTemplate.Monitor tm = new TransactionTemplate.Monitor.Adapter();
+	tm.failure(new Throwable("Herkesin tuttuğu kendine"));
+	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
+	boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+		StatementResult result;
+		Session ieca = AkkaSystem.driver.session();
+		String suffix = ",min(o.power2,l.power2),min(n.power2,m.power2) order by min(o.power2,l.power2)+min(n.power2,m.power2) desc";
+//		suffix = "";
+		try ( org.neo4j.driver.v1.Transaction tx = ieca.beginTransaction())
+	    {
+			markUnalignedNodes();
+			ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
+			ArrayList<Node> record = new ArrayList<Node>();
+			result = tx.run("match (o:Organism2)-[i2:INTERACTS_2]->(n:Organism2),(m:Organism1)<-[i1:INTERACTS_1]-(l:Organism1) where ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN o.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN l.marked WHERE x = '"+this.alignmentNo+"') "
+			+ "return o,l,n,m"+suffix);
+			
+			while(result.hasNext()){
+				Record row = result.next();
+				record.clear();
+				for ( Entry<String,Object> column : row.asMap().entrySet() ){
+					if(column.getValue()!=null)
+						switch (column.getKey()) {
+						case "o":
+							record.add(0,row.get( column.getKey() ).asNode());
+							break;
+						case "l":
+							record.add(1,row.get( column.getKey() ).asNode());
+							break;
+						case "n":
+							record.add(2,row.get( column.getKey() ).asNode());
+							break;
+						case "m":
+							record.add(3,row.get( column.getKey() ).asNode());
+							break;
+						case "min(o.power2,l.power2)":
+							;
+							break;
+						case "min(n.power2,m.power2)":
+							;
+							break;
+						default:
+							System.out.println("Unexpected column"+column.getKey());
+							break;
+						}
+					}
+				records.add(new ArrayList<Node>(record));
+				}
+			
+			Set<Node> aligned = new HashSet<Node>();
+//			addResultsToAlignment(records,aligned,mode);
+			System.out.println(addResultsToAlignment(records,aligned,mode)+" records were added with alignEdges method of Aligner "+this.alignmentNo);
+			unmarkAllNodes();
+
+			tx.success(); tx.close();
+	    } catch (Exception e){
+	    	e.printStackTrace();
+	    	System.out.println("kamil");
+	    	System.out.println("alignEdges: " + e.getMessage());
+	    } finally {ieca.close();}
+		this.bs = as.calculateGlobalBenchmarks(this);
+		return true;
+	} );
+	
+	if(!success)
+		System.err.println("alignEdges");
+	
+	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
+	
+}
+
 //hizalanmış kenarları artırmadığı görülmüş olaydır. Buyuk olasilikla dugum eslesmeleri yanlisti ve duzeltildi. hala sorgu iyilestirmesi gerekiyor.
 // SCC gibi graph algo küme partitionları ile iyileştirilecek.
 

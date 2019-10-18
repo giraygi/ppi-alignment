@@ -1970,11 +1970,15 @@ public BenchmarkScores calculateGlobalBenchmarks(Aligner a){
 			bs.setEC((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/(double) this.sizeOfSecondNetwork);
 			bs.setICS((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/(double) this.countInducedSubGraphEdgesOfANetwork(false,Integer.toString(a.getAlignmentNo())));
 			bs.setS3((double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))/((double) this.sizeOfSecondNetwork + (double) this.countInducedSubGraphEdgesOfANetwork(false,Integer.toString(a.getAlignmentNo())) - (double) this.countAlignedEdges(Integer.toString(a.getAlignmentNo()))));
-			bs.setLCCS(this.calculateLCCS2(Integer.toString(a.getAlignmentNo())));
+			bs.setSize(this.countAlignedNodes(Integer.toString(a.getAlignmentNo())));
+			if(bs.getSize()>0)
+				bs.setLCCS(this.calculateLCCS2(Integer.toString(a.getAlignmentNo())));
+			else
+				bs.setLCCS(0);
 			bs.setGOC(this.calculateGOCScore(Integer.toString(a.getAlignmentNo())));
 			bs.setGOEnrichment(this.calculateGOEnrichment(Integer.toString(a.getAlignmentNo())));
 			bs.setBitScore(this.calculateBitScoreSum(Integer.toString(a.getAlignmentNo())));
-			bs.setSize(this.countAlignedNodes(Integer.toString(a.getAlignmentNo())));
+			
 			
 			if (a.getBenchmarkScores().EC>bestEC) {bestEC = a.getBenchmarkScores().EC;alignerWithBestEC = a.getAlignmentNo();}
 			if (a.getBenchmarkScores().ICS>bestICS) {bestICS = a.getBenchmarkScores().ICS;alignerWithBestICS = a.getAlignmentNo();}
