@@ -2178,7 +2178,7 @@ public void increaseFunctionalParametersWithPower(int minCommonAnnotations, doub
 	
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);
 }
-
+// Only to be used when an alignment is almost complete.
 public void alignEdges(char mode) {
 	
 	System.out.println("alignEdges for Aligner "+this.alignmentNo);

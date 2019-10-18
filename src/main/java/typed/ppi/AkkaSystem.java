@@ -419,50 +419,73 @@ public class AkkaSystem {
 			
 			for (int i = 0;i<md.noofPercentileSteps;i++) {
 				result = tx.run( "match (p:Organism1) return percentileCont(p.pagerank,"+(i+1)/md.noofPercentileSteps+")");
-				md.organism1Pagerank[i] = Double.parseDouble(result.single().get("percentileCont(p.pagerank,"+(i+1)/md.noofPercentileSteps+")").toString());
+				if(!result.single().get("percentileCont(p.pagerank,"+(i+1)/md.noofPercentileSteps+")").isNull())
+					md.organism1Pagerank[i] = Double.parseDouble(result.single().get("percentileCont(p.pagerank,"+(i+1)/md.noofPercentileSteps+")").toString());
+				else
+					md.organism1Pagerank[i] = 0.0;
 				System.out.println(i+". Organism1Pagerank: "+md.organism1Pagerank[i] );
 			}
 			
 			for (int i = 0;i<md.noofPercentileSteps;i++) {
 				result = tx.run( "match (n:Organism2) return percentileCont(n.pagerank,"+(i+1)/md.noofPercentileSteps+")");
-				md.organism2Pagerank[i] = Double.parseDouble(result.single().get("percentileCont(n.pagerank,"+(i+1)/md.noofPercentileSteps+")").toString());
+				if(!result.single().get("percentileCont(n.pagerank,"+(i+1)/md.noofPercentileSteps+")").isNull())
+					md.organism2Pagerank[i] = Double.parseDouble(result.single().get("percentileCont(n.pagerank,"+(i+1)/md.noofPercentileSteps+")").toString());
+				else
+					md.organism2Pagerank[i] = 0.0;
 				System.out.println(i+". Organism2Pagerank: "+md.organism2Pagerank[i] );
 			}
 			
 			for (int i = 0;i<md.noofPercentileSteps;i++) {
 				result = tx.run( "match (p:Organism1) return percentileCont(p.betweenness,"+(i+1)/md.noofPercentileSteps+")");
-				md.organism1Betweenness[i] = Double.parseDouble(result.single().get("percentileCont(p.betweenness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				if(!result.single().get("percentileCont(p.betweenness,"+(i+1)/md.noofPercentileSteps+")").isNull())
+					md.organism1Betweenness[i] = Double.parseDouble(result.single().get("percentileCont(p.betweenness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				else 
+					md.organism1Betweenness[i] = 0.0;
 				System.out.println(i+". Organism1Betweenness: "+md.organism1Betweenness[i] );
 			}
 			
 			for (int i = 0;i<md.noofPercentileSteps;i++) {
 				result = tx.run( "match (n:Organism2) return percentileCont(n.betweenness,"+(i+1)/md.noofPercentileSteps+")");
-				md.organism2Betweenness[i] = Double.parseDouble(result.single().get("percentileCont(n.betweenness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				if(!result.single().get("percentileCont(n.betweenness,"+(i+1)/md.noofPercentileSteps+")").isNull())
+					md.organism2Betweenness[i] = Double.parseDouble(result.single().get("percentileCont(n.betweenness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				else
+					md.organism2Betweenness[i] = 0.0;
 				System.out.println(i+". Organism2Betweenness: "+md.organism2Betweenness[i] );
 			}
 			
 			
 			for (int i = 0;i<md.noofPercentileSteps;i++) {
 				result = tx.run( "match (p:Organism1) return percentileCont(p.closeness,"+(i+1)/md.noofPercentileSteps+")");
-				md.organism1Closeness[i] = Double.parseDouble(result.single().get("percentileCont(p.closeness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				if(!result.single().get("percentileCont(p.closeness,"+(i+1)/md.noofPercentileSteps+")").isNull())
+					md.organism1Closeness[i] = Double.parseDouble(result.single().get("percentileCont(p.closeness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				md.organism1Closeness[i] = 0.0;
 				System.out.println(i+". Organism1Closeness: "+md.organism1Closeness[i] );
 			}
 			
 			for (int i = 0;i<md.noofPercentileSteps;i++) {
 				result = tx.run( "match (n:Organism2) return percentileCont(n.closeness,"+(i+1)/md.noofPercentileSteps+")");
-				md.organism2Closeness[i] = Double.parseDouble(result.single().get("percentileCont(n.closeness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				if(!result.single().get("percentileCont(n.closeness,"+(i+1)/md.noofPercentileSteps+")").isNull())
+					md.organism2Closeness[i] = Double.parseDouble(result.single().get("percentileCont(n.closeness,"+(i+1)/md.noofPercentileSteps+")").toString());
+				else
+					md.organism2Closeness[i] = 0.0;
 				System.out.println(i+". Organism2Closeness: "+md.organism2Closeness[i] );
 			}
 			
 			for (int i = 0;i<md.noofPercentileSteps;i++) {
 				result = tx.run( "match (p:Organism1) return percentileCont(p.harmonic,"+(i+1)/md.noofPercentileSteps+")");
-				md.organism1Harmonic[i] = Double.parseDouble(result.single().get("percentileCont(p.harmonic,"+(i+1)/md.noofPercentileSteps+")").toString());
+				if(!result.single().get("percentileCont(p.harmonic,"+(i+1)/md.noofPercentileSteps+")").isNull())
+					md.organism1Harmonic[i] = Double.parseDouble(result.single().get("percentileCont(p.harmonic,"+(i+1)/md.noofPercentileSteps+")").toString());
+				else
+					md.organism1Harmonic[i] = 0.0;
 				System.out.println(i+". Organism1Harmonic: "+md.organism1Harmonic[i] );
 			}
 			
 			for (int i = 0;i<md.noofPercentileSteps;i++) {
 				result = tx.run( "match (n:Organism2) return percentileCont(n.harmonic,"+(i+1)/md.noofPercentileSteps+")");
-				md.organism2Harmonic[i] = Double.parseDouble(result.single().get("percentileCont(n.harmonic,"+(i+1)/md.noofPercentileSteps+")").toString());
+				if(!result.single().get("percentileCont(n.harmonic,"+(i+1)/md.noofPercentileSteps+")").isNull())
+					md.organism2Harmonic[i] = Double.parseDouble(result.single().get("percentileCont(n.harmonic,"+(i+1)/md.noofPercentileSteps+")").toString());
+				else
+					md.organism2Harmonic[i] = 0.0;
 				System.out.println(i+". Organism2Harmonic: "+md.organism2Harmonic[i] );
 			}
 			
