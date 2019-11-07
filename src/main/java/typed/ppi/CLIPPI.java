@@ -942,7 +942,6 @@ public class CLIPPI {
 			for(int i =1;i<populationSize+1;i++) {
 				Aligner a = new AlignerImpl(as, i);
 				as.calculateGlobalBenchmarks(a);
-				
 				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
 					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
 						if(j+1<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+1])>Math.ceil(as.md.annotatedSimilarity[j]))
@@ -961,6 +960,7 @@ public class CLIPPI {
 				
 				int cycles = 0;
 				while(a.getBenchmarkScores().getSize() <=as.noofNodesInSecondNetwork-tolerance&&cycles<postProcessingCycles) {
+					finalMappingFactor = finalMappingFactor + 10;
 				System.out.println("Cycle "+(cycles+1)+":");
 				int size1 = 0;
 				int size2 = 0;		
@@ -1014,6 +1014,7 @@ public class CLIPPI {
 					}		
 				}	
 				a.increaseECByAddingPair(0, 0, '3');
+				a.removeBadMappingsRandomly(1, 1, true, 0);
 			}
 		}
 			
