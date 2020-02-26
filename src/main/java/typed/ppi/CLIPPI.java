@@ -58,6 +58,7 @@ import scala.concurrent.duration.FiniteDuration;
 public class CLIPPI {
 	
 	static String databaseAddress ="neo4j-community-3.5.6" ;
+	static String neo4jPassword = "evet";
 	static Timeout timeout = new Timeout(Duration.create(360, "seconds"));
 	int interactiveCycles = 300;
 	int tolerance = 100;
@@ -100,6 +101,7 @@ public class CLIPPI {
 	  options.addOption("fmf", "finalmappingfactor", true, "No of Mappings added in each Cycle of the final stage of post processing.");
 	  options.addOption("ppc", "postprocessingcycles", true, "No of Post Processing cycles to be spent for each aligner in the final hill climbing phase.");
 	  options.addOption("p", "path", true, "Directory of alignments");
+	  options.addOption("npw","neo4jpassword",true,"password for connecting the neo4j database");
 	  options.addOption("db", "dbaddress", true, "Database address of neo4j.");
 	  options.addOption("e", "extension", true, "File extension for the alignments to be stored/loaded.");
 	  options.addOption("l", "label", true, "Initial tag for the alignments to be stored.");
@@ -394,6 +396,11 @@ public class CLIPPI {
 				  
 			  }
 			   } 
+		   
+			  if (cmd.hasOption("npw")) {
+				  log.log(Level.INFO, "Using cli argument -npw=" + cmd.getOptionValue("npw"));
+				  System.out.println("Using cli argument -npw=" + cmd.getOptionValue("npw"));
+			  }  
 			  
 			  if (cmd.hasOption("db")) {
 				  log.log(Level.INFO, "Using cli argument -db=" + cmd.getOptionValue("db"));
@@ -492,7 +499,11 @@ public class CLIPPI {
 	  
 	  	if(cmd.hasOption("db"))
 	  		databaseAddress = cmd.getOptionValue("db");	
-		final AkkaSystem as = new AkkaSystem(1,databaseAddress,noofDeletedMappingInUnprogressiveCycle,unprogressiveCycleLength,noofPercentileSteps,interactiveCycles);
+	  	if(cmd.hasOption("npw"))
+	  		neo4jPassword = cmd.getOptionValue("npw");	
+	  	else
+	  		log.log(Level.INFO, "Using the default Neo4j Password as evet");
+		final AkkaSystem as = new AkkaSystem(1,databaseAddress,neo4jPassword,noofDeletedMappingInUnprogressiveCycle,unprogressiveCycleLength,noofPercentileSteps,interactiveCycles);
 		if(cmd.hasOption("c")&&cmd.hasOption("n1")&&cmd.hasOption("n2")&&cmd.hasOption("s")&&cmd.hasOption("i1")&&cmd.hasOption("i2")&&cmd.hasOption("a1")&&cmd.hasOption("a2"))
 		{
 			as.deleteAllNodesRelationships();

@@ -7,7 +7,7 @@ public class MyUnitTest {
 
     @Test
     public void testInitializePreviousAlignmentsFromFolder() {
-        AkkaSystem myUnit = new AkkaSystem(1,"neo4j-community-3.5.6",100,20,10,300);
+        AkkaSystem myUnit = new AkkaSystem(1,"neo4j-community-3.5.6","evet",100,20,10,300);
         myUnit.computeMetaData();
         myUnit.removeAllAlignments();
         int result = myUnit.initializePreviousAlignmentsFromFolder(1, "/home/giray/4/dorderdorder", "aln");

@@ -58,7 +58,6 @@ public class AkkaSystem {
 	 */
 	
 	static GraphDatabaseService graphDb;
-	static String databaseAddress;
 	FileReader fr;
 	BufferedReader br;
 	FileWriter fw;
@@ -110,9 +109,9 @@ public class AkkaSystem {
 	static int marked = 0; 
 	MetaData md;
 	
-	public AkkaSystem(int noofAligners, String args, int noofDeletedMappingInUnprogressiveCycles,int unprogressiveCycleLength, int noofPercentileSteps, int interactiveCycles ){
+	public AkkaSystem(int noofAligners, String dbAddress, String neo4jPassword, int noofDeletedMappingInUnprogressiveCycles,int unprogressiveCycleLength, int noofPercentileSteps, int interactiveCycles ){
 		this.noofAligners = noofAligners;
-		this.init(args);
+		this.init(dbAddress, neo4jPassword);
 		this.noofDeletedMappingInUnprogressiveCycle = noofDeletedMappingInUnprogressiveCycles;
 		this.unprogressiveCycleLength = unprogressiveCycleLength;
 		this.noofPercentileSteps = noofPercentileSteps;
@@ -120,19 +119,19 @@ public class AkkaSystem {
 		md  = new MetaData(this.noofPercentileSteps);
 	}
 	
-	public void init(String args){
+	public void init(String dbAddress, String neo4jPassword){
 		
 //		GraphDatabaseSettings.BoltConnector bolt = GraphDatabaseSettings.boltConnector( "0" );
 
 //		@SuppressWarnings("unused")
 		GraphDatabaseService graphDb = new GraphDatabaseFactory()
 //		        .newEmbeddedDatabase( new File("C:\\Users\\giray.tuncay\\neo4j-community-3.4.9-windows\\neo4j-community-3.4.9") );
-                .newEmbeddedDatabase( new File("~/"+args) );
+                .newEmbeddedDatabase( new File("~/"+dbAddress) );
 //		        .setConfig( bolt.enabled, "true" )
 //		        .setConfig( bolt.address, "localhost:7687" )
 //		        .newGraphDatabase();
 		AkkaSystem.graphDb = graphDb;
-		driver = GraphDatabase.driver( "bolt://localhost", AuthTokens.basic( "neo4j", "evet" ) );
+		driver = GraphDatabase.driver( "bolt://localhost", AuthTokens.basic( "neo4j", neo4jPassword ) );
 		session = driver.session();
 		//graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( new File("/home/giray/Downloads/neo4j-community-3.0.6") ).newGraphDatabase();	
 	}
