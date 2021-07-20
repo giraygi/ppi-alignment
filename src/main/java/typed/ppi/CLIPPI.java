@@ -977,6 +977,7 @@ public class CLIPPI {
 				int size2 = 0;		
 
 				size1 = a.getBenchmarkScores().getSize();
+				a.increaseEdgesWithBitScoreWithTopMappings((int)(finalMappingFactor), '3');
 				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor), '3');
 				a.increaseECByAddingPair(0, as.minSimilarity, '3');
 				if (cmd.hasOption("gopp")) 
@@ -1006,11 +1007,16 @@ public class CLIPPI {
 				}
 
 				 if(size2-size1<finalMappingFactor)
-					 a.removeBadMappingsRandomly(1, 1, true, finalMappingFactor-size2+size1);
+					 if(Math.random() < 0.5)
+						 a.removeBadMappingsRandomly(1, 1, true, finalMappingFactor);
+					 else
+						 a.removeBadMappingsRandomly(1, 1, true, 0);
 				a.removeLatterOfManyToManyAlignments();
 				cycles++;
 			} 	
-				System.out.println("Final Improvement Step of Aligner : "+a.getAlignmentNo());			
+				System.out.println("Final Improvement Step of Aligner : "+a.getAlignmentNo());
+				 a.removeBadMappingsRandomly(1, 1, true, 0);
+				a.increaseEdgesWithBitScoreWithTopMappings((int)(finalMappingFactor), '3');
 				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor), '3');
 				a.increaseECByAddingPair(0, as.minSimilarity, '3');
 				a.increaseGOCWithTopMappings((int)(finalMappingFactor), '3');
@@ -1037,6 +1043,7 @@ public class CLIPPI {
 			
 			if(cmd.hasOption("svs")&&cmd.hasOption("p")&&cmd.hasOption("e"))
 				as.initializePreviousAlignmentsFromFolderAndSaveStatistics(1, cmd.getOptionValue("p"), cmd.getOptionValue("e"));
+			    System.exit(0);
 	 }
 
 	 private void help() {

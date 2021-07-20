@@ -40,6 +40,7 @@ public interface Aligner extends Receiver {
 	public Future<Long> markClusterEdges(int minCommonAnnotations, String clusterType,long clusterIDOfOrganism1, long clusterIDOfOrganism2,long markedQuery, ExecutionContextExecutor dispatcher);
 	public void increaseBitScoreAndGOC(int minCommonAnnotations, char mode);
 	public void increaseGOCAndBitScore(int minCommonAnnotations, char mode);
+	public void increaseEdgesWithBitScoreWithTopMappings(int limit, char mode);
 	public void increaseBitScoreWithTopMappings(int limit, char mode) ;
 	public void increaseGOCWithTopMappings(int limit, char mode);
 	public void increaseECWithFunctionalParameters(int k1, int k2, double sim1, double sim2, char mode);

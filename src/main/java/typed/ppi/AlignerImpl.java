@@ -1848,6 +1848,62 @@ while(gocbs.isOpen()) {
 	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
 }
 
+public void increaseEdgesWithBitScoreWithTopMappings(int limit, char mode) {
+	System.out.println("increaseBitScoreWithTopMappings for Aligner "+this.alignmentNo+" with a limit of "+limit);
+	ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
+	ArrayList<Node> record = new ArrayList<Node>();
+	Set<Node> aligned = new HashSet<Node>();
+	Session bsgoc = AkkaSystem.driver.session();
+	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS );
+	boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+		StatementResult result;
+		int countRows = 0;
+		try ( org.neo4j.driver.v1.Transaction tx = bsgoc.beginTransaction() ){		
+		markUnalignedNodes();
+		
+		result = tx.run("match (o:Organism2)-[u:INTERACTS_2]-(p:Organism2)<-[t:SIMILARITY]-(n:Organism1)-[r:INTERACTS_1]-(m:Organism1)-[s:SIMILARITY]->(o) where ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN o.marked WHERE x = '"+this.alignmentNo+"') return o,m,p,n order by t.similarity+s.similarity desc limit "+limit);
+		while(result.hasNext()){
+			Record row = result.next();
+			record.clear();
+			for ( Entry<String,Object> column : row.asMap().entrySet() ){
+				if(column.getValue()!=null)
+					switch (column.getKey()) {
+					case "o":
+						record.add(0,row.get( column.getKey() ).asNode());
+						break;
+					case "m":
+						record.add(1,row.get( column.getKey() ).asNode());
+						break;
+					case "p":
+						record.add(2,row.get( column.getKey() ).asNode());
+						break;
+					case "n":
+						record.add(3,row.get( column.getKey() ).asNode());
+						break;
+					default:
+						System.out.println("Unexpected column"+column.getKey());
+						break;
+					}
+				}
+			if(records.add(new ArrayList<Node>(record)))
+				countRows++;
+			}
+		System.out.println("Number of rows in increaseEdgesWithBitScoreWithTopMappings query: "+countRows+"/"+addResultsToAlignment(records,aligned,mode)+" of them are added.");		
+		
+		unmarkAllNodes();
+		tx.success(); tx.close();
+		} catch(Exception e){
+			System.out.println("increaseEdgesWithBitScoreWithTopMappings: " + e.getMessage());
+		}
+		return true;
+	} );	
+	if(!success)
+		System.err.println("Method increaseEdgesWithBitScoreWithTopMappings was interrupted");
+	
+	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
+	
+}
+
 public void increaseBitScoreWithTopMappings(int limit, char mode) {
 	System.out.println("increaseBitScoreWithTopMappings for Aligner "+this.alignmentNo+" with a limit of "+limit);
 	ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
@@ -3285,7 +3341,7 @@ public void removeBadMappings(int k, double sim, boolean keepEdges, int limit){
 }
 
 public void removeBadMappingsRandomly(int k, double sim, boolean keepEdges, int limit){
-	System.out.println("removeBadMappingsRandomly for Aligner "+this.alignmentNo);
+	System.out.println("removeBadMappingsRandomly for Aligner "+this.alignmentNo+" with limit "+limit);
 	TransactionTemplate.Monitor tm = new TransactionTemplate.Monitor.Adapter();
 	tm.failure(new Throwable("Herkesin tuttuğu kendine"));
 	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
