@@ -68,6 +68,7 @@ public class CLIPPI {
 	int noofDeletedMappingInUnprogressiveCycle = 100;
 	int unprogressiveCycleLength = 25;
 	int postProcessingCycles = 40;
+	String algorithm = "";
 	private static final Logger log = Logger.getLogger(CLIPPI.class.getName());
 	private String[] args = null;
 	private Options options = new Options();
@@ -116,6 +117,7 @@ public class CLIPPI {
 	  options.addOption("cc", "centralitiescommunities", false, "Compute Several Centrality and Community approaches for the networks.");
 	  options.addOption("nps", "noofpercentilesteps", true, "Number of Percentile Steps to be calculated for the Meta Data.");
 	  options.addOption("ps", "populationsize", true, "Population Size to be improved in post processing.");
+	  options.addOption("cntalg", "centralityalgorithm", true, "Centrality Algorithm to be used in post processing and interactive phase.");
 
 	 }
 
@@ -490,7 +492,21 @@ public class CLIPPI {
 							System.err.println("User defined Population Size could not be accessed. Switching to the default value "+populationSize);
 						}		    	    
 					    
-					   }  
+					   } 
+				 
+				 if (cmd.hasOption("cntalg")) {
+					    log.log(Level.INFO, "Using cli argument -ps=" + cmd.getOptionValue("cntalg"));       
+						try {
+							if(cmd.getOptionValue("cntalg") != null ) {
+								algorithm = cmd.getOptionValue("cntalg");
+								System.out.println("Centrality Algorithm of alignments from argument  is "+algorithm);
+							} else
+								System.out.println("Centrality Algorithm should be a positive number. Switching to the default value "+algorithm);
+						} catch (Exception e) {
+							System.err.println("User defined Centrality Algorithm could not be accessed. Switching to the default value "+algorithm);
+						}		    	    
+					    
+					   } 
 		
 	  } catch (ParseException e) {
 	   log.log(Level.SEVERE, "Failed to parse comand line properties", e);
@@ -747,12 +763,12 @@ public class CLIPPI {
 						public void onComplete(Throwable failure, Boolean success) {
 							if (success && failure == null) {
 								System.out.println("SONRAKİ");
-								firstAligner.increaseECByAddingPair(4, 0.0, '3');
-								firstAligner.increaseECByAddingPair(3, 0.0, '3');
-								firstAligner.increaseECByAddingPair(2, 0.0, '3');
-								firstAligner.increaseECByAddingPair(1, 50.0, '3');
-								firstAligner.increaseECByAddingPair(0, 50.0, '3');
-								firstAligner.increaseECByAddingPair(0, 0, '3');
+								firstAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 							} else if (failure != null)
 								System.out.println("KAMİLLEEEER" + failure.getMessage());
 						}
@@ -761,12 +777,12 @@ public class CLIPPI {
 							if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException
 									|| problem instanceof Exception || problem != null) {
 								System.out.println("RECOVER ETTİM GARİ");
-								firstAligner.increaseECByAddingPair(4, 0.0, '3');
-								firstAligner.increaseECByAddingPair(3, 0.0, '3');
-								firstAligner.increaseECByAddingPair(2, 0.0, '3');
-								firstAligner.increaseECByAddingPair(1, 50.0, '3');
-								firstAligner.increaseECByAddingPair(0, 50.0, '3');
-								firstAligner.increaseECByAddingPair(0, 0, '3');
+								firstAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								firstAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 								return true;
 							}
 							return false;
@@ -777,12 +793,12 @@ public class CLIPPI {
 						public void onComplete(Throwable failure, Boolean success) {
 							if (success && failure == null) {
 								System.out.println("SONRAKİ");
-								sixthAligner.increaseECByAddingPair(4, 0.0, '3');
-								sixthAligner.increaseECByAddingPair(3, 0.0, '3');
-								sixthAligner.increaseECByAddingPair(2, 0.0, '3');
-								sixthAligner.increaseECByAddingPair(1, 50.0, '3');
-								sixthAligner.increaseECByAddingPair(0, 50.0, '3');
-								sixthAligner.increaseECByAddingPair(0, 0, '3');
+								sixthAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 							} else if (failure != null)
 								System.out.println("KAMİLLEEEER" + failure.getMessage());
 						}
@@ -791,12 +807,12 @@ public class CLIPPI {
 							if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException
 									|| problem instanceof Exception || problem != null) {
 								System.out.println("RECOVER ETTİM GARİ");
-								sixthAligner.increaseECByAddingPair(4, 0.0, '3');
-								sixthAligner.increaseECByAddingPair(3, 0.0, '3');
-								sixthAligner.increaseECByAddingPair(2, 0.0, '3');
-								sixthAligner.increaseECByAddingPair(1, 50.0, '3');
-								sixthAligner.increaseECByAddingPair(0, 50.0, '3');
-								sixthAligner.increaseECByAddingPair(0, 0, '3');
+								sixthAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								sixthAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 								return true;
 							}
 							return false;
@@ -807,12 +823,12 @@ public class CLIPPI {
 						public void onComplete(Throwable failure, Boolean success) {
 							if (success && failure == null) {
 								System.out.println("SONRAKİ");
-								eighthAligner.increaseECByAddingPair(4, 0.0, '3');
-								eighthAligner.increaseECByAddingPair(3, 0.0, '3');
-								eighthAligner.increaseECByAddingPair(2, 0.0, '3');
-								eighthAligner.increaseECByAddingPair(1, 50.0, '3');
-								eighthAligner.increaseECByAddingPair(0, 50.0, '3');
-								eighthAligner.increaseECByAddingPair(0, 0, '3');
+								eighthAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 							} else if (failure != null)
 								System.out.println("KAMİLLEEEER" + failure.getMessage());
 						}
@@ -822,12 +838,12 @@ public class CLIPPI {
 							if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException
 									|| problem instanceof Exception || problem != null) {
 								System.out.println("RECOVER ETTİM GARİ");
-								eighthAligner.increaseECByAddingPair(4, 0.0, '3');
-								eighthAligner.increaseECByAddingPair(3, 0.0, '3');
-								eighthAligner.increaseECByAddingPair(2, 0.0, '3');
-								eighthAligner.increaseECByAddingPair(1, 50.0, '3');
-								eighthAligner.increaseECByAddingPair(0, 50.0, '3');
-								eighthAligner.increaseECByAddingPair(0, 0, '3');
+								eighthAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								eighthAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 								return true;
 							}
 							return false;
@@ -838,12 +854,12 @@ public class CLIPPI {
 						public void onComplete(Throwable failure, Boolean success) {
 							if (success && failure == null) {
 								System.out.println("SONRAKİ");
-								ninthAligner.increaseECByAddingPair(4, 0.0, '3');
-								ninthAligner.increaseECByAddingPair(3, 0.0, '3');
-								ninthAligner.increaseECByAddingPair(2, 0.0, '3');
-								ninthAligner.increaseECByAddingPair(1, 50.0, '3');
-								ninthAligner.increaseECByAddingPair(0, 50.0, '3');
-								ninthAligner.increaseECByAddingPair(0, 0, '3');
+								ninthAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 							} else if (failure != null)
 								System.out.println("KAMİLLEEEER" + failure.getMessage());
 						}
@@ -852,12 +868,12 @@ public class CLIPPI {
 							if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException
 									|| problem instanceof Exception || problem != null) {
 								System.out.println("RECOVER ETTİM GARİ");
-								ninthAligner.increaseECByAddingPair(4, 0.0, '3');
-								ninthAligner.increaseECByAddingPair(3, 0.0, '3');
-								ninthAligner.increaseECByAddingPair(2, 0.0, '3');
-								ninthAligner.increaseECByAddingPair(1, 50.0, '3');
-								ninthAligner.increaseECByAddingPair(0, 50.0, '3');
-								ninthAligner.increaseECByAddingPair(0, 0, '3');
+								ninthAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								ninthAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 								return true;
 							}
 							return false;
@@ -868,12 +884,12 @@ public class CLIPPI {
 						public void onComplete(Throwable failure, Boolean success) {
 							if (success && failure == null) {
 								System.out.println("SONRAKİ");
-								tenthAligner.increaseECByAddingPair(4, 0.0, '3');
-								tenthAligner.increaseECByAddingPair(3, 0.0, '3');
-								tenthAligner.increaseECByAddingPair(2, 0.0, '3');
-								tenthAligner.increaseECByAddingPair(1, 50.0, '3');
-								tenthAligner.increaseECByAddingPair(0, 50.0, '3');
-								tenthAligner.increaseECByAddingPair(0, 0, '3');
+								tenthAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 							} else if (failure != null)
 								System.out.println("KAMİLLEEEER" + failure.getMessage());
 						}
@@ -883,12 +899,12 @@ public class CLIPPI {
 							if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException
 									|| problem instanceof Exception || problem != null) {
 								System.out.println("RECOVER ETTİM GARİ");
-								tenthAligner.increaseECByAddingPair(4, 0.0, '3');
-								tenthAligner.increaseECByAddingPair(3, 0.0, '3');
-								tenthAligner.increaseECByAddingPair(2, 0.0, '3');
-								tenthAligner.increaseECByAddingPair(1, 50.0, '3');
-								tenthAligner.increaseECByAddingPair(0, 50.0, '3');
-								tenthAligner.increaseECByAddingPair(0, 0, '3');
+								tenthAligner.increaseECByAddingPair(4, 0.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(3, 0.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(2, 0.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(1, 50.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(0, 50.0, algorithm, '3');
+								tenthAligner.increaseECByAddingPair(0, 0, algorithm, '3');
 								return true;
 							}
 							return false;
@@ -956,15 +972,15 @@ public class CLIPPI {
 				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
 					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
 						if(j+1<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+1])>Math.ceil(as.md.annotatedSimilarity[j]))
-							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, '3');
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, algorithm, '3');
 						else if (j+2<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+2])>Math.ceil(as.md.annotatedSimilarity[j+1]))
-							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+2]), 0, '3');
-						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, '3');
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+2]), 0, algorithm, '3');
+						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, algorithm, '3');
 						break;
 					}		
 				}
 				
-				a.increaseECByAddingPair(0, 0, '3');
+				a.increaseECByAddingPair(0, 0, algorithm, '3');
 				a.removeBadMappingsToReduceInduction1(true, 0, 0, 0);
 				a.removeBadMappingsRandomly(1, 1, true, finalMappingFactor);
 				a.removeLatterOfManyToManyAlignments();
@@ -979,7 +995,7 @@ public class CLIPPI {
 				size1 = a.getBenchmarkScores().getSize();
 				a.increaseEdgesWithBitScoreWithTopMappings((int)(finalMappingFactor), '3');
 				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor), '3');
-				a.increaseECByAddingPair(0, as.minSimilarity, '3');
+				a.increaseECByAddingPair(0, as.minSimilarity, algorithm, '3');
 				if (cmd.hasOption("gopp")) 
 					a.increaseGOCWithTopMappings((int)(finalMappingFactor), '3');
 				size2 = a.getBenchmarkScores().getSize();
@@ -990,14 +1006,14 @@ public class CLIPPI {
 				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
 					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
 						if(j+1<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+1])>Math.ceil(as.md.annotatedSimilarity[j]))
-							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, '3');
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, algorithm, '3');
 						else if (j+2<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+2])>Math.ceil(as.md.annotatedSimilarity[j+1]))
-							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+2]), 0, '3');
-						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, '3');
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+2]), 0, algorithm, '3');
+						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, algorithm, '3');
 						break;
 					}		
 				}
-				a.increaseECByAddingPair(0, 0, '3');
+				a.increaseECByAddingPair(0, 0, algorithm, '3');
 				size1 = 0;
 				size2 = 0;	
 				if(Math.random() < 0.3) {
@@ -1018,19 +1034,19 @@ public class CLIPPI {
 				 a.removeBadMappingsRandomly(1, 1, true, 0);
 				a.increaseEdgesWithBitScoreWithTopMappings((int)(finalMappingFactor), '3');
 				a.increaseBitScoreWithTopMappings((int)(finalMappingFactor), '3');
-				a.increaseECByAddingPair(0, as.minSimilarity, '3');
+				a.increaseECByAddingPair(0, as.minSimilarity, algorithm, '3');
 				a.increaseGOCWithTopMappings((int)(finalMappingFactor), '3');
 				for (int j = 0;j<as.md.annotatedSimilarity.length;j++) {
 					if(Math.ceil(as.md.annotatedSimilarity[j])>0.0) {			
 						if(j+1<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+1])>Math.ceil(as.md.annotatedSimilarity[j]))
-							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, '3');
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+1]), 0, algorithm, '3');
 						else if (j+2<as.md.annotatedSimilarity.length&&Math.ceil(as.md.annotatedSimilarity[j+2])>Math.ceil(as.md.annotatedSimilarity[j+1]))
-							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+2]), 0, '3');
-						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, '3');
+							a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j+2]), 0, algorithm, '3');
+						a.increaseECByAddingPair((int)Math.ceil(as.md.annotatedSimilarity[j]), 0, algorithm, '3');
 						break;
 					}		
 				}	
-				a.increaseECByAddingPair(0, 0, '3');
+				a.increaseECByAddingPair(0, 0, algorithm, '3');
 				a.removeBadMappingsRandomly(1, 1, true, 0);
 			}
 		}

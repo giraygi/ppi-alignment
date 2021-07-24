@@ -245,7 +245,7 @@ public void addAlignment(SubGraph alignment){
 				else if(prob2 < 0.67)
 					m = (int)Math.ceil(this.as.minSimilarity);
 				
-				this.increaseECByAddingPair(n, m, '3');
+				this.increaseECByAddingPair(n, m, "pagerank",'3');
 			}
 				
 		}
@@ -2524,7 +2524,7 @@ public void increaseConnectedEdges(int limit, int minCommonAnnotations, boolean 
  *  not (o)-[:ALIGNS {alignmentNumber: '+"alignmentNo"+'}]->(l) return o,l
  * */
 
-public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mode){
+public void increaseECByAddingPair(int minCommonAnnotations, double sim, String algorithm, char mode){
 	System.out.println("increaseECByAddingPair for Aligner "+this.alignmentNo+" with "+minCommonAnnotations+" minCommonAnnotations and "+sim+" similarity");
 	TransactionTemplate.Monitor tm = new TransactionTemplate.Monitor.Adapter();
 	tm.failure(new Throwable("Herkesin tuttuğu kendine"));
@@ -2532,8 +2532,9 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 	boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
 		StatementResult result;
 		Session ieca = AkkaSystem.driver.session();
-		String suffix = ",min(o.power2,l.power2) order by min(o.power2,l.power2) desc";
-		suffix = "";
+		String suffix = "";
+		if (algorithm.equals("betweenness") || algorithm.equals("harmonic") || algorithm.equals("pagerank") || algorithm.equals("closeness")|| algorithm.equals("power2")|| algorithm.equals("power3")|| algorithm.equals("power4"))
+			suffix = ",min(o."+algorithm+",l."+algorithm+") order by min(o."+algorithm+",l."+algorithm+") desc";
 		try ( org.neo4j.driver.v1.Transaction tx = ieca.beginTransaction())
 	    {
 			if(sim > 0) {
@@ -2568,6 +2569,7 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 			
 			Set<Node> aligned = new HashSet<Node>();
 			addResultsToAlignment(records,aligned,mode);
+			System.out.println(addResultsToAlignment(records,aligned,mode)+" records were added with increaseECByAddingPair of Aligner "+this.alignmentNo+" with centrality alg.: "+algorithm);
 			unmarkAllNodes();
 			} else {
 				markUnalignedNodes();
@@ -2603,7 +2605,7 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mo
 				
 				Set<Node> aligned = new HashSet<Node>();
 				
-				System.out.println(addResultsToAlignment(records,aligned,mode)+" records were added with increaseECByAddingPair of Aligner "+this.alignmentNo);
+				System.out.println(addResultsToAlignment(records,aligned,mode)+" records were added with increaseECByAddingPair of Aligner "+this.alignmentNo+" with centrality alg.: "+algorithm);
 				unmarkAllNodes();
 			}
 			tx.success(); tx.close();

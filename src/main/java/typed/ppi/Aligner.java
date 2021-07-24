@@ -47,7 +47,7 @@ public interface Aligner extends Receiver {
 	public void increaseFunctionalParametersWithPower(int minCommonAnnotations, double sim,int power, char powerMode, boolean orderbyBitScoreOrGOC, char mode); 
 	public void alignEdges(char mode);
 	public void increaseConnectedEdges(int limit, int minCommonAnnotations, boolean doubleOrTriple, char mode);
-	public void increaseECByAddingPair(int minCommonAnnotations, double sim, char mode);
+	public void increaseECByAddingPair(int minCommonAnnotations, double sim, String algorithm, char mode);
 	public void increaseCentralEdges(int power2, int power3, int power4, char mode) ;
 	public Future<Boolean>  alignCentralPowerNodes(int minCommonAnnotations, double sim, int power2, int power3, int power4, char mode);
 	public Future<Boolean> alignCentralPowerNodesFromTop(int minCommonAnnotations, double sim, char powerMode, double percentile, int limit, char mode);
