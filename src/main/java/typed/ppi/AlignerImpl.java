@@ -2534,7 +2534,7 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, String 
 		Session ieca = AkkaSystem.driver.session();
 		String suffix = "";
 		if (algorithm.equals("betweenness") || algorithm.equals("harmonic") || algorithm.equals("pagerank") || algorithm.equals("closeness")|| algorithm.equals("power2")|| algorithm.equals("power3")|| algorithm.equals("power4"))
-			suffix = ",min(o."+algorithm+",l."+algorithm+") order by min(o."+algorithm+",l."+algorithm+") desc";
+			suffix = ",min(o."+algorithm+",l."+algorithm+") as centrality order by centrality desc";
 		try ( org.neo4j.driver.v1.Transaction tx = ieca.beginTransaction())
 	    {
 			if(sim > 0) {
@@ -2556,7 +2556,7 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, String 
 						case "l":
 							record.add(1,row.get( column.getKey() ).asNode());
 							break;
-						case "min(o.power2,l.power2)":
+						case "centrality":
 							;
 							break;
 						default:
@@ -2592,7 +2592,7 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, String 
 							case "l":
 								record.add(1,row.get( column.getKey() ).asNode());
 								break;
-							case "min(o.power2,l.power2)":
+							case "centrality":
 								;
 								break;
 							default:
