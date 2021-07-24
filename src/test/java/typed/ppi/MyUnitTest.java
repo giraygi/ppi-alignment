@@ -7,7 +7,7 @@ public class MyUnitTest {
 
     @Test
     public void testInitializePreviousAlignmentsFromFolder() {
-        AkkaSystem myUnit = new AkkaSystem(1,"neo4j-community-3.5.6","evet",100,20,10,300);
+        AkkaSystem myUnit = new AkkaSystem(1,"neo4j-community-3.5.6","evet",100,20,10,300,"pagerank");
         myUnit.computeMetaData();
         myUnit.removeAllAlignments();
         int result = myUnit.initializePreviousAlignmentsFromFolder(1, "/home/giray/4/dorderdorder", "aln");
@@ -15,7 +15,7 @@ public class MyUnitTest {
         for (int i = 1;i<result+1;i++) {
         	Aligner a = new AlignerImpl(myUnit,i);
         	myUnit.calculateGlobalBenchmarks(a);
-        	a.increaseECByAddingPair(0, 0, '3');
+        	a.increaseECByAddingPair(0, 0, "",'3');
         }
         
         myUnit.writeAlignments("TestSave", "/home/giray/4/dorderdorder","aln");
