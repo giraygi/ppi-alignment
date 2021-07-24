@@ -519,7 +519,7 @@ public class CLIPPI {
 	  		neo4jPassword = cmd.getOptionValue("npw");	
 	  	else
 	  		log.log(Level.INFO, "Using the default Neo4j Password as evet");
-		final AkkaSystem as = new AkkaSystem(1,databaseAddress,neo4jPassword,noofDeletedMappingInUnprogressiveCycle,unprogressiveCycleLength,noofPercentileSteps,interactiveCycles);
+		final AkkaSystem as = new AkkaSystem(1,databaseAddress,neo4jPassword,noofDeletedMappingInUnprogressiveCycle,unprogressiveCycleLength,noofPercentileSteps,interactiveCycles, algorithm);
 		if(cmd.hasOption("c")&&cmd.hasOption("n1")&&cmd.hasOption("n2")&&cmd.hasOption("s")&&cmd.hasOption("i1")&&cmd.hasOption("i2")&&cmd.hasOption("a1")&&cmd.hasOption("a2"))
 		{
 			as.deleteAllNodesRelationships();

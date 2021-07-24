@@ -81,6 +81,7 @@ public class AkkaSystem {
 	int unprogressiveCycleLength = 25;
 	int noofPercentileSteps = 10;
 	int interactiveCycles = 300;
+	String algorithm = "";
 	static akka.actor.ActorSystem system2 = akka.actor.ActorSystem.create();
 	TypedActorExtension typed = TypedActor.get(system2);
 	static ExecutionContext ec = system2.dispatcher();
@@ -109,13 +110,14 @@ public class AkkaSystem {
 	static int marked = 0; 
 	MetaData md;
 	
-	public AkkaSystem(int noofAligners, String dbAddress, String neo4jPassword, int noofDeletedMappingInUnprogressiveCycles,int unprogressiveCycleLength, int noofPercentileSteps, int interactiveCycles ){
+	public AkkaSystem(int noofAligners, String dbAddress, String neo4jPassword, int noofDeletedMappingInUnprogressiveCycles,int unprogressiveCycleLength, int noofPercentileSteps, int interactiveCycles, String algorithm ){
 		this.noofAligners = noofAligners;
 		this.init(dbAddress, neo4jPassword);
 		this.noofDeletedMappingInUnprogressiveCycle = noofDeletedMappingInUnprogressiveCycles;
 		this.unprogressiveCycleLength = unprogressiveCycleLength;
 		this.noofPercentileSteps = noofPercentileSteps;
 		this.interactiveCycles = interactiveCycles;
+		this.algorithm = algorithm;
 		md  = new MetaData(this.noofPercentileSteps);
 	}
 	
@@ -2377,9 +2379,9 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 					else
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, '4', 0.3,1000, '3');
 					if(Math.random() < 0.5)
-						routees.get(i).increaseECByAddingPair(n, s, '3');
+						routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
 					else
-						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
+						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
 					
 				}
 					
@@ -2401,7 +2403,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, m*5, c, false, '3');
 						
 						if(Math.random() < 0.4)
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2),s, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2),s, algorithm, '3');
 					}
 					if(routees.get(i).getAlignmentNo()==3) {
 						Random rand1 = new Random();
@@ -2413,7 +2415,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						routees.get(i).increaseBitScoreWithTopMappings(200, '3');
 						
 						if(Math.random() < 0.4)
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==4) {
@@ -2449,7 +2451,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, (m+1)*5, p,false, '3');
 						
 						if(Math.random() < 0.5)
-						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
+						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, '3');
 						
 						
 					}
@@ -2486,7 +2488,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, (m+1)*5, p,false, '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, '3');
 							
 					}
 					
@@ -2507,9 +2509,9 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair(n, s, '3');
+							routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
 						else
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==7) {
@@ -2527,7 +2529,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						   routees.get(i).increaseBitScoreWithTopMappings(200, '3');
 						
 						if(Math.random() < 0.4)
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, '3');
 						
 					}
 					
@@ -2548,9 +2550,9 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair(n, s, '3');
+							routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
 						else
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==9)
@@ -2570,9 +2572,9 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair(n, s, '3');
+							routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
 						else
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==10)
@@ -2592,9 +2594,9 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair(n, s, '3');
+							routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
 						else
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
 					}
 					
 //					if(Math.random() < 0.1)
@@ -2637,7 +2639,7 @@ public Future<Boolean> chainMappings(Future<Boolean> f, Aligner a, int minCommon
     	public void onComplete(Throwable failure, Boolean success) {
     		if (success && failure==null) {
 //    			System.out.println("Chain Trial 1");
-    			a.increaseECByAddingPair(minCommonAnnotations, sim, '3');
+    			a.increaseECByAddingPair(minCommonAnnotations, sim, algorithm, '3');
     		} else
     			if (failure!=null)
     			System.out.println("Unchain My Heart! "+failure.getMessage());
@@ -2647,7 +2649,7 @@ public Future<Boolean> chainMappings(Future<Boolean> f, Aligner a, int minCommon
     		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
     		{
     			System.out.println("Chain Trial 2");
-    			a.increaseECByAddingPair(minCommonAnnotations, sim, '3');
+    			a.increaseECByAddingPair(minCommonAnnotations, sim, algorithm, '3');
     			return true;
     		}
     			return false;
