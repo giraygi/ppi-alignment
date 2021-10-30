@@ -245,7 +245,7 @@ public void addAlignment(SubGraph alignment){
 				else if(prob2 < 0.67)
 					m = (int)Math.ceil(this.as.minSimilarity);
 				
-				this.increaseECByAddingPair(n, m, "pagerank",'3');
+				this.increaseECByAddingPair(n, m, "pagerank",0,'3');
 			}
 				
 		}
@@ -2524,7 +2524,7 @@ public void increaseConnectedEdges(int limit, int minCommonAnnotations, boolean 
  *  not (o)-[:ALIGNS {alignmentNumber: '+"alignmentNo"+'}]->(l) return o,l
  * */
 
-public void increaseECByAddingPair(int minCommonAnnotations, double sim, String algorithm, char mode){
+public void increaseECByAddingPair(int minCommonAnnotations, double sim, String algorithm, int limit, char mode){
 	System.out.println("increaseECByAddingPair for Aligner "+this.alignmentNo+" with "+minCommonAnnotations+" minCommonAnnotations and "+sim+" similarity");
 	TransactionTemplate.Monitor tm = new TransactionTemplate.Monitor.Adapter();
 	tm.failure(new Throwable("Herkesin tuttuğu kendine"));
@@ -2535,6 +2535,9 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, String 
 		String suffix = "";
 		if (algorithm.equals("betweenness") || algorithm.equals("harmonic") || algorithm.equals("pagerank") || algorithm.equals("closeness")|| algorithm.equals("power2")|| algorithm.equals("power3")|| algorithm.equals("power4"))
 			suffix = ",min(o."+algorithm+",l."+algorithm+") as centrality order by centrality desc";
+		if (limit > 0)
+			suffix = suffix+" limit "+limit;
+			
 		try ( org.neo4j.driver.v1.Transaction tx = ieca.beginTransaction())
 	    {
 			if(sim > 0) {
@@ -2608,6 +2611,71 @@ public void increaseECByAddingPair(int minCommonAnnotations, double sim, String 
 				System.out.println(addResultsToAlignment(records,aligned,mode)+" records were added with increaseECByAddingPair of Aligner "+this.alignmentNo+" with centrality alg.: "+algorithm);
 				unmarkAllNodes();
 			}
+			tx.success(); tx.close();
+	    } catch (Exception e){
+	    	System.out.println("increaseECByAddingPair: " + e.getMessage());
+	    } finally {ieca.close();}
+		this.bs = as.calculateGlobalBenchmarks(this);
+		return true;
+	} );
+	
+	if(!success)
+		System.err.println("Method increaseECByAddingPair was interrupted");
+	
+	this.bs = as.calculateGlobalBenchmarks((Aligner)this);	
+}
+
+
+public void increaseECByAddingIntermediaryPair(int minCommonAnnotations, String algorithm, int limit, char mode){
+	System.out.println("increaseECByAddingPair for Aligner "+this.alignmentNo+" with "+minCommonAnnotations+" minCommonAnnotations");
+	TransactionTemplate.Monitor tm = new TransactionTemplate.Monitor.Adapter();
+	tm.failure(new Throwable("Herkesin tuttuğu kendine"));
+	TransactionTemplate template = new TransactionTemplate(  ).retries( 1000 ).backoff( 5, TimeUnit.SECONDS ).monitor(tm);
+	boolean success = template.with(AkkaSystem.graphDb).execute( transaction -> {
+		StatementResult result;
+		Session ieca = AkkaSystem.driver.session();
+		String suffix = "";
+		if (algorithm.equals("betweenness") || algorithm.equals("harmonic") || algorithm.equals("pagerank") || algorithm.equals("closeness")|| algorithm.equals("power2")|| algorithm.equals("power3")|| algorithm.equals("power4"))
+			suffix = ",min(o."+algorithm+",l."+algorithm+") as centrality order by centrality desc";
+		if (limit > 0)
+			suffix = suffix+" limit "+limit;
+			
+		try ( org.neo4j.driver.v1.Transaction tx = ieca.beginTransaction())
+	    {
+			markUnalignedNodes();
+			ArrayList<ArrayList<Node>> records = new ArrayList<ArrayList<Node>>();
+			ArrayList<Node> record = new ArrayList<Node>();
+			result = tx.run("match (o:Organism2)-[i2:INTERACTS_2]-(p:Organism2)-[i2:INTERACTS_2]-(q:Organism2)-[r:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(l:Organism1)-[i1:INTERACTS_1]-(m:Organism1)--[i1:INTERACTS_1]-(n:Organism1)<-[s:ALIGNS  {alignmentNumber: '"+alignmentNo+"'}]-(o) where NOT ANY(x IN q.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN l.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN n.marked WHERE x = '"+this.alignmentNo+"') and NOT ANY(x IN o.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN m.marked WHERE x = '"+this.alignmentNo+"') and ANY(x IN p.marked WHERE x = '"+this.alignmentNo+"') "
+			+ "and length(FILTER(x in m.annotations WHERE x in p.annotations)) >= "+minCommonAnnotations+" and not (p)-[:ALIGNS {alignmentNumber: '"+alignmentNo+"'}]->(m) return p,m"+suffix);
+			
+			while(result.hasNext()){
+				Record row = result.next();
+				record.clear();
+				for ( Entry<String,Object> column : row.asMap().entrySet() ){
+					if(column.getValue()!=null)
+						switch (column.getKey()) {
+						case "p":
+							record.add(0,row.get( column.getKey() ).asNode());
+							break;
+						case "m":
+							record.add(1,row.get( column.getKey() ).asNode());
+							break;
+						case "centrality":
+							;
+							break;
+						default:
+							System.out.println("Unexpected column"+column.getKey());
+							break;
+						}
+					}
+				records.add(new ArrayList<Node>(record));
+				}
+			
+			Set<Node> aligned = new HashSet<Node>();
+			addResultsToAlignment(records,aligned,mode);
+			System.out.println(addResultsToAlignment(records,aligned,mode)+" records were added with increaseECByAddingPair of Aligner "+this.alignmentNo+" with centrality alg.: "+algorithm);
+			unmarkAllNodes();
+			 
 			tx.success(); tx.close();
 	    } catch (Exception e){
 	    	System.out.println("increaseECByAddingPair: " + e.getMessage());
