@@ -2375,13 +2375,13 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 					int  n = rand1.nextInt((int)Math.floor(AkkaSystem.this.averageCommonAnnotations/2));
 					double s = rand2.nextInt(4)*AkkaSystem.this.averageSimilarity/4;
 					if(Math.random() < 0.5)
-						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, '3', 0.3,1000, '3');
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, '3', 0.3,(int) Math.floor(0.2*noofNodesInSecondNetwork) , '3');
 					else
-						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, '4', 0.3,1000, '3');
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, '4', 0.3,(int) Math.floor(0.2*noofNodesInSecondNetwork), '3');
 					if(Math.random() < 0.5)
-						routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
+						routees.get(i).increaseECByAddingPair(n, s, algorithm, noofNodesInSecondNetwork/10,'3');
 					else
-						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
+						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, noofNodesInSecondNetwork/10,'3');
 					
 				}
 					
@@ -2403,7 +2403,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, m*5, c, false, '3');
 						
 						if(Math.random() < 0.4)
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2),s, algorithm, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2),s, algorithm, noofNodesInSecondNetwork/10,'3');
 					}
 					if(routees.get(i).getAlignmentNo()==3) {
 						Random rand1 = new Random();
@@ -2415,7 +2415,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						routees.get(i).increaseBitScoreWithTopMappings(200, '3');
 						
 						if(Math.random() < 0.4)
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, noofNodesInSecondNetwork/10,'3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==4) {
@@ -2451,7 +2451,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, (m+1)*5, p,false, '3');
 						
 						if(Math.random() < 0.5)
-						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, '3');
+						routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, noofNodesInSecondNetwork/10,'3');
 						
 						
 					}
@@ -2488,7 +2488,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 							routees.get(i).increaseFunctionalParametersWithPower((int)Math.floor(n/2), s, (m+1)*5, p,false, '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, noofNodesInSecondNetwork/10,'3');
 							
 					}
 					
@@ -2503,15 +2503,15 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						char p = (char) (rand3.nextInt(3)+2);
 
 						if(Math.random() < 0.6)
-						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, 1000, "pagerank", '3');
+						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, (int) Math.floor(0.2*noofNodesInSecondNetwork), "pagerank", '3');
 						
 						if(Math.random() < 0.4)
-						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, (int) Math.floor(0.2*noofNodesInSecondNetwork), '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
+							routees.get(i).increaseECByAddingPair(n, s, algorithm,noofNodesInSecondNetwork/10, '3');
 						else
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, noofNodesInSecondNetwork/10,'3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==7) {
@@ -2529,7 +2529,7 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						   routees.get(i).increaseBitScoreWithTopMappings(200, '3');
 						
 						if(Math.random() < 0.4)
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), s, algorithm, noofNodesInSecondNetwork/10,'3');
 						
 					}
 					
@@ -2544,15 +2544,15 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						char p = (char) (rand3.nextInt(3)+2);
 
 						if(Math.random() < 0.6)
-						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, 1000, "betweenness", '3');
+						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, (int) Math.floor(0.2*noofNodesInSecondNetwork), "betweenness", '3');
 						
 						if(Math.random() < 0.4)
-						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, (int) Math.floor(0.2*noofNodesInSecondNetwork), '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
+							routees.get(i).increaseECByAddingPair(n, s, algorithm, noofNodesInSecondNetwork/10,'3');
 						else
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, noofNodesInSecondNetwork/10,'3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==9)
@@ -2566,15 +2566,15 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						char p = (char) (rand3.nextInt(3)+2);
 
 						if(Math.random() < 0.6)
-						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, 1000, "harmonic", '3');
+						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, (int) Math.floor(0.2*noofNodesInSecondNetwork), "harmonic", '3');
 						
 						if(Math.random() < 0.4)
-						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, (int) Math.floor(0.2*noofNodesInSecondNetwork), '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
+							routees.get(i).increaseECByAddingPair(n, s, algorithm, noofNodesInSecondNetwork/10,'3');
 						else
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, noofNodesInSecondNetwork/10,'3');
 					}
 					
 					if(routees.get(i).getAlignmentNo()==10)
@@ -2588,15 +2588,15 @@ public Cancellable addRandomMapping(int initialDelay, int interval) {
 						char p = (char) (rand3.nextInt(3)+2);
 
 						if(Math.random() < 0.6)
-						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, 1000, "closeness", '3');
+						routees.get(i).alignAlternativeCentralNodesFromTop(n, s+1, 0.3, (int) Math.floor(0.2*noofNodesInSecondNetwork), "closeness", '3');
 						
 						if(Math.random() < 0.4)
-						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, 1000, '3');
+						routees.get(i).alignCentralPowerNodesFromTop(n, s+1, p, 0.3, (int) Math.floor(0.2*noofNodesInSecondNetwork), '3');
 						
 						if(Math.random() < 0.5)
-							routees.get(i).increaseECByAddingPair(n, s, algorithm, '3');
+							routees.get(i).increaseECByAddingPair(n, s, algorithm, noofNodesInSecondNetwork/10,'3');
 						else
-							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, '3');
+							routees.get(i).increaseECByAddingPair((int)Math.floor(n/2), Math.floor(s/2), algorithm, noofNodesInSecondNetwork/10,'3');
 					}
 					
 //					if(Math.random() < 0.1)
@@ -2639,7 +2639,7 @@ public Future<Boolean> chainMappings(Future<Boolean> f, Aligner a, int minCommon
     	public void onComplete(Throwable failure, Boolean success) {
     		if (success && failure==null) {
 //    			System.out.println("Chain Trial 1");
-    			a.increaseECByAddingPair(minCommonAnnotations, sim, algorithm, '3');
+    			a.increaseECByAddingPair(minCommonAnnotations, sim, algorithm, noofNodesInSecondNetwork/10,'3');
     		} else
     			if (failure!=null)
     			System.out.println("Unchain My Heart! "+failure.getMessage());
@@ -2649,7 +2649,7 @@ public Future<Boolean> chainMappings(Future<Boolean> f, Aligner a, int minCommon
     		if (problem instanceof org.neo4j.driver.v1.exceptions.TransientException || problem instanceof Exception || problem !=null)
     		{
     			System.out.println("Chain Trial 2");
-    			a.increaseECByAddingPair(minCommonAnnotations, sim, algorithm, '3');
+    			a.increaseECByAddingPair(minCommonAnnotations, sim, algorithm, noofNodesInSecondNetwork/10,'3');
     			return true;
     		}
     			return false;

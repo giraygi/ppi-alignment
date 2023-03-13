@@ -15,7 +15,7 @@ public class MyUnitTest {
         for (int i = 1;i<result+1;i++) {
         	Aligner a = new AlignerImpl(myUnit,i);
         	myUnit.calculateGlobalBenchmarks(a);
-        	a.increaseECByAddingPair(0, 0, "",'3');
+        	a.increaseECByAddingPair(0, 0, "",10,'3');
         }
         
         myUnit.writeAlignments("TestSave", "/home/giray/4/dorderdorder","aln");
