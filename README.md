@@ -1,4 +1,4 @@
-# Repository for Parallel Exchange of Randomized Subgraphs for Optimizing Network Alignment (PERSONA)
+# Parallel Exchange of Randomized Subgraphs for Optimizing Network Alignment (PERSONA)
 The project was developed with Eclipse IDE and maven buid automation tool. Main Class is in CLIPPI. Run CLIPPI with -h or --help arguments to see the possible list of arguments.
 The code documentation and good programming practices will be revised after the paper has been reviewed.
 
